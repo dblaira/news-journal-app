@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Life Headlines</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1 class="site-title">Big Wave</h1>
+            <p class="tagline">Your Personal News Feed</p>
+        </div>
+        <nav class="category-nav">
+            <button class="category-btn active" data-category="all">All</button>
+            <button class="category-btn" data-category="Business">Business</button>
+            <button class="category-btn" data-category="Finance">Finance</button>
+            <button class="category-btn" data-category="Health">Health</button>
+            <button class="category-btn" data-category="Spiritual">Spiritual</button>
+            <button class="category-btn" data-category="Fun">Fun</button>
+            <button class="category-btn" data-category="Social">Social</button>
+            <button class="category-btn" data-category="Romance">Romance</button>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="controls">
+            <button id="newEntryBtn" class="btn-primary">+ New Entry</button>
+        </div>
+
+        <!-- Entry Form (hidden by default) -->
+        <div id="entryForm" class="entry-form hidden">
+            <h2>Write Your Headline</h2>
+            <form id="journalForm">
+                <div class="form-group">
+                    <label for="headline">Headline</label>
+                    <input type="text" id="headline" required placeholder="What's your big story today?">
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" required>
+                        <option value="Business">Business</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Health">Health</option>
+                        <option value="Spiritual">Spiritual</option>
+                        <option value="Fun">Fun</option>
+                        <option value="Social">Social</option>
+                        <option value="Romance">Romance</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="subheading">Subheading (optional)</label>
+                    <input type="text" id="subheading" placeholder="Add context to your headline">
+                </div>
+
+                <div class="form-group">
+                    <label for="content">Your Story</label>
+                    <textarea id="content" rows="10" required placeholder="Write your journal entry here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="mood">Mood (optional)</label>
+                    <input type="text" id="mood" placeholder="e.g., motivated, reflective, excited">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Publish Entry</button>
+                    <button type="button" id="cancelBtn" class="btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Entries Feed -->
+        <div id="entriesFeed" class="entries-feed">
+            <div class="empty-state">
+                <h2>No entries yet</h2>
+                <p>Start your personal news feed by creating your first entry!</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 My Life Headlines. Your story, your way.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
