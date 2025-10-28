@@ -25,11 +25,8 @@ function attachEventListeners() {
     
     categoryBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            // Update active category
             categoryBtns.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
-            
-            // Filter entries
             currentFilter = e.target.dataset.category;
             displayEntries();
         });
@@ -48,7 +45,7 @@ function hideForm() {
 }
 
 // Handle form submission
-async function handleSubmit(e) {
+function handleSubmit(e) {
     e.preventDefault();
     
     const entry = {
@@ -59,21 +56,16 @@ async function handleSubmit(e) {
         subheading: document.getElementById('subheading').value,
         content: document.getElementById('content').value,
         mood: document.getElementById('mood').value,
-        original: document.getElementById('content').value, // Store original
-        enhanced: null, // Will be filled by AI
-        enhancementStatus: 'pending' // pending, complete, or error
+        versions: null,
+        generatingVersions: false
     };
     
-    entries.unshift(entry); // Add to beginning of array
+    entries.unshift(entry);
     saveEntries();
     displayEntries();
     hideForm();
     
-    // Scroll to top to see new entry
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Trigger AI enhancement in the background
-    enhanceEntryWithAI(entry.id);
 }
 
 // Save entries to localStorage
@@ -91,16 +83,13 @@ function loadEntries() {
 
 // Display entries
 function displayEntries() {
-    // Filter entries
     let filtered = entries;
     if (currentFilter !== 'all') {
         filtered = entries.filter(entry => entry.category === currentFilter);
     }
     
-    // Clear feed
     entriesFeed.innerHTML = '';
     
-    // Show empty state if no entries
     if (filtered.length === 0) {
         const emptyMessage = currentFilter === 'all' 
             ? 'No entries yet. Start your personal news feed by creating your first entry!'
@@ -115,7 +104,6 @@ function displayEntries() {
         return;
     }
     
-    // Display entries
     filtered.forEach(entry => {
         const card = createEntryCard(entry);
         entriesFeed.appendChild(card);
@@ -134,17 +122,16 @@ function createEntryCard(entry) {
         day: 'numeric' 
     });
     
-    // Add enhancement badge
-    let enhancementBadge = '';
-    if (entry.enhancementStatus === 'pending') {
-        enhancementBadge = '<span style="background: #ffc107; color: #000; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">✨ Enhancing...</span>';
-    } else if (entry.enhancementStatus === 'complete') {
-        enhancementBadge = '<span style="background: #4CAF50; color: #fff; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">✨ Enhanced</span>';
+    let versionBadge = '';
+    if (entry.generatingVersions) {
+        versionBadge = '<span style="background: #ffc107; color: #000; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">⏳ Generating...</span>';
+    } else if (entry.versions) {
+        versionBadge = '<span style="background: #4CAF50; color: #fff; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">✨ Enhanced</span>';
     }
     
     card.innerHTML = `
         <div class="entry-header">
-            <div class="entry-category">${entry.category}${enhancementBadge}</div>
+            <div class="entry-category">${entry.category}${versionBadge}</div>
             <h3 class="entry-headline">${entry.headline}</h3>
             ${entry.subheading ? `<p class="entry-subheading">${entry.subheading}</p>` : ''}
         </div>
@@ -157,6 +144,9 @@ function createEntryCard(entry) {
                 ${entry.mood ? `<span class="entry-mood">${entry.mood}</span>` : ''}
             </div>
             <div class="entry-actions">
+                ${!entry.versions && !entry.generatingVersions ? 
+                    `<button onclick="generateVersions('${entry.id}')" style="background: #4CAF50; color: white;">✨ Generate Versions</button>` : 
+                    ''}
                 <button onclick="viewEntry('${entry.id}')">Read More</button>
                 <button onclick="deleteEntry('${entry.id}')">Delete</button>
             </div>
@@ -164,6 +154,48 @@ function createEntryCard(entry) {
     `;
     
     return card;
+}
+
+// Generate AI versions
+async function generateVersions(id) {
+    const entry = entries.find(e => e.id === id);
+    if (!entry) return;
+    
+    entry.generatingVersions = true;
+    saveEntries();
+    displayEntries();
+    
+    try {
+        const response = await fetch('/api/generate-versions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ entry })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        entry.versions = data.versions;
+        entry.generatingVersions = false;
+        
+        saveEntries();
+        displayEntries();
+        
+        // Auto-open the entry to show versions
+        viewEntry(id);
+        
+    } catch (error) {
+        console.error('Error generating versions:', error);
+        entry.generatingVersions = false;
+        entry.versionError = error.message;
+        saveEntries();
+        displayEntries();
+        alert('Failed to generate versions. Please try again.');
+    }
 }
 
 // View full entry
@@ -191,6 +223,7 @@ function createModal(entry) {
         align-items: center;
         z-index: 1000;
         padding: 2rem;
+        overflow-y: auto;
     `;
     
     const date = new Date(entry.date);
@@ -201,32 +234,110 @@ function createModal(entry) {
         weekday: 'long'
     });
     
-    // Determine enhancement status message
-    let enhancementSection = '';
-    if (entry.enhancementStatus === 'pending') {
-        enhancementSection = `
+    let versionsSection = '';
+    
+    if (entry.generatingVersions) {
+        versionsSection = `
             <div style="
                 background: #fff3cd;
                 border: 1px solid #ffc107;
-                padding: 1rem;
-                border-radius: 4px;
+                padding: 2rem;
+                border-radius: 8px;
                 text-align: center;
                 color: #856404;
+                margin: 2rem 0;
             ">
-                ✨ AI is enhancing your entry...
+                <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+                <h3 style="margin: 0 0 0.5rem 0;">Generating AI Versions...</h3>
+                <p style="margin: 0;">This takes about 10-15 seconds. The page will update when ready.</p>
             </div>
         `;
-    } else if (entry.enhancementStatus === 'error') {
-        enhancementSection = `
+    } else if (entry.versions && entry.versions.length > 0) {
+        versionsSection = `
+            <div style="margin-top: 2rem;">
+                <h3 style="
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    margin-bottom: 2rem;
+                    text-align: center;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                ">✨ AI Generated Versions ✨</h3>
+                
+                <!-- Original -->
+                <div style="
+                    background: #f9f9f9;
+                    padding: 2rem;
+                    border-radius: 8px;
+                    margin-bottom: 2rem;
+                    border-left: 4px solid #000;
+                ">
+                    <h4 style="
+                        font-size: 1rem;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        margin-bottom: 1rem;
+                        color: #000;
+                    ">📝 Your Original</h4>
+                    <div style="
+                        font-size: 1rem;
+                        line-height: 1.8;
+                        color: #333;
+                        white-space: pre-wrap;
+                    ">${entry.content}</div>
+                </div>
+                
+                ${entry.versions.map(version => `
+                    <div style="
+                        background: #f0f9f1;
+                        padding: 2rem;
+                        border-radius: 8px;
+                        margin-bottom: 2rem;
+                        border-left: 4px solid #4CAF50;
+                    ">
+                        <h4 style="
+                            font-size: 1rem;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            margin-bottom: 1rem;
+                            color: #2e7d32;
+                        ">${version.title}</h4>
+                        <div style="
+                            font-size: 1rem;
+                            line-height: 1.8;
+                            color: #1b5e20;
+                            white-space: pre-wrap;
+                        ">${version.content}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } else if (!entry.versions) {
+        versionsSection = `
             <div style="
-                background: #f8d7da;
-                border: 1px solid #dc3545;
-                padding: 1rem;
-                border-radius: 4px;
+                background: #e3f2fd;
+                border: 1px solid #2196F3;
+                padding: 2rem;
+                border-radius: 8px;
                 text-align: center;
-                color: #721c24;
+                color: #0d47a1;
+                margin: 2rem 0;
             ">
-                ❌ Enhancement failed. <button onclick="retryEnhancement('${entry.id}'); this.closest('.modal').remove();" style="margin-left: 1rem; padding: 0.5rem 1rem; cursor: pointer;">Retry</button>
+                <div style="font-size: 2rem; margin-bottom: 1rem;">✨</div>
+                <h3 style="margin: 0 0 1rem 0;">Generate AI Versions</h3>
+                <p style="margin: 0 0 1.5rem 0;">See your journal entry rewritten in 4 different styles by AI.</p>
+                <button onclick="this.closest('.modal').remove(); generateVersions('${entry.id}');" style="
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 1rem 2rem;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    border-radius: 4px;
+                    cursor: pointer;
+                ">✨ Generate Versions Now</button>
             </div>
         `;
     }
@@ -234,12 +345,13 @@ function createModal(entry) {
     modal.innerHTML = `
         <div style="
             background: white;
-            max-width: 1400px;
+            max-width: 900px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
             padding: 3rem;
             position: relative;
+            border-radius: 8px;
         ">
             <button onclick="this.closest('.modal').remove()" style="
                 position: absolute;
@@ -248,10 +360,12 @@ function createModal(entry) {
                 background: #000;
                 color: white;
                 border: none;
-                padding: 0.5rem 1rem;
+                padding: 0.6rem 1.2rem;
                 cursor: pointer;
                 font-size: 1rem;
                 z-index: 10;
+                border-radius: 4px;
+                font-weight: 600;
             ">Close</button>
             
             <div style="margin-bottom: 1rem;">
@@ -290,65 +404,7 @@ function createModal(entry) {
                 ${entry.mood ? `<div style="margin-top: 0.5rem;">Mood: ${entry.mood}</div>` : ''}
             </div>
             
-            ${enhancementSection}
-            
-            ${entry.enhanced ? `
-                <div style="
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 2rem;
-                    margin-top: 2rem;
-                ">
-                    <div>
-                        <h3 style="
-                            font-size: 1rem;
-                            font-weight: 700;
-                            text-transform: uppercase;
-                            letter-spacing: 1px;
-                            margin-bottom: 1rem;
-                            color: #666;
-                            border-bottom: 2px solid #000;
-                            padding-bottom: 0.5rem;
-                        ">Your Original Entry</h3>
-                        <div style="
-                            font-size: 1rem;
-                            line-height: 1.8;
-                            color: #333;
-                            white-space: pre-wrap;
-                        ">${entry.original || entry.content}</div>
-                    </div>
-                    
-                    <div>
-                        <h3 style="
-                            font-size: 1rem;
-                            font-weight: 700;
-                            text-transform: uppercase;
-                            letter-spacing: 1px;
-                            margin-bottom: 1rem;
-                            color: #666;
-                            border-bottom: 2px solid #4CAF50;
-                            padding-bottom: 0.5rem;
-                        ">✨ AI Enhanced Version</h3>
-                        <div style="
-                            font-size: 1rem;
-                            line-height: 1.8;
-                            color: #333;
-                            white-space: pre-wrap;
-                            background: #f8fff9;
-                            padding: 1.5rem;
-                            border-left: 3px solid #4CAF50;
-                        ">${entry.enhanced}</div>
-                    </div>
-                </div>
-            ` : `
-                <div style="
-                    font-size: 1.1rem;
-                    line-height: 1.8;
-                    color: #333;
-                    white-space: pre-wrap;
-                    margin-top: 2rem;
-                ">${entry.content}</div>
-            `}
+            ${versionsSection}
         </div>
     `;
     
@@ -372,73 +428,3 @@ function deleteEntry(id) {
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', init);
-
-// AI Enhancement Feature
-async function enhanceEntryWithAI(entryId) {
-    const entry = entries.find(e => e.id === entryId);
-    if (!entry) return;
-    
-    try {
-        // Show loading state in the card
-        displayEntries();
-        
-        const prompt = `You are helping someone express their thoughts more clearly and eloquently. They've written a journal entry, and your job is to rewrite it in a way that:
-
-1. Captures the same meaning and emotion
-2. Makes the writing more articulate and expressive
-3. Maintains their authentic voice (don't make it too formal or academic)
-4. Helps them better understand and express their own feelings
-5. Keeps it to a similar length (don't make it much longer)
-
-Here is their journal entry:
-
-Category: ${entry.category}
-Headline: ${entry.headline}
-${entry.subheading ? `Subheading: ${entry.subheading}` : ''}
-Mood: ${entry.mood || 'not specified'}
-
-Content:
-${entry.content}
-
-Please rewrite the content portion in a more expressive and clear way. ONLY return the rewritten content - do not include any preamble, explanation, or meta-commentary. Just the enhanced journal entry text itself.`;
-
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                model: "claude-sonnet-4-20250514",
-                max_tokens: 2000,
-                messages: [
-                    { role: "user", content: prompt }
-                ]
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`API request failed: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const enhancedContent = data.content[0].text;
-        
-        // Update entry with enhanced version
-        entry.enhanced = enhancedContent;
-        entry.enhancementStatus = 'complete';
-        
-        saveEntries();
-        displayEntries();
-        
-    } catch (error) {
-        console.error('AI enhancement failed:', error);
-        entry.enhancementStatus = 'error';
-        saveEntries();
-        displayEntries();
-    }
-}
-
-// Manually trigger enhancement for an existing entry
-function retryEnhancement(entryId) {
-    enhanceEntryWithAI(entryId);
-}
