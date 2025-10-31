@@ -1,4 +1,4 @@
-import { supabase } from './api/supabase.js';
+import { supabase } from './supabase.js';
 
 // DOM elements
 const form = document.getElementById('auth-form');

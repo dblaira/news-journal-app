@@ -1,4 +1,4 @@
-import { supabase } from './api/supabase.js'
+import { supabase } from './supabase.js'
 // State management
 let entries = [];
 let currentFilter = 'all';
