@@ -95,7 +95,14 @@ async function callClaudeAPI(prompt, apiKey) {
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    // Try to include response body for better error messages (some APIs return JSON/text explaining the error)
+    let bodyText;
+    try {
+      bodyText = await response.text();
+    } catch (e) {
+      bodyText = '<unable to read response body>';
+    }
+    throw new Error(`API request failed: ${response.status} - ${bodyText}`);
   }
 
   const data = await response.json();
