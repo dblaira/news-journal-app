@@ -1,3 +1,4 @@
+import { supabase } from './api/supabase.js'
 // State management
 let entries = [];
 let currentFilter = 'all';
@@ -11,11 +12,62 @@ const entriesFeed = document.getElementById('entriesFeed');
 const categoryBtns = document.querySelectorAll('.category-btn');
 
 // Initialize app
-function init() {
-    loadEntries();
+async function init() {
+    await loadEntries();
     displayEntries();
     attachEventListeners();
 }
+// Check authentication
+async function checkAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+        // Not logged in, redirect to login page
+        window.location.href = 'login.html';
+        return null;
+    }
+    
+    return session.user;
+}
+
+// Add logout functionality
+function setupLogout() {
+    const logoutBtn = document.createElement('button');
+    logoutBtn.textContent = 'Logout';
+    logoutBtn.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        background: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        z-index: 1000;
+    `;
+    
+    logoutBtn.addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = 'login.html';
+    });
+    
+    document.body.appendChild(logoutBtn);
+}
+
+// Initialize auth check
+let currentUser = null;
+
+(async function initAuth() {
+    currentUser = await checkAuth();
+    if (currentUser) {
+        setupLogout();
+        // Your existing loadEntries() or initialization code goes here
+        loadEntries();
+    }
+})();
+
 
 // Event listeners
 function attachEventListeners() {
@@ -45,41 +97,63 @@ function hideForm() {
 }
 
 // Handle form submission
-function handleSubmit(e) {
+async function handleSubmit(e) {
     e.preventDefault();
     
     const entry = {
-        id: Date.now().toString(),
-        date: new Date().toISOString(),
         headline: document.getElementById('headline').value,
         category: document.getElementById('category').value,
         subheading: document.getElementById('subheading').value,
         content: document.getElementById('content').value,
         mood: document.getElementById('mood').value,
         versions: null,
-        generatingVersions: false
+        user_id: currentUser.id,
+        generating_versions: false
     };
     
-    entries.unshift(entry);
-    saveEntries();
-    displayEntries();
-    hideForm();
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Save entries to localStorage
-function saveEntries() {
-    localStorage.setItem('journalEntries', JSON.stringify(entries));
-}
-
-// Load entries from localStorage
-function loadEntries() {
-    const stored = localStorage.getItem('journalEntries');
-    if (stored) {
-        entries = JSON.parse(stored);
+    try {
+        const { data, error } = await supabase
+            .from('entries')
+            .insert([entry])
+            .select()
+            .single();
+        
+        if (error) throw error;
+        
+        // Add to local array
+        entries.unshift(data);
+        
+        displayEntries();
+        hideForm();
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+        console.error('Error creating entry:', error);
+        alert('Failed to create entry. Please try again.');
     }
 }
+//
+
+// Load entries from Supabase
+async function loadEntries() {
+    try {
+       const { data, error } = await supabase
+    .from('entries')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (data) {
+            entries = data;
+        }
+    } catch (error) {
+        console.error('Error loading entries:', error);
+        entries = [];
+    }
+}
+
 
 // Display entries
 function displayEntries() {
@@ -123,7 +197,7 @@ function createEntryCard(entry) {
     });
     
     let versionBadge = '';
-    if (entry.generatingVersions) {
+    if (entry.generating_versions) {
         versionBadge = '<span style="background: #ffc107; color: #000; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">⏳ Generating...</span>';
     } else if (entry.versions) {
         versionBadge = '<span style="background: #4CAF50; color: #fff; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">✨ Enhanced</span>';
@@ -144,7 +218,7 @@ function createEntryCard(entry) {
                 ${entry.mood ? `<span class="entry-mood">${entry.mood}</span>` : ''}
             </div>
             <div class="entry-actions">
-                ${!entry.versions && !entry.generatingVersions ? 
+                ${!entry.versions && !entry.generating_versions ? 
                     `<button onclick="generateVersions('${entry.id}')" style="background: #4CAF50; color: white;">✨ Generate Versions</button>` : 
                     ''}
                 <button onclick="viewEntry('${entry.id}')">Read More</button>
@@ -161,11 +235,16 @@ async function generateVersions(id) {
     const entry = entries.find(e => e.id === id);
     if (!entry) return;
     
-    entry.generatingVersions = true;
-    saveEntries();
+    entry.generating_versions = true;
     displayEntries();
     
     try {
+        // Update database to show generating state
+        await supabase
+            .from('entries')
+            .update({ generating_versions: true })
+            .eq('id', id);
+        
         const response = await fetch('/api/generate-versions', {
             method: 'POST',
             headers: {
@@ -179,10 +258,22 @@ async function generateVersions(id) {
         }
         
         const data = await response.json();
-        entry.versions = data.versions;
-        entry.generatingVersions = false;
         
-        saveEntries();
+        // Update entry in Supabase with versions
+        const { error } = await supabase
+            .from('entries')
+            .update({
+                versions: data.versions,
+                generating_versions: false
+            })
+            .eq('id', id);
+        
+        if (error) throw error;
+        
+        // Update local entry
+        entry.versions = data.versions;
+        entry.generating_versions = false;
+        
         displayEntries();
         
         // Auto-open the entry to show versions
@@ -190,9 +281,14 @@ async function generateVersions(id) {
         
     } catch (error) {
         console.error('Error generating versions:', error);
-        entry.generatingVersions = false;
-        entry.versionError = error.message;
-        saveEntries();
+        
+        // Reset generating state in database
+        await supabase
+            .from('entries')
+            .update({ generating_versions: false })
+            .eq('id', id);
+        
+        entry.generating_versions = false;
         displayEntries();
         alert('Failed to generate versions. Please try again.');
     }
@@ -236,7 +332,7 @@ function createModal(entry) {
     
     let versionsSection = '';
     
-    if (entry.generatingVersions) {
+    if (entry.generating_versions) {
         versionsSection = `
             <div style="
                 background: #fff3cd;
@@ -418,12 +514,24 @@ function createModal(entry) {
 }
 
 // Delete entry
-function deleteEntry(id) {
+async function deleteEntry(id) {
     if (!confirm('Are you sure you want to delete this entry?')) return;
     
-    entries = entries.filter(e => e.id !== id);
-    saveEntries();
-    displayEntries();
+    try {
+        const { error } = await supabase
+            .from('entries')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        
+        // Remove from local array
+        entries = entries.filter(e => e.id !== id);
+        displayEntries();
+    } catch (error) {
+        console.error('Error deleting entry:', error);
+        alert('Failed to delete entry. Please try again.');
+    }
 }
 
 // Initialize app when DOM is loaded
