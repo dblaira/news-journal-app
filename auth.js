@@ -88,7 +88,22 @@ form.addEventListener('submit', async (e) => {
 
     } catch (error) {
         console.error('Auth error:', error);
-        showError(error.message);
+        
+        // Provide more helpful error messages
+        let errorMsg = error.message;
+        if (error.message && error.message.includes('Invalid API key')) {
+            errorMsg = 'Invalid Supabase API key. Please check your configuration.';
+        } else if (error.message && error.message.includes('Invalid login credentials')) {
+            errorMsg = 'Invalid email or password. Please try again.';
+        } else if (error.message && error.message.includes('Email not confirmed')) {
+            errorMsg = 'Please check your email and confirm your account before signing in.';
+        } else if (error.message) {
+            errorMsg = error.message;
+        } else {
+            errorMsg = 'An error occurred. Please try again.';
+        }
+        
+        showError(errorMsg);
         submitBtn.disabled = false;
         submitBtn.textContent = isSignUp ? 'Create Account' : 'Sign In';
     }
@@ -96,10 +111,25 @@ form.addEventListener('submit', async (e) => {
 
 // Check if user is already logged in
 async function checkAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-        // User is already logged in, redirect to main app
-        window.location.href = 'index.html';
+    try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+            console.error('Auth check error:', error);
+            // If it's an invalid key error, show it to the user
+            if (error.message && error.message.includes('Invalid API key')) {
+                showError('Invalid Supabase API key. Please check your configuration.');
+            }
+            return;
+        }
+        
+        if (session) {
+            // User is already logged in, redirect to main app
+            window.location.href = 'index.html';
+        }
+    } catch (error) {
+        console.error('Error checking auth:', error);
+        // Don't block the login page if there's an error checking auth
     }
 }
 
