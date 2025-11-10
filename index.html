@@ -3,16 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Life Headlines</title>
+    <title>Adam Daily - Personal Newsroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <div class="header-container">
-            <h1 class="site-title">Big Wave</h1>
-            <p class="tagline">Your Personal News Feed</p>
-        </div>
-        <nav class="category-nav">
+    <div class="page-shell">
+        <header class="site-header">
+            <div class="brand-block">
+                <span class="brand-title">Adam Daily</span>
+                <span class="brand-edition" id="issueTagline">Edition 01 · Welcome</span>
+            </div>
+            <div class="header-controls">
+                <form id="searchForm" class="search-bar">
+                    <input id="searchInput" type="search" placeholder="Search your headlines…" aria-label="Search your headlines">
+                    <button type="submit" aria-label="Submit search">
+                        <span>Search</span>
+                    </button>
+                </form>
+                <button id="newEntryBtn" class="btn-primary">+ New Entry</button>
+            </div>
+        </header>
+
+        <section class="mindset-banner">
+            <div>
+                <span class="mindset-kicker">Today’s Mindset</span>
+                <h2 class="mindset-title" id="mindsetHeadline">Calling all Big Wave Riders</h2>
+            </div>
+            <p class="mindset-subtitle" id="mindsetSubtitle">Step into the day like it is a headline worth remembering.</p>
+        </section>
+
+        <nav class="section-nav">
             <button class="category-btn active" data-category="all">All</button>
             <button class="category-btn" data-category="Business">Business</button>
             <button class="category-btn" data-category="Finance">Finance</button>
@@ -22,69 +45,121 @@
             <button class="category-btn" data-category="Social">Social</button>
             <button class="category-btn" data-category="Romance">Romance</button>
         </nav>
-    </header>
 
-    <main class="container">
-        <div class="controls">
-            <button id="newEntryBtn" class="btn-primary">+ New Entry</button>
-        </div>
-
-        <!-- Entry Form (hidden by default) -->
-        <div id="entryForm" class="entry-form hidden">
-            <h2>Write Your Headline</h2>
-            <form id="journalForm">
-                <div class="form-group">
-                    <label for="headline">Headline</label>
-                    <input type="text" id="headline" required placeholder="What's your big story today?">
+        <main class="page-content">
+            <section class="hero-section" id="heroSection">
+                <div id="heroStory" class="hero-card hero-card--placeholder">
+                    <div class="hero-card__content">
+                        <span class="badge">Start here</span>
+                        <h1>Write your first headline</h1>
+                        <p>Capture a moment from today and let your newsroom spring to life.</p>
+                        <button type="button" class="btn-secondary" onclick="document.getElementById('newEntryBtn').click()">Create Entry</button>
+                    </div>
                 </div>
+            </section>
 
-                <div class="form-group">
-                    <label for="category">Category</label>
-                    <select id="category" required>
-                        <option value="Business">Business</option>
-                        <option value="Finance">Finance</option>
-                        <option value="Health">Health</option>
-                        <option value="Spiritual">Spiritual</option>
-                        <option value="Fun">Fun</option>
-                        <option value="Social">Social</option>
-                        <option value="Romance">Romance</option>
-                    </select>
+            <section class="front-grid">
+                <div class="feature-column">
+                    <div id="featureGrid" class="feature-grid"></div>
                 </div>
+                <aside class="sidebar">
+                    <div class="sidebar-block">
+                        <div class="sidebar-header">
+                            <h3>Trending Headlines</h3>
+                            <button class="sidebar-view-all" type="button" onclick="window.scrollTo({ top: document.querySelector('.latest-section').offsetTop, behavior: 'smooth' })">View all</button>
+                        </div>
+                        <ul id="trendingList" class="trending-list">
+                            <li class="trending-empty">Your trending stories will appear once you add entries.</li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-block">
+                        <h3>Quick Notes</h3>
+                        <div id="quickNotes" class="quick-notes">
+                            <p class="empty-note">No notes yet. Create an entry to light up this space.</p>
+                        </div>
+                    </div>
+                </aside>
+            </section>
 
-                <div class="form-group">
-                    <label for="subheading">Subheading (optional)</label>
-                    <input type="text" id="subheading" placeholder="Add context to your headline">
+            <section class="connection-station">
+                <div class="section-header">
+                    <h2>Connection Station</h2>
+                    <p class="section-lede">Moments stitched from across your categories.</p>
                 </div>
-
-                <div class="form-group">
-                    <label for="content">Your Story</label>
-                    <textarea id="content" rows="10" required placeholder="Write your journal entry here..."></textarea>
+                <div id="connectionGrid" class="connection-grid">
+                    <div class="connection-placeholder">
+                        <p>Entries from different categories will gather here to reveal the bigger picture.</p>
+                    </div>
                 </div>
+            </section>
 
-                <div class="form-group">
-                    <label for="mood">Mood (optional)</label>
-                    <input type="text" id="mood" placeholder="e.g., motivated, reflective, excited">
+            <section class="latest-section">
+                <div class="section-header">
+                    <h2>Latest Dispatches</h2>
+                    <p class="section-lede">Everyday moments, headline worthy.</p>
                 </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn-primary">Publish Entry</button>
-                    <button type="button" id="cancelBtn" class="btn-secondary">Cancel</button>
+                <div id="entriesFeed" class="entries-feed">
+                    <div class="empty-state">
+                        <h2>No entries yet</h2>
+                        <p>Start your personal news feed by creating your first entry!</p>
+                    </div>
                 </div>
-            </form>
-        </div>
+            </section>
 
-        <!-- Entries Feed -->
-        <div id="entriesFeed" class="entries-feed">
-            <div class="empty-state">
-                <h2>No entries yet</h2>
-                <p>Start your personal news feed by creating your first entry!</p>
-            </div>
-        </div>
-    </main>
+            <section id="entryForm" class="entry-form hidden">
+                <h2>Write Your Headline</h2>
+                <form id="journalForm">
+                    <div class="form-grid">
+                        <div class="form-column">
+                            <div class="form-group">
+                                <label for="headline">Headline</label>
+                                <input type="text" id="headline" required placeholder="What's your big story today?">
+                            </div>
 
-    <footer>
-        <p>&copy; 2025 My Life Headlines. Your story, your way.</p>
-    </footer>
+                            <div class="form-group">
+                                <label for="category">Category</label>
+                                <select id="category" required>
+                                    <option value="Business">Business</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="Health">Health</option>
+                                    <option value="Spiritual">Spiritual</option>
+                                    <option value="Fun">Fun</option>
+                                    <option value="Social">Social</option>
+                                    <option value="Romance">Romance</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="subheading">Subheading (optional)</label>
+                                <input type="text" id="subheading" placeholder="Add context to your headline">
+                            </div>
+                        </div>
+
+                        <div class="form-column">
+                            <div class="form-group">
+                                <label for="content">Your Story</label>
+                                <textarea id="content" rows="12" required placeholder="Write your journal entry here..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="mood">Mood (optional)</label>
+                                <input type="text" id="mood" placeholder="e.g., motivated, reflective, excited">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Publish Entry</button>
+                        <button type="button" id="cancelBtn" class="btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Adam Daily. Your story, your way.</p>
+        </footer>
+    </div>
 
     <script type="module" src="script.js"></script>
 </body>

@@ -1,21 +1,97 @@
 import { supabase } from './supabase.js'
+
 // State management
-let entries = [];
-let currentFilter = 'all';
+let entries = []
+let currentFilter = 'all'
+let searchQuery = ''
 
 // DOM elements
-const newEntryBtn = document.getElementById('newEntryBtn');
-const entryForm = document.getElementById('entryForm');
-const journalForm = document.getElementById('journalForm');
-const cancelBtn = document.getElementById('cancelBtn');
-const entriesFeed = document.getElementById('entriesFeed');
-const categoryBtns = document.querySelectorAll('.category-btn');
+const newEntryBtn = document.getElementById('newEntryBtn')
+const entryForm = document.getElementById('entryForm')
+const journalForm = document.getElementById('journalForm')
+const cancelBtn = document.getElementById('cancelBtn')
+const entriesFeed = document.getElementById('entriesFeed')
+const categoryBtns = document.querySelectorAll('.category-btn')
+const heroContainer = document.getElementById('heroStory')
+const featureGrid = document.getElementById('featureGrid')
+const trendingList = document.getElementById('trendingList')
+const quickNotesContainer = document.getElementById('quickNotes')
+const connectionGrid = document.getElementById('connectionGrid')
+const mindsetHeadline = document.getElementById('mindsetHeadline')
+const mindsetSubtitle = document.getElementById('mindsetSubtitle')
+const issueTagline = document.getElementById('issueTagline')
+const searchForm = document.getElementById('searchForm')
+const searchInput = document.getElementById('searchInput')
+
+// Image palette by category
+const categoryImages = {
+    Business: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200&q=80',
+    Finance: 'https://images.unsplash.com/photo-1434626881859-194d67b2b86f?auto=format&fit=crop&w=1200&q=80',
+    Health: 'https://images.unsplash.com/photo-1484980972926-edee96e0960d?auto=format&fit=crop&w=1200&q=80',
+    Spiritual: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+    Fun: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
+    Social: 'https://images.unsplash.com/photo-1529158062015-cad636e69505?auto=format&fit=crop&w=1200&q=80',
+    Romance: 'https://images.unsplash.com/photo-1499028344343-cd173ffc68a9?auto=format&fit=crop&w=1200&q=80',
+    default: 'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80'
+}
+
+const sampleStories = [
+    {
+        id: 'sample-1',
+        isSample: true,
+        category: 'Spiritual',
+        mood: 'reflective',
+        headline: 'Riding the Macro Wave: Finding Stability in an Era of Immense Change',
+        subheading: 'Mindset briefing: The currents are shifting in your favor.',
+        content: 'Macro energy is on the rise. You spotted optimism earlier than most, held your line, and now the horizon is widening. Today’s focus: stay ready for the next swell—double down on the rituals that keep you balanced when the tide surges.',
+        created_at: new Date().toISOString()
+    },
+    {
+        id: 'sample-2',
+        isSample: true,
+        category: 'Business',
+        mood: 'energized',
+        headline: 'Unexpected Breakthrough in “Find My Keys” Cold Case',
+        subheading: 'Daily events · Momentum noted',
+        content: 'A quiet investigation yielded results: keys recovered from the seldom-used backpack pocket. The takeaway? Small systems deliver big relief when you trust them. Celebrate with a reset of your organization rituals.',
+        created_at: new Date(Date.now() - 3600 * 1000).toISOString()
+    },
+    {
+        id: 'sample-3',
+        isSample: true,
+        category: 'Relationships',
+        mood: 'grateful',
+        headline: 'Diplomatic Ties Strengthened Over Shared Pizza Order',
+        subheading: 'Relationships · Collaboration win',
+        content: 'A late-night compromise turned joint pizza order into a diplomatic masterclass. Shared toppings, shared laughter, no leftovers. Lesson logged: align incentives early and joy follows.',
+        created_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
+    },
+    {
+        id: 'sample-4',
+        isSample: true,
+        category: 'Health',
+        mood: 'steady',
+        headline: 'Mindfulness Initiative Launched During Morning Commute',
+        subheading: 'Health · Routine upgrade',
+        content: 'Breathwork joined the commute soundtrack today, shifting the pace of the entire morning. Your nervous system sent a memo: “Thanks for the calm.”',
+        created_at: new Date(Date.now() - 5 * 3600 * 1000).toISOString()
+    },
+    {
+        id: 'sample-5',
+        isSample: true,
+        category: 'Fun',
+        mood: 'playful',
+        headline: 'The Great Sock Conspiracy: Lone Survivor Emerges from Laundry',
+        subheading: 'Fun · Mystery solved',
+        content: 'After weeks of speculation, the missing sock returned from exile, quietly lodged behind the dryer. Investigators credit persistence, humor, and a flashlight.',
+        created_at: new Date(Date.now() - 86400 * 1000).toISOString()
+    }
+]
 
 // Initialize app
 async function init() {
-    await loadEntries();
-    displayEntries();
-    attachEventListeners();
+    attachEventListeners()
+    displayEntries()
 }
 // Check authentication
 async function checkAuth() {
@@ -60,29 +136,49 @@ function setupLogout() {
 let currentUser = null;
 
 (async function initAuth() {
-    currentUser = await checkAuth();
+    currentUser = await checkAuth()
     if (currentUser) {
-        setupLogout();
-        // Your existing loadEntries() or initialization code goes here
-        loadEntries();
+        setupLogout()
+        await loadEntries()
     }
-})();
+})()
 
 
 // Event listeners
 function attachEventListeners() {
-    newEntryBtn.addEventListener('click', showForm);
-    cancelBtn.addEventListener('click', hideForm);
-    journalForm.addEventListener('submit', handleSubmit);
-    
+    if (newEntryBtn) {
+        newEntryBtn.addEventListener('click', showForm)
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hideForm)
+    }
+
+    if (journalForm) {
+        journalForm.addEventListener('submit', handleSubmit)
+    }
+
+    if (searchForm && searchInput) {
+        searchForm.addEventListener('submit', (e) => {
+            e.preventDefault()
+            searchQuery = searchInput.value.trim().toLowerCase()
+            displayEntries()
+        })
+
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.trim().toLowerCase()
+            displayEntries()
+        })
+    }
+
     categoryBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            categoryBtns.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            currentFilter = e.target.dataset.category;
-            displayEntries();
-        });
-    });
+            categoryBtns.forEach(b => b.classList.remove('active'))
+            e.target.classList.add('active')
+            currentFilter = e.target.dataset.category
+            displayEntries()
+        })
+    })
 }
 
 // Show/hide form
@@ -136,98 +232,429 @@ async function handleSubmit(e) {
 
 // Load entries from Supabase
 async function loadEntries() {
+    if (!currentUser) return
+
     try {
-       const { data, error } = await supabase
-    .from('entries')
-    .select('*')
-    .eq('user_id', currentUser.id)
-    .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        if (data) {
-            entries = data;
-        }
+        const { data, error } = await supabase
+            .from('entries')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false })
+
+        if (error) throw error
+
+        entries = Array.isArray(data) ? data : []
     } catch (error) {
-        console.error('Error loading entries:', error);
-        entries = [];
+        console.error('Error loading entries:', error)
+        entries = []
+    } finally {
+        displayEntries()
     }
 }
 
-
-// Display entries
+// Display entries across layout sections
 function displayEntries() {
-    let filtered = entries;
+    const useSamples = entries.length === 0 && !searchQuery && currentFilter === 'all'
+
+    if (useSamples) {
+        updateIssueMetadata(sampleStories)
+        updateMindset(sampleStories)
+        renderSampleFrontPage()
+        return
+    }
+
+    updateIssueMetadata(entries)
+    updateMindset(entries)
+
+    let filtered = [...entries]
+
     if (currentFilter !== 'all') {
-        filtered = entries.filter(entry => entry.category === currentFilter);
+        filtered = filtered.filter(entry => (entry.category || '').toLowerCase() === currentFilter.toLowerCase())
     }
-    
-    entriesFeed.innerHTML = '';
-    
-    if (filtered.length === 0) {
-        const emptyMessage = currentFilter === 'all' 
-            ? 'No entries yet. Start your personal news feed by creating your first entry!'
-            : `No entries in ${currentFilter} category yet.`;
-        
-        entriesFeed.innerHTML = `
-            <div class="empty-state">
-                <h2>${currentFilter === 'all' ? 'No entries yet' : 'No entries found'}</h2>
-                <p>${emptyMessage}</p>
-            </div>
-        `;
-        return;
+
+    if (searchQuery) {
+        filtered = filtered.filter(entry => {
+            const haystack = [
+                entry.headline,
+                entry.subheading,
+                entry.content,
+                entry.mood,
+                entry.category
+            ].filter(Boolean).join(' ').toLowerCase()
+
+            return haystack.includes(searchQuery)
+        })
     }
-    
-    filtered.forEach(entry => {
-        const card = createEntryCard(entry);
-        entriesFeed.appendChild(card);
-    });
+
+    renderHeroStory(filtered)
+    renderFeatureStories(filtered.slice(1))
+    renderTrendingStories(filtered)
+    renderQuickNotes(filtered)
+    renderConnectionGrid(entries)
+    renderLatestFeed(filtered)
 }
 
 // Create entry card element
 function createEntryCard(entry) {
-    const card = document.createElement('div');
-    card.className = 'entry-card';
-    
-    const date = new Date(entry.date);
-    const formattedDate = date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    });
-    
-    let versionBadge = '';
-    if (entry.generating_versions) {
-        versionBadge = '<span style="background: #ffc107; color: #000; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">⏳ Generating...</span>';
-    } else if (entry.versions) {
-        versionBadge = '<span style="background: #4CAF50; color: #fff; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">✨ Enhanced</span>';
-    }
-    
+    const card = document.createElement('article')
+    card.className = 'entry-card'
+
+    const imageUrl = getEntryImage(entry)
+    const formattedDate = formatEntryDateLong(entry)
+    const shortDate = formatEntryDateShort(entry)
+    const versionBadge = entry.generating_versions
+        ? '<span class="entry-mood">Generating…</span>'
+        : entry.versions
+            ? '<span class="entry-mood">Enhanced</span>'
+            : ''
+
     card.innerHTML = `
-        <div class="entry-header">
-            <div class="entry-category">${entry.category}${versionBadge}</div>
+        <div class="entry-card__media">
+            <img src="${imageUrl}" alt="${entry.category || 'Story'} illustration">
+        </div>
+        <div class="entry-card__body">
+            <div class="entry-card__meta">
+                <span>${entry.category || 'Story'}</span>
+                <span>${shortDate}</span>
+            </div>
             <h3 class="entry-headline">${entry.headline}</h3>
             ${entry.subheading ? `<p class="entry-subheading">${entry.subheading}</p>` : ''}
-        </div>
-        <div class="entry-body">
-            <p class="entry-content">${entry.content}</p>
+            <p class="entry-content">${truncate(entry.content, 200)}</p>
         </div>
         <div class="entry-footer">
             <div>
-                <div class="entry-date">${formattedDate}</div>
+                <span class="entry-date">${formattedDate}</span>
                 ${entry.mood ? `<span class="entry-mood">${entry.mood}</span>` : ''}
+                ${versionBadge}
             </div>
             <div class="entry-actions">
-                ${!entry.versions && !entry.generating_versions ? 
-                    `<button onclick="generateVersions('${entry.id}')" style="background: #4CAF50; color: white;">✨ Generate Versions</button>` : 
-                    ''}
-                <button onclick="viewEntry('${entry.id}')">Read More</button>
-                <button onclick="deleteEntry('${entry.id}')">Delete</button>
+                ${!entry.versions && !entry.generating_versions ? `<button type="button" onclick="generateVersions('${entry.id}')">✨ Versions</button>` : ''}
+                <button type="button" onclick="viewEntry('${entry.id}')">Read</button>
+                <button type="button" onclick="deleteEntry('${entry.id}')">Delete</button>
             </div>
         </div>
-    `;
-    
-    return card;
+    `
+
+    return card
+}
+
+function renderSampleFrontPage() {
+    renderHeroStory(sampleStories)
+    renderFeatureStories(sampleStories.slice(1))
+    renderTrendingStories(sampleStories)
+    renderQuickNotes(sampleStories)
+    renderConnectionGrid(sampleStories)
+    renderLatestFeed([])
+}
+
+function renderHeroStory(list) {
+    if (!heroContainer) return
+
+    if (!list.length) {
+        heroContainer.classList.add('hero-card--placeholder')
+        heroContainer.innerHTML = `
+            <div class="hero-card__content">
+                <span class="badge">Start here</span>
+                <h1>Write your first headline</h1>
+                <p>Capture a moment from today and let your newsroom spring to life.</p>
+                <div class="hero-actions">
+                    <button type="button" class="btn-primary" onclick="document.getElementById('newEntryBtn').click()">Create Entry</button>
+                </div>
+            </div>
+        `
+        return
+    }
+
+    const hero = list[0]
+    const imageUrl = getEntryImage(hero)
+    heroContainer.classList.remove('hero-card--placeholder')
+    const isSample = Boolean(hero.isSample)
+    const heroActions = isSample
+        ? `<div class="hero-actions"><button type="button" class="btn-secondary" disabled>Preview Story</button></div>`
+        : `<div class="hero-actions">
+                <button type="button" class="btn-primary" onclick="viewEntry('${hero.id}')">Read Story</button>
+                ${!hero.versions && !hero.generating_versions ? `<button type="button" class="btn-secondary" onclick="generateVersions('${hero.id}')">✨ Generate Versions</button>` : ''}
+           </div>`
+
+    heroContainer.innerHTML = `
+        <div class="hero-card__media">
+            <img src="${imageUrl}" alt="${hero.category || 'Story'} feature image">
+        </div>
+        <div class="hero-card__content">
+            <div class="hero-card__meta">
+                <span>${hero.category || 'Story'}</span>
+                <span>${formatEntryDateLong(hero)}</span>
+            </div>
+            <span class="badge">Top Story</span>
+            <h1>${hero.headline}</h1>
+            ${hero.subheading ? `<p>${hero.subheading}</p>` : ''}
+            <p>${truncate(hero.content, 260)}</p>
+            ${heroActions}
+        </div>
+    `
+}
+
+function renderFeatureStories(stories) {
+    if (!featureGrid) return
+    featureGrid.innerHTML = ''
+
+    const storySlice = stories.slice(0, 3)
+
+    if (!storySlice.length) {
+        featureGrid.innerHTML = `<div class="feature-placeholder">Add more entries to populate your featured stories.</div>`
+        return
+    }
+
+    storySlice.forEach(entry => {
+        featureGrid.appendChild(createFeatureCard(entry))
+    })
+}
+
+function createFeatureCard(entry) {
+    const card = document.createElement('article')
+    card.className = 'feature-card'
+    const isSample = Boolean(entry.isSample)
+    const actionButton = isSample
+        ? '<button type="button" class="btn-secondary" disabled>Preview Story</button>'
+        : `<button type="button" class="btn-secondary" onclick="viewEntry('${entry.id}')">Open Story</button>`
+    card.innerHTML = `
+        <div class="feature-card__image">
+            <img src="${getEntryImage(entry)}" alt="${entry.category || 'Story'} feature image">
+        </div>
+        <div class="story-meta">
+            <span>${entry.category || 'Story'}</span>
+            <span>${formatEntryDateShort(entry)}</span>
+        </div>
+        <h3>${entry.headline}</h3>
+        <p>${truncate(entry.content, 140)}</p>
+        ${actionButton}
+    `
+    return card
+}
+
+function renderTrendingStories(list) {
+    if (!trendingList) return
+    trendingList.innerHTML = ''
+
+    if (!list.length) {
+        trendingList.innerHTML = `<li class="trending-empty">${searchQuery ? 'No trending stories match your search yet.' : 'Your trending stories will appear once you add entries.'}</li>`
+        return
+    }
+
+    list.slice(0, 6).forEach((entry, index) => {
+        const item = document.createElement('li')
+        item.className = 'trending-item'
+        const isSample = Boolean(entry.isSample)
+        const buttonAttrs = isSample ? 'type="button" class="trending-headline" disabled' : `type="button" class="trending-headline" onclick="viewEntry('${entry.id}')"`
+        item.innerHTML = `
+            <span class="trending-rank">${String(index + 1).padStart(2, '0')}</span>
+            <div>
+                <button ${buttonAttrs}>${entry.headline}</button>
+                <span class="trending-meta">${formatEntryDateShort(entry)} · ${entry.category || 'Story'}</span>
+            </div>
+        `
+        trendingList.appendChild(item)
+    })
+}
+
+function renderQuickNotes(list) {
+    if (!quickNotesContainer) return
+    quickNotesContainer.innerHTML = ''
+
+    const notes = list.slice(0, 3)
+
+    if (!notes.length) {
+        quickNotesContainer.innerHTML = '<p class="empty-note">No notes yet. Create an entry to light up this space.</p>'
+        return
+    }
+
+    notes.forEach(entry => {
+        const note = document.createElement('article')
+        note.className = 'quick-note'
+        const subheading = entry.subheading ? ` — ${entry.subheading}` : ''
+        const label = entry.category ? `${entry.category}${entry.isSample ? ' · Preview' : ''}` : 'Story'
+        note.innerHTML = `<strong>${label}</strong>${subheading}<br>${truncate(entry.content, 120)}`
+        quickNotesContainer.appendChild(note)
+    })
+}
+
+function renderConnectionGrid(allEntries) {
+    if (!connectionGrid) return
+    connectionGrid.innerHTML = ''
+
+    const categoriesInOrder = ['Business', 'Finance', 'Health', 'Spiritual', 'Fun', 'Social', 'Romance']
+    const featured = categoriesInOrder
+        .map(category => allEntries.find(entry => (entry.category || '').toLowerCase() === category.toLowerCase()))
+        .filter(Boolean)
+        .slice(0, 4)
+
+    if (!featured.length) {
+        connectionGrid.innerHTML = `
+            <div class="connection-placeholder">
+                <p>Entries from different categories will gather here to reveal the bigger picture.</p>
+            </div>
+        `
+        return
+    }
+
+    featured.forEach(entry => {
+        const card = document.createElement('article')
+        card.className = 'connection-card'
+        const action = entry.isSample
+            ? '<button type="button" class="btn-secondary" disabled>Preview</button>'
+            : `<button type="button" class="btn-secondary" onclick="viewEntry('${entry.id}')">Open Dispatch</button>`
+        card.innerHTML = `
+            <span class="badge">${entry.category || 'Story'}</span>
+            <h3>${entry.headline}</h3>
+            <p>${truncate(entry.content, 160)}</p>
+            ${action}
+        `
+        connectionGrid.appendChild(card)
+    })
+}
+
+function renderLatestFeed(list) {
+    if (!entriesFeed) return
+    entriesFeed.innerHTML = ''
+
+    if (!list.length) {
+        entriesFeed.innerHTML = `
+            <div class="empty-state">
+                <h2>${searchQuery ? 'No results found' : 'No entries yet'}</h2>
+                <p>${searchQuery ? 'Try a different search term or category to surface another story.' : 'Start your personal news feed by creating your first entry!'}</p>
+            </div>
+        `
+        return
+    }
+
+    const startIndex = list.length > 4 ? 4 : 1
+    const remainder = list.slice(startIndex)
+
+    if (!remainder.length) {
+        entriesFeed.innerHTML = `
+            <div class="empty-state">
+                <h2>Front page is set</h2>
+                <p>Add more entries to expand your latest dispatches.</p>
+            </div>
+        `
+        return
+    }
+
+    remainder.forEach(entry => {
+        entriesFeed.appendChild(createEntryCard(entry))
+    })
+}
+
+function getEntryImage(entry) {
+    if (!entry) return categoryImages.default
+    const category = (entry.category || '').trim()
+    return categoryImages[category] || categoryImages.default
+}
+
+function getEntryDateValue(entry) {
+    return entry?.date || entry?.created_at || entry?.updated_at || entry?.inserted_at || entry?.createdAt
+}
+
+function formatEntryDateLong(entry) {
+    const raw = getEntryDateValue(entry)
+    if (!raw) return 'Date pending'
+    const date = new Date(raw)
+    if (Number.isNaN(date.getTime())) return 'Date pending'
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    })
+}
+
+function formatEntryDateShort(entry) {
+    const raw = getEntryDateValue(entry)
+    if (!raw) return 'Today'
+    const date = new Date(raw)
+    if (Number.isNaN(date.getTime())) return 'Today'
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+    })
+}
+
+function truncate(text = '', limit = 140) {
+    if (!text) return ''
+    const clean = text.replace(/\s+/g, ' ').trim()
+    if (clean.length <= limit) return clean
+    return `${clean.slice(0, limit - 1)}…`
+}
+
+function updateIssueMetadata(allEntries) {
+    if (!issueTagline) return
+    const editionNumber = Math.max(allEntries.length, 1).toString().padStart(2, '0')
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    issueTagline.textContent = `Edition ${editionNumber} · ${today}`
+}
+
+function updateMindset(allEntries) {
+    if (!mindsetHeadline || !mindsetSubtitle) return
+
+    if (!allEntries.length) {
+        mindsetHeadline.textContent = 'Calling all Big Wave Riders'
+        mindsetSubtitle.textContent = 'Step into the day like it is a headline worth remembering.'
+        return
+    }
+
+    const primaryEntry = allEntries[0]
+    const mood = (primaryEntry.mood || '').toLowerCase()
+    const category = (primaryEntry.category || '').toLowerCase()
+    const preset = deriveMindsetPreset(mood, category)
+
+    mindsetHeadline.textContent = preset.headline
+    mindsetSubtitle.textContent = preset.subtitle
+}
+
+function deriveMindsetPreset(mood, category) {
+    const presets = [
+        {
+            match: ['excited', 'energized', 'motivated', 'hype'],
+            headline: 'Calling all Big Wave Riders',
+            subtitle: 'Momentum is here. Capture it before it fades.'
+        },
+        {
+            match: ['calm', 'steady', 'reflective', 'grateful'],
+            headline: 'Steady Hands on the Helm',
+            subtitle: 'Honor the quiet details that make today matter.'
+        },
+        {
+            match: ['overwhelmed', 'tired', 'stretched'],
+            headline: 'Slow Motion, Sharp Focus',
+            subtitle: 'Narrow the lens and let one meaningful story lead.'
+        },
+        {
+            match: ['curious', 'learning', 'exploring'],
+            headline: 'Curiosity on the Front Page',
+            subtitle: 'Follow the thread that keeps pulling you forward.'
+        }
+    ]
+
+    const matched = presets.find(preset => preset.match.some(keyword => mood.includes(keyword)))
+    if (matched) return matched
+
+    if (category.includes('finance') || category.includes('business')) {
+        return {
+            headline: 'Market Moving Meaning',
+            subtitle: 'You are the bellwether. Set the tone for this issue.'
+        }
+    }
+
+    if (category.includes('health') || category.includes('spiritual')) {
+        return {
+            headline: 'Tune Inward, Broadcast Out',
+            subtitle: 'Let grounded energy steer today’s headline.'
+        }
+    }
+
+    return {
+        headline: 'Calling all Big Wave Riders',
+        subtitle: 'Step into the day like it is a headline worth remembering.'
+    }
 }
 
 // Generate AI versions
