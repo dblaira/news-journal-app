@@ -679,12 +679,16 @@ async function generateVersions(id) {
             },
             body: JSON.stringify({ entry })
         });
-        
-        if (!response.ok) {
-            throw new Error(`API request failed: ${response.status}`);
+        let data
+        try {
+            data = await response.json()
+        } catch (parseError) {
+            throw new Error(`API request failed: ${response.status} - unable to parse response`)
         }
-        
-        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data?.error || `API request failed: ${response.status}`);
+        }
         
         // Update entry in Supabase with versions
         const { error } = await supabase
