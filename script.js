@@ -717,7 +717,7 @@ async function generateVersions(id) {
         
         entry.generating_versions = false;
         displayEntries();
-        alert('Failed to generate versions. Please try again.');
+        alert(`Failed to generate versions: ${error.message || 'Please try again.'}`);
     }
 }
 
@@ -749,17 +749,38 @@ function createModal(entry) {
         overflow-y: auto;
     `;
     
-    const date = new Date(entry.date);
-    const formattedDate = date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        weekday: 'long'
-    });
-    
+    const formattedDate = formatEntryDateLong(entry);
+    const hasVersions = Array.isArray(entry.versions) && entry.versions.length > 0;
+    const isGenerating = entry.generating_versions;
+
+    const originalSection = `
+        <div style="
+            background: #f8f9fb;
+            border: 1px solid #dfe3ef;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2.5rem;
+        ">
+            <h3 style="
+                font-size: 1rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 1.2rem;
+                color: #1c1f2e;
+            ">📝 Your Original Entry</h3>
+            <div style="
+                font-size: 1rem;
+                line-height: 1.85;
+                color: #1f2333;
+                white-space: pre-wrap;
+            ">${entry.content || ''}</div>
+        </div>
+    `;
+
     let versionsSection = '';
     
-    if (entry.generating_versions) {
+    if (isGenerating) {
         versionsSection = `
             <div style="
                 background: #fff3cd;
@@ -775,7 +796,7 @@ function createModal(entry) {
                 <p style="margin: 0;">This takes about 10-15 seconds. The page will update when ready.</p>
             </div>
         `;
-    } else if (entry.versions && entry.versions.length > 0) {
+    } else if (hasVersions) {
         versionsSection = `
             <div style="margin-top: 2rem;">
                 <h3 style="
@@ -786,31 +807,7 @@ function createModal(entry) {
                     text-transform: uppercase;
                     letter-spacing: 2px;
                 ">✨ AI Generated Versions ✨</h3>
-                
-                <!-- Original -->
-                <div style="
-                    background: #f9f9f9;
-                    padding: 2rem;
-                    border-radius: 8px;
-                    margin-bottom: 2rem;
-                    border-left: 4px solid #000;
-                ">
-                    <h4 style="
-                        font-size: 1rem;
-                        font-weight: 700;
-                        text-transform: uppercase;
-                        letter-spacing: 1px;
-                        margin-bottom: 1rem;
-                        color: #000;
-                    ">📝 Your Original</h4>
-                    <div style="
-                        font-size: 1rem;
-                        line-height: 1.8;
-                        color: #333;
-                        white-space: pre-wrap;
-                    ">${entry.content}</div>
-                </div>
-                
+
                 ${entry.versions.map(version => `
                     <div style="
                         background: #f0f9f1;
@@ -926,7 +923,8 @@ function createModal(entry) {
                 <div>${formattedDate}</div>
                 ${entry.mood ? `<div style="margin-top: 0.5rem;">Mood: ${entry.mood}</div>` : ''}
             </div>
-            
+
+            ${originalSection}
             ${versionsSection}
         </div>
     `;
