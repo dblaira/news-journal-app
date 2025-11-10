@@ -961,5 +961,10 @@ async function deleteEntry(id) {
     }
 }
 
+// Expose non-module functions for inline handlers
+window.generateVersions = generateVersions
+window.viewEntry = viewEntry
+window.deleteEntry = deleteEntry
+
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', init);
