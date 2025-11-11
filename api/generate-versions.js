@@ -83,7 +83,7 @@ async function callClaudeAPI(prompt, apiKey) {
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20240620',
+      model: 'claude-sonnet-4-20250514',  // ← Sonnet 4 (latest), // ← Auto-updates to latest 3.5,  // ← Latest Sonnet 4 (recommended)',
       max_tokens: 2000,
       messages: [
         {
