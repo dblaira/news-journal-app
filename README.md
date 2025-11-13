@@ -123,10 +123,23 @@ This project is configured for deployment on Vercel:
 
 1. Push your code to GitHub
 2. Import your repository in Vercel
-3. Add environment variables in Vercel dashboard
+3. **Add environment variables in Vercel dashboard** (see below)
 4. Deploy!
 
 The `vercel.json` file configures cron jobs for scheduled tasks.
+
+### Required Environment Variables
+
+Add these in Vercel Dashboard → Settings → Environment Variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+- `ANTHROPIC_API_KEY` - Your Anthropic Claude API key
+- `CRON_SECRET` - Random secret for cron authentication (optional for now)
+
+**Important**: After adding environment variables, you must redeploy for them to take effect.
+
+See `VERCEL_DEPLOYMENT.md` for detailed deployment instructions and troubleshooting.
 
 ## Future Features (V3/V4)
 
