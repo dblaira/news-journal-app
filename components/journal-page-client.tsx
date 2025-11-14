@@ -255,15 +255,44 @@ export function JournalPageClient({
       )}
 
       {entries.length >= 7 && !weeklyTheme && (
-        <div style={{ padding: '1rem 2rem', textAlign: 'center' }}>
+        <div style={{ 
+          padding: '1.5rem 2rem', 
+          textAlign: 'center',
+          background: 'var(--bg-panel)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-color)',
+          marginBottom: '2rem'
+        }}>
+          <p style={{ 
+            marginBottom: '1rem', 
+            color: 'var(--text-secondary)',
+            fontSize: '0.95rem'
+          }}>
+            You have {entries.length} entries. Generate your weekly theme!
+          </p>
           <button
             type="button"
             className="btn-primary"
             onClick={handleGenerateWeeklyTheme}
             disabled={isGeneratingTheme}
+            style={{ fontSize: '1rem', padding: '0.9rem 2rem' }}
           >
             {isGeneratingTheme ? 'Generating...' : '✨ Generate Weekly Theme'}
           </button>
+        </div>
+      )}
+      
+      {/* Debug info - remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ 
+          padding: '0.5rem', 
+          fontSize: '0.75rem', 
+          color: 'var(--text-muted)',
+          background: 'rgba(0,0,0,0.2)',
+          borderRadius: '4px',
+          marginBottom: '1rem'
+        }}>
+          Debug: {entries.length} entries, Weekly theme: {weeklyTheme ? 'exists' : 'none'}
         </div>
       )}
 
