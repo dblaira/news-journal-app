@@ -1,124 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { Entry } from '@/types'
 
-export async function GET(request: NextRequest) {
-  // Verify cron secret
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+export interface ProcessingResult {
+  success: boolean
+  entryId: string
+  error?: string
+}
 
+export async function processEntryVersions(
+  entry: Entry,
+  apiKey: string
+): Promise<ProcessingResult> {
   try {
-    const supabase = createClient()
-    const apiKey = process.env.ANTHROPIC_API_KEY
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'API key not configured' },
-        { status: 500 }
-      )
+    const versions = await generateAllVersions(entry, apiKey)
+    return {
+      success: true,
+      entryId: entry.id,
     }
-
-    // Calculate date 7 days ago
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    const dateString = sevenDaysAgo.toISOString().split('T')[0]
-
-    // Query entries needing version generation
-    // - generating_versions = false
-    // - versions IS NULL
-    // - created within last 7 days
-    const { data: entries, error: fetchError } = await supabase
-      .from('entries')
-      .select('*')
-      .eq('generating_versions', false)
-      .is('versions', null)
-      .gte('created_at', dateString)
-      .order('created_at', { ascending: false })
-      .limit(10) // Process up to 10 entries per run
-
-    if (fetchError) {
-      console.error('Error fetching entries:', fetchError)
-      return NextResponse.json(
-        { error: `Failed to fetch entries: ${fetchError.message}` },
-        { status: 500 }
-      )
-    }
-
-    if (!entries || entries.length === 0) {
-      return NextResponse.json({
-        message: 'No entries to process',
-        processed: 0,
-        errors: 0,
-        timestamp: new Date().toISOString(),
-      })
-    }
-
-    let processed = 0
-    let errors = 0
-    const errorDetails: string[] = []
-
-    // Process entries sequentially to avoid rate limits
-    for (const entry of entries) {
-      try {
-        // Set generating flag
-        await supabase
-          .from('entries')
-          .update({ generating_versions: true })
-          .eq('id', entry.id)
-
-        // Generate versions
-        const versions = await generateVersionsForEntry(entry as Entry, apiKey)
-
-        // Update entry with versions
-        const { error: updateError } = await supabase
-          .from('entries')
-          .update({
-            versions,
-            generating_versions: false,
-          })
-          .eq('id', entry.id)
-
-        if (updateError) {
-          throw new Error(`Failed to update entry: ${updateError.message}`)
-        }
-
-        processed++
-        
-        // Add delay between entries to avoid rate limiting
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-      } catch (error) {
-        errors++
-        const errorMsg = `Entry ${entry.id}: ${error instanceof Error ? error.message : 'Unknown error'}`
-        errorDetails.push(errorMsg)
-        console.error(errorMsg)
-
-        // Reset generating flag on error
-        await supabase
-          .from('entries')
-          .update({ generating_versions: false })
-          .eq('id', entry.id)
-      }
-    }
-
-    return NextResponse.json({
-      message: 'Nightly generation completed',
-      processed,
-      errors,
-      errorDetails: errorDetails.length > 0 ? errorDetails : undefined,
-      timestamp: new Date().toISOString(),
-    })
   } catch (error) {
-    console.error('Cron error:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    )
+    return {
+      success: false,
+      entryId: entry.id,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
   }
 }
 
-async function generateVersionsForEntry(entry: Entry, apiKey: string) {
+async function generateAllVersions(entry: Entry, apiKey: string) {
   const styles = [
     {
       name: 'poetic',

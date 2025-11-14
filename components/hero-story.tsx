@@ -40,14 +40,14 @@ export function HeroStory({
     )
   }
 
-  const imageUrl = getCategoryImage(entry.category)
+  const imageUrl = entry.photo_url || getCategoryImage(entry.category)
   const formattedDate = formatEntryDateLong(entry.created_at)
 
   return (
     <section className="hero-section">
       <div className="hero-card">
         <div className="hero-card__media">
-          <img src={imageUrl} alt={`${entry.category} feature image`} />
+          <img src={imageUrl} alt={entry.photo_url ? entry.headline : `${entry.category} feature image`} />
         </div>
         <div className="hero-card__content">
           <div className="hero-card__meta">

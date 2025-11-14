@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { JournalPageClient } from '@/components/journal-page-client'
-import { Entry } from '@/types'
+import { Entry, WeeklyTheme } from '@/types'
+import { getCurrentWeeklyTheme } from '@/app/actions/entries'
 
 async function getEntries(userId: string): Promise<Entry[]> {
   const supabase = createClient()
@@ -35,12 +36,14 @@ export default async function HomePage({
 
   const entries = await getEntries(user.id)
   const searchQuery = searchParams.search?.toLowerCase() || ''
+  const currentTheme = await getCurrentWeeklyTheme(user.id)
 
   return (
     <JournalPageClient
       initialEntries={entries}
       initialSearchQuery={searchQuery}
       userId={user.id}
+      initialWeeklyTheme={currentTheme}
     />
   )
 }

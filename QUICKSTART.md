@@ -76,3 +76,49 @@ After testing locally:
 
 Your app has been successfully migrated to Next.js 14 with TypeScript. All functionality is preserved and ready for V3/V4 features!
 
+## 🚀 V3 Features Setup
+
+After completing the basic setup above, follow these steps to enable V3 features:
+
+### 1. Run Database Migrations
+
+Open your Supabase Dashboard → SQL Editor and run the SQL from `database-migrations.sql`:
+
+```sql
+-- This creates the weekly_themes table and adds photo fields to entries
+-- See database-migrations.sql for the full script
+```
+
+### 2. Create Storage Bucket
+
+**Option A: Via Supabase Dashboard (Recommended)**
+1. Go to Supabase Dashboard → Storage
+2. Click "New bucket"
+3. Name it `entry-photos`
+4. Set to **Public** (or configure RLS policies)
+5. Set file size limit to 10MB
+6. Add allowed MIME types: `image/jpeg`, `image/png`, `image/webp`
+
+**Option B: Via Script**
+```bash
+# Set SUPABASE_SERVICE_ROLE_KEY in .env.local first
+node scripts/create-storage-bucket.js
+```
+
+### 3. Verify Setup
+
+Run the verification script to check everything is configured:
+
+```bash
+node scripts/setup-verification.js
+```
+
+### 4. Test V3 Features
+
+1. **Weekly Theme**: Create 7+ entries, then click "Generate Weekly Theme"
+2. **Photo Upload**: Create an entry with a photo attachment
+3. **PDF Export**: Click "Export PDF" in any entry modal
+4. **Nightly Generation**: The cron job runs automatically at 2 AM (or test manually)
+
+See `V3_IMPLEMENTATION.md` for detailed documentation.
+

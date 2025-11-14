@@ -2,7 +2,7 @@
 
 import { Entry, Version } from '@/types'
 import { formatEntryDateLong } from '@/lib/utils'
-import { useState } from 'react'
+import { getCategoryImage } from '@/lib/mindset'
 
 interface EntryModalProps {
   entry: Entry
@@ -109,6 +109,21 @@ export function EntryModal({
           >
             {entry.subheading}
           </p>
+        )}
+
+        {entry.photo_url && (
+          <div style={{ marginBottom: '2rem' }}>
+            <img
+              src={entry.photo_url}
+              alt={entry.headline}
+              style={{
+                width: '100%',
+                maxHeight: '400px',
+                objectFit: 'cover',
+                borderRadius: '8px',
+              }}
+            />
+          </div>
         )}
 
         <div
@@ -261,9 +276,49 @@ export function EntryModal({
                 fontWeight: 600,
                 borderRadius: '4px',
                 cursor: 'pointer',
+                marginRight: '1rem',
               }}
             >
               ✨ Generate Versions Now
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/export-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'entry', entryIds: [entry.id] }),
+                  })
+                  if (response.ok) {
+                    const blob = await response.blob()
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `entry-${entry.id}.pdf`
+                    document.body.appendChild(a)
+                    a.click()
+                    window.URL.revokeObjectURL(url)
+                    document.body.removeChild(a)
+                  } else {
+                    alert('Failed to export PDF')
+                  }
+                } catch (error) {
+                  console.error('Error exporting PDF:', error)
+                  alert('Failed to export PDF')
+                }
+              }}
+              style={{
+                background: '#2196F3',
+                color: 'white',
+                border: 'none',
+                padding: '1rem 2rem',
+                fontSize: '1rem',
+                fontWeight: 600,
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              📄 Export PDF
             </button>
           </div>
         )}

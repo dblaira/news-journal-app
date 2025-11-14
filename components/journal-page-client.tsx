@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Entry } from '@/types'
+import { Entry, WeeklyTheme } from '@/types'
 import { Header } from './header'
 import { MindsetBanner } from './mindset-banner'
+import { WeeklyThemeBanner } from './weekly-theme-banner'
 import { CategoryNav } from './category-nav'
 import { HeroStory } from './hero-story'
 import { FeatureGrid } from './feature-grid'
@@ -15,19 +16,21 @@ import { EntryForm } from './entry-form'
 import { EntryModal } from './entry-modal'
 import { deriveMindsetPreset } from '@/lib/mindset'
 import { formatEntryDateLong } from '@/lib/utils'
-import { deleteEntry, updateEntryVersions } from '@/app/actions/entries'
+import { deleteEntry, updateEntryVersions, generateWeeklyTheme } from '@/app/actions/entries'
 import { supabase } from '@/lib/supabase/client'
 
 interface JournalPageClientProps {
   initialEntries: Entry[]
   initialSearchQuery: string
   userId: string
+  initialWeeklyTheme?: WeeklyTheme | null
 }
 
 export function JournalPageClient({
   initialEntries,
   initialSearchQuery,
   userId,
+  initialWeeklyTheme,
 }: JournalPageClientProps) {
   const router = useRouter()
   const [entries, setEntries] = useState<Entry[]>(initialEntries)
@@ -36,6 +39,8 @@ export function JournalPageClient({
   const [showForm, setShowForm] = useState(false)
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
   const [isGeneratingVersions, setIsGeneratingVersions] = useState<string | null>(null)
+  const [weeklyTheme, setWeeklyTheme] = useState<WeeklyTheme | null>(initialWeeklyTheme || null)
+  const [isGeneratingTheme, setIsGeneratingTheme] = useState(false)
 
   // Filter entries
   let filtered = [...entries]
@@ -181,6 +186,40 @@ export function JournalPageClient({
     router.push('/login')
   }
 
+  const handleGenerateWeeklyTheme = async () => {
+    if (entries.length < 7) {
+      alert('You need at least 7 entries to generate a weekly theme')
+      return
+    }
+
+    setIsGeneratingTheme(true)
+    try {
+      const recentEntries = entries.slice(0, 7)
+      const entryIds = recentEntries.map((e) => e.id)
+      
+      const result = await generateWeeklyTheme(entryIds)
+      if (result.error) {
+        alert(`Failed to generate weekly theme: ${result.error}`)
+        return
+      }
+
+      if (result.data) {
+        setWeeklyTheme(result.data)
+        router.refresh()
+      }
+    } catch (error: any) {
+      console.error('Error generating weekly theme:', error)
+      alert(`Failed to generate weekly theme: ${error.message || 'Please try again.'}`)
+    } finally {
+      setIsGeneratingTheme(false)
+    }
+  }
+
+  const handleViewTheme = (theme: WeeklyTheme) => {
+    // For now, show theme content in an alert. Could be enhanced with a modal
+    alert(`${theme.headline}\n\n${theme.subtitle}\n\n${theme.theme_content}`)
+  }
+
   return (
     <div className="page-shell">
       <Header issueTagline={issueTagline} onNewEntry={handleCreateEntry} />
@@ -203,10 +242,30 @@ export function JournalPageClient({
         Logout
       </button>
 
-      <MindsetBanner
-        headline={mindset.headline}
-        subtitle={mindset.subtitle}
-      />
+      {weeklyTheme ? (
+        <WeeklyThemeBanner
+          theme={weeklyTheme}
+          onViewTheme={handleViewTheme}
+        />
+      ) : (
+        <MindsetBanner
+          headline={mindset.headline}
+          subtitle={mindset.subtitle}
+        />
+      )}
+
+      {entries.length >= 7 && !weeklyTheme && (
+        <div style={{ padding: '1rem 2rem', textAlign: 'center' }}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleGenerateWeeklyTheme}
+            disabled={isGeneratingTheme}
+          >
+            {isGeneratingTheme ? 'Generating...' : '✨ Generate Weekly Theme'}
+          </button>
+        </div>
+      )}
 
       <CategoryNav
         currentFilter={currentFilter}

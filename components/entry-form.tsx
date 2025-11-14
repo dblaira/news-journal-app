@@ -22,6 +22,8 @@ const categories: CreateEntryInput['category'][] = [
 export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [formData, setFormData] = useState<CreateEntryInput>({
     headline: '',
     category: 'Business',
@@ -29,6 +31,18 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
     content: '',
     mood: '',
   })
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setPhotoFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +56,30 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
         setIsSubmitting(false)
         return
       }
+
+      // Upload photo if provided
+      if (photoFile && result.data) {
+        try {
+          const photoFormData = new FormData()
+          photoFormData.append('file', photoFile)
+          photoFormData.append('entryId', result.data.id)
+
+          const photoResponse = await fetch('/api/upload-photo', {
+            method: 'POST',
+            body: photoFormData,
+          })
+
+          if (!photoResponse.ok) {
+            const photoError = await photoResponse.json()
+            console.error('Photo upload failed:', photoError)
+            // Don't fail the entry creation if photo upload fails
+          }
+        } catch (photoErr) {
+          console.error('Error uploading photo:', photoErr)
+          // Don't fail the entry creation if photo upload fails
+        }
+      }
+
       onSuccess()
     } catch (err) {
       setError('Failed to create entry. Please try again.')
@@ -138,6 +176,31 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
                 }
                 disabled={isSubmitting}
               />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="photo">Photo (optional)</label>
+              <input
+                type="file"
+                id="photo"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                onChange={handlePhotoChange}
+                disabled={isSubmitting}
+              />
+              {photoPreview && (
+                <div style={{ marginTop: '1rem' }}>
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '200px',
+                      borderRadius: '8px',
+                      objectFit: 'cover',
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

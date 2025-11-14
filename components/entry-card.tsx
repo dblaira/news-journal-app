@@ -17,7 +17,7 @@ export function EntryCard({
   onGenerateVersions,
   onDelete,
 }: EntryCardProps) {
-  const imageUrl = getCategoryImage(entry.category)
+  const imageUrl = entry.photo_url || getCategoryImage(entry.category)
   const formattedDate = formatEntryDateLong(entry.created_at)
   const shortDate = formatEntryDateShort(entry.created_at)
   const versionBadge =
@@ -30,7 +30,7 @@ export function EntryCard({
   return (
     <article className="entry-card">
       <div className="entry-card__media">
-        <img src={imageUrl} alt={`${entry.category} illustration`} />
+        <img src={imageUrl} alt={entry.photo_url ? entry.headline : `${entry.category} illustration`} />
       </div>
       <div className="entry-card__body">
         <div className="entry-card__meta">
