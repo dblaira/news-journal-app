@@ -6,6 +6,7 @@
  */
 
 const { createClient } = require('@supabase/supabase-js')
+require('dotenv').config({ path: '.env.local' })
 
 const colors = {
   reset: '\x1b[0m',

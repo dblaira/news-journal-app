@@ -6,7 +6,8 @@
     "lint": "next lint",
     "setup": "node scripts/complete-setup.js",
     "setup:verify": "node scripts/setup-verification.js",
-    "setup:storage": "node scripts/create-storage-bucket.js"
+    "setup:storage": "node scripts/create-storage-bucket.js",
+    "setup:migrations": "node scripts/run-migrations.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
