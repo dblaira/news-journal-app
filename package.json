@@ -4,6 +4,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "setup": "node scripts/complete-setup.js",
     "setup:verify": "node scripts/setup-verification.js",
     "setup:storage": "node scripts/create-storage-bucket.js"
   },
