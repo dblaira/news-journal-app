@@ -18,44 +18,65 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
+  try {
+    const supabase = createServerClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              request.cookies.set(name, value)
+            )
+            response = NextResponse.next({
+              request,
+            })
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options)
+            )
+          },
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            request.cookies.set(name, value)
-          )
-          response = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          )
-        },
-      },
+      }
+    )
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
+
+    // Always allow access to login page, even if there's an auth error
+    if (request.nextUrl.pathname === '/login') {
+      // Only redirect away from login if user is definitely authenticated
+      if (user && !error) {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+      // Otherwise, allow access to login page
+      return response
     }
-  )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    // If there's an auth error, redirect to login
+    if (error) {
+      console.error('Auth error in middleware:', error.message)
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
 
-  // Protect main page - redirect to login if not authenticated
-  if (request.nextUrl.pathname === '/' && !user) {
+    // Protect main page - redirect to login if not authenticated
+    if (request.nextUrl.pathname === '/' && !user) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    return response
+  } catch (error) {
+    console.error('Middleware error:', error)
+    // On error, allow access to login page, redirect others to login
+    if (request.nextUrl.pathname === '/login') {
+      return response
+    }
     return NextResponse.redirect(new URL('/login', request.url))
   }
-
-  // Redirect authenticated users away from login page
-  if (request.nextUrl.pathname === '/login' && user) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
-
-  return response
 }
 
 export const config = {
