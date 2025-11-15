@@ -38,29 +38,38 @@ export function AuthForm() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
         })
 
         if (error) throw error
 
-        setSuccess('Account created! Redirecting...')
-        setTimeout(() => {
-          router.push('/')
-        }, 1500)
+        // Wait for session to be established
+        if (data.session) {
+          setSuccess('Account created! Redirecting...')
+          // Use window.location for a full page reload to ensure middleware picks up the session
+          window.location.href = '/'
+        } else {
+          setSuccess('Account created! Please check your email to confirm your account.')
+          setIsLoading(false)
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
 
         if (error) throw error
 
-        setSuccess('Signed in! Redirecting...')
-        setTimeout(() => {
-          router.push('/')
-        }, 1000)
+        // Wait for session to be established
+        if (data.session) {
+          setSuccess('Signed in! Redirecting...')
+          // Use window.location for a full page reload to ensure middleware picks up the session
+          window.location.href = '/'
+        } else {
+          throw new Error('No session created. Please try again.')
+        }
       }
     } catch (error: any) {
       console.error('Auth error:', error)
@@ -72,6 +81,8 @@ export function AuthForm() {
         errorMsg = 'Invalid email or password. Please try again.'
       } else if (error.message?.includes('Email not confirmed')) {
         errorMsg = 'Please check your email and confirm your account before signing in.'
+      } else if (error.message?.includes('Failed to fetch')) {
+        errorMsg = 'Network error. Please check your connection and try again.'
       } else if (!error.message) {
         errorMsg = 'An error occurred. Please try again.'
       }
