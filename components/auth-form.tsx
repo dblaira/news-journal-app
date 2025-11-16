@@ -48,8 +48,10 @@ export function AuthForm() {
         // Wait for session to be established
         if (data.session) {
           setSuccess('Account created! Redirecting...')
-          // Use window.location for a full page reload to ensure middleware picks up the session
-          window.location.href = '/'
+          // Small delay to ensure cookies are set, then redirect
+          setTimeout(() => {
+            window.location.href = '/'
+          }, 100)
         } else {
           setSuccess('Account created! Please check your email to confirm your account.')
           setIsLoading(false)
@@ -65,8 +67,10 @@ export function AuthForm() {
         // Wait for session to be established
         if (data.session) {
           setSuccess('Signed in! Redirecting...')
-          // Use window.location for a full page reload to ensure middleware picks up the session
-          window.location.href = '/'
+          // Small delay to ensure cookies are set, then redirect
+          setTimeout(() => {
+            window.location.href = '/'
+          }, 100)
         } else {
           throw new Error('No session created. Please try again.')
         }

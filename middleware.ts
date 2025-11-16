@@ -29,19 +29,13 @@ export async function middleware(request: NextRequest) {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
-              // Add explicit options for production
-              const cookieOptions = {
+              // Let Supabase handle cookie options, but ensure secure in production
+              response.cookies.set(name, value, {
                 ...options,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                httpOnly: true,
-                path: '/',
-              }
-              request.cookies.set(name, value)
-              response.cookies.set(name, value, cookieOptions)
-            })
-            response = NextResponse.next({
-              request,
+                sameSite: options?.sameSite || 'lax',
+                path: options?.path || '/',
+              })
             })
           },
         },
