@@ -28,15 +28,21 @@ export async function middleware(request: NextRequest) {
             return request.cookies.getAll()
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // Add explicit options for production
+              const cookieOptions = {
+                ...options,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                httpOnly: true,
+                path: '/',
+              }
               request.cookies.set(name, value)
-            )
+              response.cookies.set(name, value, cookieOptions)
+            })
             response = NextResponse.next({
               request,
             })
-            cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options)
-            )
           },
         },
       }
@@ -46,6 +52,10 @@ export async function middleware(request: NextRequest) {
       data: { user },
       error,
     } = await supabase.auth.getUser()
+
+    console.log('Middleware path:', request.nextUrl.pathname)
+    console.log('Middleware user:', user ? user.id : 'no user')
+    console.log('Middleware error:', error ? error.message : 'no error')
 
     // Always allow access to login page, even if there's an auth error
     if (request.nextUrl.pathname === '/login') {
