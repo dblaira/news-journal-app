@@ -48,10 +48,11 @@ export function AuthForm() {
         // Wait for session to be established
         if (data.session) {
           setSuccess('Account created! Redirecting...')
-          // Wait for cookies to be set by browser client, then redirect
+          // Ensure session is synced - browser client handles cookies automatically
+          // Use full page reload to ensure middleware picks up cookies
           setTimeout(() => {
             window.location.href = '/'
-          }, 300)
+          }, 500)
         } else {
           setSuccess('Account created! Please check your email to confirm your account.')
           setIsLoading(false)
@@ -66,12 +67,16 @@ export function AuthForm() {
 
         // Wait for session to be established
         if (data.session) {
+          console.log('Login successful, session:', data.session)
           setSuccess('Signed in! Redirecting...')
-          // Wait for cookies to be set by browser client, then redirect
-          // The browser client automatically syncs session to cookies
+          // Verify session is available
+          const { data: sessionData } = await supabase.auth.getSession()
+          console.log('Session after login:', sessionData?.session ? 'exists' : 'missing')
+          // Ensure session is synced - browser client handles cookies automatically
+          // Use full page reload to ensure middleware picks up cookies
           setTimeout(() => {
             window.location.href = '/'
-          }, 300)
+          }, 500)
         } else {
           throw new Error('No session created. Please try again.')
         }

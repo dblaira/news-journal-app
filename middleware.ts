@@ -42,6 +42,9 @@ export async function middleware(request: NextRequest) {
       }
     )
 
+    // Refresh session to ensure cookies are synced
+    await supabase.auth.getSession()
+    
     const {
       data: { user },
       error,
