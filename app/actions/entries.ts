@@ -105,17 +105,29 @@ export async function generateWeeklyTheme(entryIds: string[]) {
   }
 
   try {
+    console.log('Starting weekly theme generation for user:', user.id)
+    console.log('Entry IDs:', entryIds)
+    
     // Import and call the logic directly instead of making an HTTP request
+    console.log('Importing generateWeeklyThemeLogic...')
     const { generateWeeklyThemeLogic } = await import('@/lib/ai/generate-weekly-theme.server')
+    console.log('Import successful, calling generateWeeklyThemeLogic...')
+    
     const theme = await generateWeeklyThemeLogic(entryIds, user.id)
+    console.log('Theme generated successfully:', theme.id)
+    
     revalidatePath('/')
     return { data: theme }
   } catch (error) {
     console.error('Error generating weekly theme:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
+    console.error('Error details:', { errorMessage, errorStack })
+    
     // Check if it's a fetch error and provide more context
     if (errorMessage.includes('fetch') || errorMessage.includes('Failed to fetch')) {
-      return { error: `API call failed: ${errorMessage}. Please check your ANTHROPIC_API_KEY environment variable.` }
+      return { error: `API call failed: ${errorMessage}. Check Vercel function logs for details.` }
     }
     return { error: errorMessage }
   }
