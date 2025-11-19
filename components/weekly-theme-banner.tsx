@@ -52,11 +52,13 @@ export function WeeklyThemeBanner({
                   window.URL.revokeObjectURL(url)
                   document.body.removeChild(a)
                 } else {
-                  alert('Failed to export PDF')
+                  const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+                  console.error('PDF export failed:', response.status, errorData)
+                  alert(`Failed to export PDF: ${errorData.error || 'Unknown error'}`)
                 }
               } catch (error) {
                 console.error('Error exporting PDF:', error)
-                alert('Failed to export PDF')
+                alert(`Failed to export PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
               }
             }}
           >

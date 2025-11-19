@@ -3,8 +3,12 @@ import { createClient } from '@/lib/supabase/server'
 import { generateEntryPDF, generateWeeklyPDF, generateMultiEntryPDF } from '@/lib/pdf/generate-pdf.server'
 import { Entry, WeeklyTheme } from '@/types'
 
+// PDFKit requires Node.js runtime, not Edge
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
+    console.log('PDF export request received')
     const supabase = createClient()
     const {
       data: { user },
@@ -36,8 +40,9 @@ export async function POST(request: NextRequest) {
       }
 
       pdfBuffer = await generateEntryPDF(entry as Entry)
-    } else if (type === 'weekly' && themeId) {
+    } else     if (type === 'weekly' && themeId) {
       // Weekly theme PDF
+      console.log('Generating weekly theme PDF for themeId:', themeId)
       const { data: theme, error: themeError } = await supabase
         .from('weekly_themes')
         .select('*')
@@ -46,12 +51,14 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (themeError || !theme) {
+        console.error('Theme error:', themeError)
         return NextResponse.json(
-          { error: 'Weekly theme not found' },
+          { error: `Weekly theme not found: ${themeError?.message || 'Unknown error'}` },
           { status: 404 }
         )
       }
 
+      console.log('Theme found:', theme.id)
       const { data: entries, error: entriesError } = await supabase
         .from('entries')
         .select('*')
@@ -60,13 +67,17 @@ export async function POST(request: NextRequest) {
         .order('created_at', { ascending: false })
 
       if (entriesError) {
+        console.error('Entries error:', entriesError)
         return NextResponse.json(
-          { error: 'Failed to fetch entries' },
+          { error: `Failed to fetch entries: ${entriesError.message}` },
           { status: 500 }
         )
       }
 
+      console.log('Entries found:', entries?.length || 0)
+      console.log('Generating PDF...')
       pdfBuffer = await generateWeeklyPDF(theme as WeeklyTheme, entries as Entry[])
+      console.log('PDF generated successfully, size:', pdfBuffer.length)
     } else if (type === 'multi' && entryIds && entryIds.length > 0) {
       // Multiple entries PDF
       const { data: entries, error } = await supabase
@@ -99,8 +110,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error generating PDF:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    console.error('Error details:', { errorMessage, errorStack })
+    
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { error: `PDF generation failed: ${errorMessage}` },
       { status: 500 }
     )
   }
