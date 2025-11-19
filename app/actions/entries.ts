@@ -112,7 +112,12 @@ export async function generateWeeklyTheme(entryIds: string[]) {
     return { data: theme }
   } catch (error) {
     console.error('Error generating weekly theme:', error)
-    return { error: error instanceof Error ? error.message : 'Unknown error' }
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    // Check if it's a fetch error and provide more context
+    if (errorMessage.includes('fetch') || errorMessage.includes('Failed to fetch')) {
+      return { error: `API call failed: ${errorMessage}. Please check your ANTHROPIC_API_KEY environment variable.` }
+    }
+    return { error: errorMessage }
   }
 }
 

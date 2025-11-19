@@ -78,36 +78,49 @@ export async function generateWeeklyThemeLogic(entryIds: string[], userId: strin
 }
 
 async function callClaudeAPI(prompt: string, apiKey: string): Promise<string> {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4000,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-    }),
-  })
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      }),
+    })
 
-  if (!response.ok) {
-    let bodyText: string
-    try {
-      bodyText = await response.text()
-    } catch (e) {
-      bodyText = '<unable to read response body>'
+    if (!response.ok) {
+      let bodyText: string
+      try {
+        bodyText = await response.text()
+      } catch (e) {
+        bodyText = '<unable to read response body>'
+      }
+      throw new Error(`Anthropic API error (${response.status}): ${bodyText}`)
     }
-    throw new Error(`API request failed: ${response.status} - ${bodyText}`)
-  }
 
-  const data = await response.json()
-  return data.content[0].text
+    const data = await response.json()
+    
+    if (!data.content || !data.content[0] || !data.content[0].text) {
+      throw new Error('Invalid response format from Anthropic API')
+    }
+    
+    return data.content[0].text
+  } catch (error) {
+    // Re-throw with more context if it's a fetch error
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error(`Network error calling Anthropic API: ${error.message}. Please check your internet connection and ANTHROPIC_API_KEY.`)
+    }
+    throw error
+  }
 }
 
