@@ -105,24 +105,13 @@ export async function generateWeeklyTheme(entryIds: string[]) {
   }
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-    const response = await fetch(`${baseUrl}/api/generate-weekly-theme`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ entryIds }),
-    })
-
-    if (!response.ok) {
-      const data = await response.json()
-      return { error: data.error || 'Failed to generate weekly theme' }
-    }
-
-    const data = await response.json()
+    // Import and call the logic directly instead of making an HTTP request
+    const { generateWeeklyThemeLogic } = await import('@/lib/ai/generate-weekly-theme.server')
+    const theme = await generateWeeklyThemeLogic(entryIds, user.id)
     revalidatePath('/')
-    return { data: data.theme }
+    return { data: theme }
   } catch (error) {
+    console.error('Error generating weekly theme:', error)
     return { error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
