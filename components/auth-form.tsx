@@ -67,16 +67,12 @@ export function AuthForm() {
 
         // Wait for session to be established
         if (data.session) {
-          console.log('Login successful, session:', data.session)
           setSuccess('Signed in! Redirecting...')
-          // Verify session is available
-          const { data: sessionData } = await supabase.auth.getSession()
-          console.log('Session after login:', sessionData?.session ? 'exists' : 'missing')
-          // Ensure session is synced - browser client handles cookies automatically
+          // Browser client automatically syncs session to cookies
           // Use full page reload to ensure middleware picks up cookies
           setTimeout(() => {
             window.location.href = '/'
-          }, 500)
+          }, 300)
         } else {
           throw new Error('No session created. Please try again.')
         }

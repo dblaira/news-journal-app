@@ -42,17 +42,10 @@ export async function middleware(request: NextRequest) {
       }
     )
 
-    // Refresh session to ensure cookies are synced
-    await supabase.auth.getSession()
-    
     const {
       data: { user },
       error,
     } = await supabase.auth.getUser()
-
-    console.log('Middleware path:', request.nextUrl.pathname)
-    console.log('Middleware user:', user ? user.id : 'no user')
-    console.log('Middleware error:', error ? error.message : 'no error')
 
     // Always allow access to login page and debug page, even if there's an auth error
     if (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/debug-auth') {
