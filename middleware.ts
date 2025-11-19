@@ -54,13 +54,13 @@ export async function middleware(request: NextRequest) {
     console.log('Middleware user:', user ? user.id : 'no user')
     console.log('Middleware error:', error ? error.message : 'no error')
 
-    // Always allow access to login page, even if there's an auth error
-    if (request.nextUrl.pathname === '/login') {
+    // Always allow access to login page and debug page, even if there's an auth error
+    if (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/debug-auth') {
       // Only redirect away from login if user is definitely authenticated
-      if (user && !error) {
+      if (request.nextUrl.pathname === '/login' && user && !error) {
         return NextResponse.redirect(new URL('/', request.url))
       }
-      // Otherwise, allow access to login page
+      // Otherwise, allow access to login/debug page
       return response
     }
 
