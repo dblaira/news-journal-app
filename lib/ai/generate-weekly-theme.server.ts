@@ -26,13 +26,23 @@ export async function generateWeeklyThemeLogic(entryIds: string[], userId: strin
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
+    console.error('ANTHROPIC_API_KEY is missing from environment')
     throw new Error('API key not configured')
   }
 
+  console.log('API key found, length:', apiKey.length)
+  console.log('API key starts with:', apiKey.substring(0, 10))
+
   // Generate weekly theme using Claude API
   const prompt = createWeeklyThemePrompt(entries as Entry[])
+  console.log('Prompt created, length:', prompt.length)
+  
+  console.log('Calling Anthropic API...')
   const response = await callClaudeAPI(prompt, apiKey)
+  console.log('API response received, length:', response.length)
+  
   const theme = parseWeeklyThemeResponse(response)
+  console.log('Theme parsed:', { headline: theme.headline, subtitle: theme.subtitle })
 
   // Calculate week start date (Monday of the week)
   const now = new Date()
@@ -78,7 +88,11 @@ export async function generateWeeklyThemeLogic(entryIds: string[], userId: strin
 }
 
 async function callClaudeAPI(prompt: string, apiKey: string): Promise<string> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
+  
   try {
+    console.log('Making fetch request to Anthropic API...')
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -96,7 +110,10 @@ async function callClaudeAPI(prompt: string, apiKey: string): Promise<string> {
           },
         ],
       }),
+      signal: controller.signal,
     })
+    
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       let bodyText: string
@@ -116,10 +133,21 @@ async function callClaudeAPI(prompt: string, apiKey: string): Promise<string> {
     
     return data.content[0].text
   } catch (error) {
+    clearTimeout(timeoutId)
+    
+    // Handle abort (timeout)
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request to Anthropic API timed out after 60 seconds')
+    }
+    
     // Re-throw with more context if it's a fetch error
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error(`Network error calling Anthropic API: ${error.message}. Please check your internet connection and ANTHROPIC_API_KEY.`)
+      console.error('Fetch error details:', error)
+      throw new Error(`Network error calling Anthropic API: ${error.message}. This might be a DNS, network, or SSL issue.`)
     }
+    
+    // Handle other errors
+    console.error('Error calling Anthropic API:', error)
     throw error
   }
 }
