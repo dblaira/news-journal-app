@@ -2,12 +2,14 @@ import PDFDocument from 'pdfkit'
 import { Entry, WeeklyTheme } from '@/types'
 
 // PDFKit configuration for serverless environments
-// Use standard fonts that don't require external files
+// Set font path to empty to prevent PDFKit from looking for font files
+// PDFKit will use its built-in standard fonts
 const PDF_OPTIONS = {
   size: 'LETTER',
   margins: { top: 50, bottom: 50, left: 50, right: 50 },
-  // Don't use custom fonts - use built-in standard fonts
   autoFirstPage: true,
+  // Prevent PDFKit from looking for font files in serverless environment
+  font: undefined,
 }
 
 export async function generateEntryPDF(entry: Entry): Promise<Buffer> {

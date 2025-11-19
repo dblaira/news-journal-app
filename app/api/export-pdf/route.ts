@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { generateEntryPDF, generateWeeklyPDF, generateMultiEntryPDF } from '@/lib/pdf/generate-pdf.server'
+import { generateEntryPDF, generateWeeklyPDF, generateMultiEntryPDF } from '@/lib/pdf/generate-pdf-serverless'
 import { Entry, WeeklyTheme } from '@/types'
 
 // PDFKit requires Node.js runtime, not Edge
