@@ -346,7 +346,9 @@ export function JournalPageClient({
         </section>
 
         {showForm && (
-          <EntryForm onSuccess={handleFormSuccess} onCancel={handleFormCancel} />
+          <div style={{ marginTop: '2rem', marginBottom: '2rem' }}>
+            <EntryForm onSuccess={handleFormSuccess} onCancel={handleFormCancel} />
+          </div>
         )}
       </main>
 
