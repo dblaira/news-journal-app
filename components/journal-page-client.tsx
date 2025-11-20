@@ -12,7 +12,7 @@ import { FeatureGrid } from './feature-grid'
 import { Sidebar } from './sidebar'
 import { ConnectionGrid } from './connection-grid'
 import { EntriesFeed } from './entries-feed'
-import { EntryForm } from './entry-form'
+import { EntryFormModal } from './entry-form-modal'
 import { EntryModal } from './entry-modal'
 import { deriveMindsetPreset } from '@/lib/mindset'
 import { formatEntryDateLong } from '@/lib/utils'
@@ -346,9 +346,7 @@ export function JournalPageClient({
         </section>
 
         {showForm && (
-          <div style={{ marginTop: '2rem', marginBottom: '2rem' }}>
-            <EntryForm onSuccess={handleFormSuccess} onCancel={handleFormCancel} />
-          </div>
+          <EntryFormModal onSuccess={handleFormSuccess} onCancel={handleFormCancel} />
         )}
       </main>
 
