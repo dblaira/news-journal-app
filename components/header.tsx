@@ -45,7 +45,6 @@ export function Header({ issueTagline, onNewEntry }: HeaderProps) {
           className="btn-primary" 
           onClick={(e) => {
             e.preventDefault()
-            console.log('New Entry button clicked')
             onNewEntry()
           }}
           type="button"

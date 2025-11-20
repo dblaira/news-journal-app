@@ -87,7 +87,6 @@ export function JournalPageClient({
   const issueTagline = `Edition ${editionNumber} · ${today}`
 
   const handleCreateEntry = () => {
-    console.log('handleCreateEntry called, setting showForm to true')
     setShowForm(true)
   }
 
