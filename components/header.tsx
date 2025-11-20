@@ -40,7 +40,16 @@ export function Header({ issueTagline, onNewEntry }: HeaderProps) {
             <span>Search</span>
           </button>
         </form>
-        <button id="newEntryBtn" className="btn-primary" onClick={onNewEntry}>
+        <button 
+          id="newEntryBtn" 
+          className="btn-primary" 
+          onClick={(e) => {
+            e.preventDefault()
+            console.log('New Entry button clicked')
+            onNewEntry()
+          }}
+          type="button"
+        >
           + New Entry
         </button>
       </div>
