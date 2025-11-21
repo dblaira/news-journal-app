@@ -47,26 +47,20 @@ export function deriveMindsetPreset(mood: string, category: string) {
   }
 }
 
+// Use placeholder images via placeholder.com instead of Unsplash to avoid 404s
 export function getCategoryImage(category: string): string {
-  const categoryImages: Record<string, string> = {
-    Business:
-      'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200&q=80',
-    Finance:
-      'https://images.unsplash.com/photo-1434626881859-194d67b2b86f?auto=format&fit=crop&w=1200&q=80',
-    Health:
-      'https://images.unsplash.com/photo-1484980972926-edee96e0960d?auto=format&fit=crop&w=1200&q=80',
-    Spiritual:
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-    Fun: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
-    Social:
-      'https://images.unsplash.com/photo-1529158062015-cad636e69505?auto=format&fit=crop&w=1200&q=80',
-    Romance:
-      'https://images.unsplash.com/photo-1499028344343-cd173ffc68a9?auto=format&fit=crop&w=1200&q=80',
+  const categoryColors: Record<string, string> = {
+    Business: '4A90E2',
+    Finance: '50C878',
+    Health: 'FF6B6B',
+    Spiritual: '9B59B6',
+    Fun: 'FFA500',
+    Social: 'FF69B4',
+    Romance: 'FF1493',
   }
 
-  return (
-    categoryImages[category] ||
-    'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80'
-  )
+  const color = categoryColors[category] || '6C7A89'
+  // Use placeholder.com which is more reliable than Unsplash
+  return `https://via.placeholder.com/1200x600/${color}/FFFFFF?text=${encodeURIComponent(category)}`
 }
 

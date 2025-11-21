@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Entry } from '@/types'
 import { formatEntryDateLong, formatEntryDateShort, truncate } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
@@ -19,7 +19,12 @@ export function EntryCard({
   onDelete,
 }: EntryCardProps) {
   const [imageError, setImageError] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const imageUrl = entry.photo_url || getCategoryImage(entry.category)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
   const formattedDate = formatEntryDateLong(entry.created_at)
   const shortDate = formatEntryDateShort(entry.created_at)
   const versionBadge =
@@ -50,8 +55,13 @@ export function EntryCard({
             src={imageUrl} 
             alt={entry.photo_url ? entry.headline : `${entry.category} illustration`}
             loading="lazy"
-            onError={() => {
-              setImageError(true)
+            onError={(e) => {
+              if (isMounted) {
+                setImageError(true)
+              } else {
+                // Hide broken image during SSR/hydration
+                e.currentTarget.style.display = 'none'
+              }
             }}
           />
         )}

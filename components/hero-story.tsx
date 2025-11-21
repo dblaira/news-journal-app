@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Entry } from '@/types'
 import { formatEntryDateLong, truncate } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
@@ -19,6 +19,11 @@ export function HeroStory({
   onGenerateVersions,
 }: HeroStoryProps) {
   const [imageError, setImageError] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
   if (!entry) {
     return (
       <section className="hero-section">
@@ -67,8 +72,13 @@ export function HeroStory({
               src={imageUrl} 
               alt={entry.photo_url ? entry.headline : `${entry.category} feature image`}
               loading="lazy"
-              onError={() => {
-                setImageError(true)
+              onError={(e) => {
+                if (isMounted) {
+                  setImageError(true)
+                } else {
+                  // Hide broken image during SSR/hydration
+                  e.currentTarget.style.display = 'none'
+                }
               }}
             />
           )}
