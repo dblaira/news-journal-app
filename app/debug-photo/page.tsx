@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase/client'
 
 export default function DebugPhotoPage() {
   const router = useRouter()
@@ -9,6 +10,17 @@ export default function DebugPhotoPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState('')
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setIsAuthenticated(!!user)
+      setUser(user)
+    }
+    checkAuth()
+  }, [])
 
   const handleCheck = async () => {
     if (!entryId.trim()) {
@@ -37,9 +49,45 @@ export default function DebugPhotoPage() {
     }
   }
 
+  if (isAuthenticated === null) {
+    return (
+      <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', fontFamily: 'monospace', textAlign: 'center' }}>
+        <div style={{ color: '#d0d6f1' }}>Checking authentication...</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', fontFamily: 'monospace' }}>
+        <h1 style={{ color: '#ef4444', marginBottom: '1rem' }}>Authentication Required</h1>
+        <p style={{ color: '#d0d6f1', marginBottom: '1rem' }}>
+          You need to be logged in to use the photo debug tool.
+        </p>
+        <button
+          onClick={() => router.push('/login')}
+          style={{
+            padding: '0.75rem 1.5rem',
+            background: '#13c9b3',
+            color: '#02151f',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          Go to Login
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', fontFamily: 'monospace' }}>
       <h1 style={{ color: '#13c9b3', marginBottom: '1rem' }}>Photo Debug Tool</h1>
+      <div style={{ color: '#8d95b5', marginBottom: '1rem', fontSize: '0.9rem' }}>
+        Logged in as: {user?.email}
+      </div>
       
       <div style={{ marginBottom: '2rem' }}>
         <label style={{ display: 'block', marginBottom: '0.5rem', color: '#f5f7ff' }}>
