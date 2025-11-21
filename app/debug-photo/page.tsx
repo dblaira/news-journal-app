@@ -15,11 +15,33 @@ export default function DebugPhotoPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setIsAuthenticated(!!user)
-      setUser(user)
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser()
+        if (error) {
+          console.error('Auth check error:', error)
+          setIsAuthenticated(false)
+          setUser(null)
+        } else {
+          setIsAuthenticated(!!user)
+          setUser(user)
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err)
+        setIsAuthenticated(false)
+        setUser(null)
+      }
     }
     checkAuth()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user)
+      setUser(session?.user || null)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   const handleCheck = async () => {

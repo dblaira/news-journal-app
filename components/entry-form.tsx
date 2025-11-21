@@ -72,11 +72,16 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
           if (!photoResponse.ok) {
             const photoError = await photoResponse.json()
             console.error('Photo upload failed:', photoError)
-            // Don't fail the entry creation if photo upload fails
+            // Show warning but don't fail entry creation
+            alert(`Entry created successfully, but photo upload failed: ${photoError.error || 'Unknown error'}. You can try uploading the photo again by editing the entry.`)
+          } else {
+            const photoData = await photoResponse.json()
+            console.log('Photo uploaded successfully:', photoData.photoUrl)
           }
-        } catch (photoErr) {
+        } catch (photoErr: any) {
           console.error('Error uploading photo:', photoErr)
-          // Don't fail the entry creation if photo upload fails
+          // Show warning but don't fail entry creation
+          alert(`Entry created successfully, but photo upload failed: ${photoErr.message || 'Network error'}. You can try uploading the photo again by editing the entry.`)
         }
       }
 

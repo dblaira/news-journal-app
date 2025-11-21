@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { processEntryPhoto } from '@/lib/image/process-photo.server'
 
+// Sharp requires Node.js runtime, not Edge
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = createClient()
