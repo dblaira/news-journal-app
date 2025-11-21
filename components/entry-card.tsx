@@ -17,11 +17,6 @@ export function EntryCard({
   onGenerateVersions,
   onDelete,
 }: EntryCardProps) {
-  // Debug: Log photo URL if it exists
-  if (entry.photo_url) {
-    console.log('Entry photo URL:', entry.photo_url, 'for entry:', entry.headline)
-  }
-  
   const imageUrl = entry.photo_url || getCategoryImage(entry.category)
   const formattedDate = formatEntryDateLong(entry.created_at)
   const shortDate = formatEntryDateShort(entry.created_at)
@@ -38,11 +33,18 @@ export function EntryCard({
         <img 
           src={imageUrl} 
           alt={entry.photo_url ? entry.headline : `${entry.category} illustration`}
+          loading="lazy"
           onError={(e) => {
             console.error('Image failed to load:', imageUrl)
-            // Fallback to category image if photo fails to load
-            if (entry.photo_url) {
-              e.currentTarget.src = getCategoryImage(entry.category)
+            // Hide broken image and show placeholder
+            e.currentTarget.style.display = 'none'
+            const parent = e.currentTarget.parentElement
+            if (parent && !parent.querySelector('.image-placeholder')) {
+              const placeholder = document.createElement('div')
+              placeholder.className = 'image-placeholder'
+              placeholder.style.cssText = 'width: 100%; height: 200px; background: var(--bg-panel-alt); display: flex; align-items: center; justify-content: center; color: var(--text-muted);'
+              placeholder.textContent = 'Image unavailable'
+              parent.appendChild(placeholder)
             }
           }}
         />

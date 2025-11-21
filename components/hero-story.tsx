@@ -50,12 +50,11 @@ export function HeroStory({
           <img 
             src={imageUrl} 
             alt={entry.photo_url ? entry.headline : `${entry.category} feature image`}
+            loading="lazy"
             onError={(e) => {
               console.error('Image failed to load:', imageUrl)
-              // Fallback to category image if photo fails to load
-              if (entry.photo_url) {
-                e.currentTarget.src = getCategoryImage(entry.category)
-              }
+              // Hide broken image
+              e.currentTarget.style.display = 'none'
             }}
           />
         </div>
