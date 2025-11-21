@@ -47,7 +47,9 @@ export async function processEntryPhoto(
     throw new Error(`Failed to upload photo: ${error.message}`)
   }
 
-  // Get public URL
+  // Get public URL - ensure we're using the correct method
+  // For public buckets, getPublicUrl should work
+  // For private buckets, we'd need signed URLs
   const {
     data: { publicUrl },
   } = supabase.storage.from('entry-photos').getPublicUrl(filePath)
@@ -57,11 +59,23 @@ export async function processEntryPhoto(
     publicUrl,
     entryId,
     userId,
+    bucket: 'entry-photos',
   })
 
-  // Verify the URL is valid
+  // Verify the URL is valid and is a full URL
   if (!publicUrl) {
     throw new Error('Failed to generate public URL for photo')
+  }
+
+  // Ensure URL is absolute (starts with http:// or https://)
+  if (!publicUrl.startsWith('http://') && !publicUrl.startsWith('https://')) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (supabaseUrl) {
+      // Construct full URL if needed
+      const fullUrl = `${supabaseUrl}/storage/v1/object/public/entry-photos/${filePath}`
+      console.log('Constructed full URL:', fullUrl)
+      return fullUrl
+    }
   }
 
   return publicUrl
