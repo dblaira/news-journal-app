@@ -116,6 +116,10 @@ export function EntryModal({
             <img
               src={entry.photo_url}
               alt={entry.headline}
+              onError={(e) => {
+                console.error('Image failed to load:', entry.photo_url)
+                e.currentTarget.style.display = 'none'
+              }}
               style={{
                 width: '100%',
                 maxHeight: '400px',

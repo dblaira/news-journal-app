@@ -30,7 +30,17 @@ export function EntryCard({
   return (
     <article className="entry-card">
       <div className="entry-card__media">
-        <img src={imageUrl} alt={entry.photo_url ? entry.headline : `${entry.category} illustration`} />
+        <img 
+          src={imageUrl} 
+          alt={entry.photo_url ? entry.headline : `${entry.category} illustration`}
+          onError={(e) => {
+            console.error('Image failed to load:', imageUrl)
+            // Fallback to category image if photo fails to load
+            if (entry.photo_url) {
+              e.currentTarget.src = getCategoryImage(entry.category)
+            }
+          }}
+        />
       </div>
       <div className="entry-card__body">
         <div className="entry-card__meta">

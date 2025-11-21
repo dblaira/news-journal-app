@@ -47,7 +47,17 @@ export function HeroStory({
     <section className="hero-section">
       <div className="hero-card">
         <div className="hero-card__media">
-          <img src={imageUrl} alt={entry.photo_url ? entry.headline : `${entry.category} feature image`} />
+          <img 
+            src={imageUrl} 
+            alt={entry.photo_url ? entry.headline : `${entry.category} feature image`}
+            onError={(e) => {
+              console.error('Image failed to load:', imageUrl)
+              // Fallback to category image if photo fails to load
+              if (entry.photo_url) {
+                e.currentTarget.src = getCategoryImage(entry.category)
+              }
+            }}
+          />
         </div>
         <div className="hero-card__content">
           <div className="hero-card__meta">

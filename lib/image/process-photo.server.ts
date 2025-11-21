@@ -52,6 +52,18 @@ export async function processEntryPhoto(
     data: { publicUrl },
   } = supabase.storage.from('entry-photos').getPublicUrl(filePath)
 
+  console.log('Photo uploaded successfully:', {
+    filePath,
+    publicUrl,
+    entryId,
+    userId,
+  })
+
+  // Verify the URL is valid
+  if (!publicUrl) {
+    throw new Error('Failed to generate public URL for photo')
+  }
+
   return publicUrl
 }
 
