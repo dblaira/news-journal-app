@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Entry } from '@/types'
 import { formatEntryDateLong, formatEntryDateShort, truncate } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
@@ -17,6 +18,7 @@ export function EntryCard({
   onGenerateVersions,
   onDelete,
 }: EntryCardProps) {
+  const [imageError, setImageError] = useState(false)
   const imageUrl = entry.photo_url || getCategoryImage(entry.category)
   const formattedDate = formatEntryDateLong(entry.created_at)
   const shortDate = formatEntryDateShort(entry.created_at)
@@ -30,24 +32,29 @@ export function EntryCard({
   return (
     <article className="entry-card">
       <div className="entry-card__media">
-        <img 
-          src={imageUrl} 
-          alt={entry.photo_url ? entry.headline : `${entry.category} illustration`}
-          loading="lazy"
-          onError={(e) => {
-            console.error('Image failed to load:', imageUrl)
-            // Hide broken image and show placeholder
-            e.currentTarget.style.display = 'none'
-            const parent = e.currentTarget.parentElement
-            if (parent && !parent.querySelector('.image-placeholder')) {
-              const placeholder = document.createElement('div')
-              placeholder.className = 'image-placeholder'
-              placeholder.style.cssText = 'width: 100%; height: 200px; background: var(--bg-panel-alt); display: flex; align-items: center; justify-content: center; color: var(--text-muted);'
-              placeholder.textContent = 'Image unavailable'
-              parent.appendChild(placeholder)
-            }
-          }}
-        />
+        {imageError ? (
+          <div style={{
+            width: '100%',
+            height: '200px',
+            background: 'var(--bg-panel-alt)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-muted)',
+            borderRadius: 'var(--radius-sm)',
+          }}>
+            Image unavailable
+          </div>
+        ) : (
+          <img 
+            src={imageUrl} 
+            alt={entry.photo_url ? entry.headline : `${entry.category} illustration`}
+            loading="lazy"
+            onError={() => {
+              setImageError(true)
+            }}
+          />
+        )}
       </div>
       <div className="entry-card__body">
         <div className="entry-card__meta">

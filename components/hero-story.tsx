@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Entry } from '@/types'
 import { formatEntryDateLong, truncate } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
@@ -17,6 +18,7 @@ export function HeroStory({
   onViewEntry,
   onGenerateVersions,
 }: HeroStoryProps) {
+  const [imageError, setImageError] = useState(false)
   if (!entry) {
     return (
       <section className="hero-section">
@@ -47,16 +49,29 @@ export function HeroStory({
     <section className="hero-section">
       <div className="hero-card">
         <div className="hero-card__media">
-          <img 
-            src={imageUrl} 
-            alt={entry.photo_url ? entry.headline : `${entry.category} feature image`}
-            loading="lazy"
-            onError={(e) => {
-              console.error('Image failed to load:', imageUrl)
-              // Hide broken image
-              e.currentTarget.style.display = 'none'
-            }}
-          />
+          {imageError ? (
+            <div style={{
+              width: '100%',
+              height: '300px',
+              background: 'var(--bg-panel-alt)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-muted)',
+              borderRadius: 'var(--radius-sm)',
+            }}>
+              Image unavailable
+            </div>
+          ) : (
+            <img 
+              src={imageUrl} 
+              alt={entry.photo_url ? entry.headline : `${entry.category} feature image`}
+              loading="lazy"
+              onError={() => {
+                setImageError(true)
+              }}
+            />
+          )}
         </div>
         <div className="hero-card__content">
           <div className="hero-card__meta">
