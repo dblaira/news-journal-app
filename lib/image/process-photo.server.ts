@@ -1,5 +1,5 @@
 import sharp from 'sharp'
-import { createClient } from '@/lib/supabase/server'
+import { createStorageClient } from '@/lib/supabase/storage'
 
 export async function processEntryPhoto(
   file: File,
@@ -31,8 +31,8 @@ export async function processEntryPhoto(
     .webp({ quality: 85 })
     .toBuffer()
 
-  // Upload to Supabase Storage
-  const supabase = createClient()
+  // Upload to Supabase Storage using storage client (prefers service role key)
+  const supabase = createStorageClient()
   const fileName = `${entryId}.webp`
   const filePath = `${userId}/${fileName}`
 
