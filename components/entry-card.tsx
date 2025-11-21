@@ -17,6 +17,11 @@ export function EntryCard({
   onGenerateVersions,
   onDelete,
 }: EntryCardProps) {
+  // Debug: Log photo URL if it exists
+  if (entry.photo_url) {
+    console.log('Entry photo URL:', entry.photo_url, 'for entry:', entry.headline)
+  }
+  
   const imageUrl = entry.photo_url || getCategoryImage(entry.category)
   const formattedDate = formatEntryDateLong(entry.created_at)
   const shortDate = formatEntryDateShort(entry.created_at)
