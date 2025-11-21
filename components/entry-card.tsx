@@ -55,12 +55,19 @@ export function EntryCard({
             src={imageUrl} 
             alt={entry.photo_url ? entry.headline : `${entry.category} illustration`}
             loading="lazy"
+            crossOrigin="anonymous"
             onError={(e) => {
               if (isMounted) {
+                console.error('Image failed to load:', imageUrl, 'Entry:', entry.headline)
                 setImageError(true)
               } else {
                 // Hide broken image during SSR/hydration
                 e.currentTarget.style.display = 'none'
+              }
+            }}
+            onLoad={() => {
+              if (entry.photo_url) {
+                console.log('Photo loaded successfully:', imageUrl)
               }
             }}
           />
