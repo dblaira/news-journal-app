@@ -57,12 +57,10 @@ export function EntryCard({
             loading="lazy"
             crossOrigin="anonymous"
             onError={(e) => {
+              // Only handle errors after component is mounted to avoid hydration issues
               if (isMounted) {
                 console.error('Image failed to load:', imageUrl, 'Entry:', entry.headline)
                 setImageError(true)
-              } else {
-                // Hide broken image during SSR/hydration
-                e.currentTarget.style.display = 'none'
               }
             }}
             onLoad={() => {

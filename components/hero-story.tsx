@@ -73,11 +73,9 @@ export function HeroStory({
               alt={entry.photo_url ? entry.headline : `${entry.category} feature image`}
               loading="lazy"
               onError={(e) => {
+                // Only handle errors after component is mounted to avoid hydration issues
                 if (isMounted) {
                   setImageError(true)
-                } else {
-                  // Hide broken image during SSR/hydration
-                  e.currentTarget.style.display = 'none'
                 }
               }}
             />
