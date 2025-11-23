@@ -57,13 +57,12 @@ export function HeroStory({
           {imageError ? (
             <div style={{
               width: '100%',
-              height: '300px',
-              background: 'var(--bg-panel-alt)',
+              height: '100%',
+              background: '#000',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--text-muted)',
-              borderRadius: 'var(--radius-sm)',
+              color: '#999',
             }}>
               Image unavailable
             </div>
@@ -83,13 +82,12 @@ export function HeroStory({
         </div>
         <div className="hero-card__content">
           <div className="hero-card__meta">
-            <span>{entry.category}</span>
+            <span className="category-label">{entry.category}</span>
             <span>{formattedDate}</span>
           </div>
-          <span className="badge">Top Story</span>
           <h1>{entry.headline}</h1>
-          {entry.subheading && <p>{entry.subheading}</p>}
-          <p>{truncate(entry.content, 260)}</p>
+          {entry.subheading && <p style={{ fontSize: '1.2rem', fontStyle: 'italic', marginTop: '0.5rem' }}>{entry.subheading}</p>}
+          <p style={{ marginTop: '1rem' }}>{truncate(entry.content, 300)}</p>
           <div className="hero-actions">
             <button
               type="button"
@@ -103,6 +101,7 @@ export function HeroStory({
                 type="button"
                 className="btn-secondary"
                 onClick={() => onGenerateVersions(entry.id)}
+                style={{ color: 'var(--text-hero)', borderColor: 'rgba(255,255,255,0.3)' }}
               >
                 ✨ Generate Versions
               </button>

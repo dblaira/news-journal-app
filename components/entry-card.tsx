@@ -73,7 +73,7 @@ export function EntryCard({
       </div>
       <div className="entry-card__body">
         <div className="entry-card__meta">
-          <span>{entry.category}</span>
+          <span className="category-label">{entry.category}</span>
           <span>{shortDate}</span>
         </div>
         <h3 className="entry-headline">{entry.headline}</h3>

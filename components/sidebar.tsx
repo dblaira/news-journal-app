@@ -17,7 +17,7 @@ export function Sidebar({ trendingEntries, quickNotesEntries, onViewEntry }: Sid
     <aside className="sidebar">
       <div className="sidebar-block">
         <div className="sidebar-header">
-          <h3>Trending Headlines</h3>
+          <h3>Latest Stories</h3>
           <button
             className="sidebar-view-all"
             type="button"
@@ -33,15 +33,15 @@ export function Sidebar({ trendingEntries, quickNotesEntries, onViewEntry }: Sid
         <ul className="trending-list">
           {trending.length === 0 ? (
             <li className="trending-empty">
-              Your trending stories will appear once you add entries.
+              Your latest stories will appear once you add entries.
             </li>
           ) : (
             trending.map((entry, index) => (
               <li key={entry.id} className="trending-item">
-                <span className="trending-rank">
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+                  <span className="category-label" style={{ fontSize: '0.7rem', letterSpacing: '0.1rem', fontWeight: 700 }}>
+                    {entry.category}
+                  </span>
                   <button
                     type="button"
                     className="trending-headline"
@@ -50,35 +50,13 @@ export function Sidebar({ trendingEntries, quickNotesEntries, onViewEntry }: Sid
                     {entry.headline}
                   </button>
                   <span className="trending-meta">
-                    {formatEntryDateShort(entry.created_at)} · {entry.category}
+                    {formatEntryDateShort(entry.created_at)}
                   </span>
                 </div>
               </li>
             ))
           )}
         </ul>
-      </div>
-      <div className="sidebar-block">
-        <h3>Quick Notes</h3>
-        <div className="quick-notes">
-          {notes.length === 0 ? (
-            <p className="empty-note">
-              No notes yet. Create an entry to light up this space.
-            </p>
-          ) : (
-            notes.map((entry) => (
-              <article key={entry.id} className="quick-note">
-                <strong>
-                  {entry.category}
-                  {entry.isSample ? ' · Preview' : ''}
-                </strong>
-                {entry.subheading && ` — ${entry.subheading}`}
-                <br />
-                {truncate(entry.content, 120)}
-              </article>
-            ))
-          )}
-        </div>
       </div>
     </aside>
   )

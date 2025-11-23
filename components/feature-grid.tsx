@@ -36,7 +36,7 @@ export function FeatureGrid({ entries, onViewEntry }: FeatureGridProps) {
               />
             </div>
             <div className="story-meta">
-              <span>{entry.category}</span>
+              <span className="category-label">{entry.category}</span>
               <span>{formatEntryDateShort(entry.created_at)}</span>
             </div>
             <h3>{entry.headline}</h3>

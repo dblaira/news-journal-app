@@ -34,14 +34,14 @@ export function EntryFormModal({ onSuccess, onCancel }: EntryFormModalProps) {
     >
       <div
         style={{
-          background: 'var(--bg-panel)',
+          background: '#FFFFFF',
           maxWidth: '900px',
           width: '100%',
           marginTop: '2rem',
           marginBottom: '2rem',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border-color)',
-          boxShadow: 'var(--shadow-soft)',
+          borderRadius: 0,
+          border: 'none',
+          boxShadow: 'none',
           position: 'relative',
           maxHeight: 'calc(100vh - 4rem)',
           overflowY: 'auto',
@@ -54,40 +54,48 @@ export function EntryFormModal({ onSuccess, onCancel }: EntryFormModalProps) {
             position: 'absolute',
             top: '1.5rem',
             right: '1.5rem',
-            background: 'rgba(255, 255, 255, 0.1)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-color)',
+            background: 'transparent',
+            color: '#000000',
+            border: '1px solid rgba(0,0,0,0.2)',
             padding: '0.5rem 1rem',
             cursor: 'pointer',
-            fontSize: '0.9rem',
+            fontSize: '0.85rem',
             zIndex: 10,
-            borderRadius: 'var(--radius-xs)',
+            borderRadius: 0,
             fontWeight: 600,
+            letterSpacing: '0.05rem',
+            textTransform: 'uppercase',
             transition: 'all 0.2s ease',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
+            e.currentTarget.style.background = '#DC143C'
+            e.currentTarget.style.color = '#FFFFFF'
+            e.currentTarget.style.borderColor = '#DC143C'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.color = '#000000'
+            e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'
           }}
         >
           ✕ Close
         </button>
         
         <div style={{ padding: '2.5rem' }}>
-          <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+          <div style={{ marginBottom: '2rem', textAlign: 'left' }}>
             <h1
               style={{
-                fontSize: '2rem',
+                fontSize: '2.5rem',
                 fontFamily: "'Playfair Display', serif",
-                color: 'var(--text-primary)',
+                color: '#000000',
                 marginBottom: '0.5rem',
+                fontWeight: 400,
+                letterSpacing: '-0.02em',
               }}
             >
               Write Your Headline
             </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+            <p style={{ color: '#666666', fontSize: '1rem' }}>
               Capture your story, your way
             </p>
           </div>

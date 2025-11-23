@@ -44,31 +44,44 @@ export function EntryModal({
     >
       <div
         style={{
-          background: 'white',
+          background: '#FFFFFF',
           maxWidth: '900px',
           width: '100%',
           maxHeight: '90vh',
           overflowY: 'auto',
           padding: '3rem',
           position: 'relative',
-          borderRadius: '8px',
+          borderRadius: 0,
         }}
       >
         <button
           onClick={onClose}
           style={{
             position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            background: '#000',
-            color: 'white',
-            border: 'none',
-            padding: '0.6rem 1.2rem',
+            top: '1.5rem',
+            right: '1.5rem',
+            background: 'transparent',
+            color: '#000000',
+            border: '1px solid rgba(0,0,0,0.2)',
+            padding: '0.5rem 1rem',
             cursor: 'pointer',
-            fontSize: '1rem',
+            fontSize: '0.85rem',
             zIndex: 10,
-            borderRadius: '4px',
+            borderRadius: 0,
             fontWeight: 600,
+            letterSpacing: '0.05rem',
+            textTransform: 'uppercase',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#DC143C'
+            e.currentTarget.style.color = '#FFFFFF'
+            e.currentTarget.style.borderColor = '#DC143C'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.color = '#000000'
+            e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'
           }}
         >
           Close
@@ -77,10 +90,11 @@ export function EntryModal({
         <div style={{ marginBottom: '1rem' }}>
           <span
             style={{
-              fontSize: '0.75rem',
+              fontSize: '0.7rem',
               fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '1px',
+              letterSpacing: '0.1rem',
+              color: '#DC143C',
             }}
           >
             {entry.category}
@@ -89,10 +103,13 @@ export function EntryModal({
 
         <h2
           style={{
-            fontSize: '2.5rem',
-            fontWeight: 700,
-            lineHeight: 1.2,
+            fontSize: '2.8rem',
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 400,
+            lineHeight: 1.15,
             marginBottom: '0.5rem',
+            letterSpacing: '-0.02em',
+            color: '#000000',
           }}
         >
           {entry.headline}
@@ -272,15 +289,24 @@ export function EntryModal({
                 onGenerateVersions(entry.id)
               }}
               style={{
-                background: '#4CAF50',
-                color: 'white',
+                background: '#DC143C',
+                color: '#FFFFFF',
                 border: 'none',
-                padding: '1rem 2rem',
-                fontSize: '1rem',
+                padding: '0.8rem 1.8rem',
+                fontSize: '0.85rem',
                 fontWeight: 600,
-                borderRadius: '4px',
+                letterSpacing: '0.08rem',
+                textTransform: 'uppercase',
+                borderRadius: 0,
                 cursor: 'pointer',
                 marginRight: '1rem',
+                transition: 'background 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#B01030'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#DC143C'
               }}
             >
               ✨ Generate Versions Now
@@ -312,14 +338,27 @@ export function EntryModal({
                 }
               }}
               style={{
-                background: '#2196F3',
-                color: 'white',
-                border: 'none',
-                padding: '1rem 2rem',
-                fontSize: '1rem',
+                background: 'transparent',
+                color: '#000000',
+                border: '1px solid rgba(0,0,0,0.2)',
+                padding: '0.8rem 1.8rem',
+                fontSize: '0.85rem',
                 fontWeight: 600,
-                borderRadius: '4px',
+                letterSpacing: '0.08rem',
+                textTransform: 'uppercase',
+                borderRadius: 0,
                 cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#DC143C'
+                e.currentTarget.style.color = '#FFFFFF'
+                e.currentTarget.style.borderColor = '#DC143C'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = '#000000'
+                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'
               }}
             >
               📄 Export PDF
