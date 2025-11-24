@@ -242,6 +242,20 @@ export function JournalPageClient({
         Logout
       </button>
 
+      <div className="hero-section-wrapper">
+        <CategoryNav
+          currentFilter={currentFilter}
+          onFilterChange={setCurrentFilter}
+        />
+
+        <HeroStory
+          entry={filtered[0] || null}
+          onCreateEntry={handleCreateEntry}
+          onViewEntry={handleViewEntry}
+          onGenerateVersions={handleGenerateVersions}
+        />
+      </div>
+
       {weeklyTheme ? (
         <WeeklyThemeBanner
           theme={weeklyTheme}
@@ -296,18 +310,7 @@ export function JournalPageClient({
         </div>
       )}
 
-      <CategoryNav
-        currentFilter={currentFilter}
-        onFilterChange={setCurrentFilter}
-      />
-
       <main className="page-content">
-        <HeroStory
-          entry={filtered[0] || null}
-          onCreateEntry={handleCreateEntry}
-          onViewEntry={handleViewEntry}
-          onGenerateVersions={handleGenerateVersions}
-        />
 
         <section className="front-grid">
           <FeatureGrid

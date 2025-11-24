@@ -42,6 +42,7 @@ export function HeroStory({
               </button>
             </div>
           </div>
+          <div className="hero-card__media" style={{ background: '#000' }}></div>
         </div>
       </section>
     )
@@ -53,33 +54,6 @@ export function HeroStory({
   return (
     <section className="hero-section">
       <div className="hero-card">
-        <div className="hero-card__media">
-          {imageError ? (
-            <div style={{
-              width: '100%',
-              height: '100%',
-              background: '#000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#999',
-            }}>
-              Image unavailable
-            </div>
-          ) : (
-            <img 
-              src={imageUrl} 
-              alt={entry.photo_url ? entry.headline : `${entry.category} feature image`}
-              loading="lazy"
-              onError={(e) => {
-                // Only handle errors after component is mounted to avoid hydration issues
-                if (isMounted) {
-                  setImageError(true)
-                }
-              }}
-            />
-          )}
-        </div>
         <div className="hero-card__content">
           <div className="hero-card__meta">
             <span className="category-label">{entry.category}</span>
@@ -107,6 +81,33 @@ export function HeroStory({
               </button>
             )}
           </div>
+        </div>
+        <div className="hero-card__media">
+          {imageError ? (
+            <div style={{
+              width: '100%',
+              height: '100%',
+              background: '#000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#999',
+            }}>
+              Image unavailable
+            </div>
+          ) : (
+            <img 
+              src={imageUrl} 
+              alt={entry.photo_url ? entry.headline : `${entry.category} feature image`}
+              loading="lazy"
+              onError={(e) => {
+                // Only handle errors after component is mounted to avoid hydration issues
+                if (isMounted) {
+                  setImageError(true)
+                }
+              }}
+            />
+          )}
         </div>
       </div>
     </section>
