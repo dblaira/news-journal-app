@@ -14,6 +14,7 @@ export interface Entry {
   photo_url?: string
   photo_processed?: boolean
   week_theme_id?: string
+  view_count?: number
 }
 
 export interface Version {

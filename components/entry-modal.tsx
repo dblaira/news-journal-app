@@ -1,8 +1,10 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Entry, Version } from '@/types'
 import { formatEntryDateLong } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
+import { incrementViewCount } from '@/app/actions/entries'
 
 interface EntryModalProps {
   entry: Entry
@@ -18,6 +20,13 @@ export function EntryModal({
   const formattedDate = formatEntryDateLong(entry.created_at)
   const hasVersions = Array.isArray(entry.versions) && entry.versions.length > 0
   const isGenerating = entry.generating_versions
+
+  // Track view when modal opens
+  useEffect(() => {
+    incrementViewCount(entry.id).catch((error) => {
+      console.error('Failed to increment view count:', error)
+    })
+  }, [entry.id])
 
   return (
     <div

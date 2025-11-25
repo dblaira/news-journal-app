@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { JournalPageClient } from '@/components/journal-page-client'
 import { Entry, WeeklyTheme } from '@/types'
-import { getCurrentWeeklyTheme } from '@/app/actions/entries'
+import { getCurrentWeeklyTheme, getLatestEntryPerCategory, getLatestEntries, getTrendingEntries } from '@/app/actions/entries'
 
 async function getEntries(userId: string): Promise<Entry[]> {
   const supabase = createClient()
@@ -37,6 +37,11 @@ export default async function HomePage({
   const entries = await getEntries(user.id)
   const searchQuery = searchParams.search?.toLowerCase() || ''
   const currentTheme = await getCurrentWeeklyTheme(user.id)
+  
+  // Fetch data for 3-column layout
+  const categoryEntries = await getLatestEntryPerCategory(user.id)
+  const latestEntries = await getLatestEntries(user.id, 20)
+  const trendingEntries = await getTrendingEntries(user.id, 10)
 
   return (
     <JournalPageClient
@@ -44,6 +49,9 @@ export default async function HomePage({
       initialSearchQuery={searchQuery}
       userId={user.id}
       initialWeeklyTheme={currentTheme}
+      categoryEntries={categoryEntries}
+      latestEntries={latestEntries}
+      trendingEntries={trendingEntries}
     />
   )
 }

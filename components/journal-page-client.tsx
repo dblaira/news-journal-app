@@ -8,10 +8,7 @@ import { MindsetBanner } from './mindset-banner'
 import { WeeklyThemeBanner } from './weekly-theme-banner'
 import { CategoryNav } from './category-nav'
 import { HeroStory } from './hero-story'
-import { FeatureGrid } from './feature-grid'
-import { Sidebar } from './sidebar'
-import { ConnectionGrid } from './connection-grid'
-import { EntriesFeed } from './entries-feed'
+import { VanityFairLayout } from './vanity-fair-layout'
 import { EntryFormModal } from './entry-form-modal'
 import { EntryModal } from './entry-modal'
 import { deriveMindsetPreset } from '@/lib/mindset'
@@ -24,6 +21,9 @@ interface JournalPageClientProps {
   initialSearchQuery: string
   userId: string
   initialWeeklyTheme?: WeeklyTheme | null
+  categoryEntries: Entry[]
+  latestEntries: Entry[]
+  trendingEntries: Entry[]
 }
 
 export function JournalPageClient({
@@ -31,6 +31,9 @@ export function JournalPageClient({
   initialSearchQuery,
   userId,
   initialWeeklyTheme,
+  categoryEntries,
+  latestEntries,
+  trendingEntries,
 }: JournalPageClientProps) {
   const router = useRouter()
   const [entries, setEntries] = useState<Entry[]>(initialEntries)
@@ -310,47 +313,17 @@ export function JournalPageClient({
         </div>
       )}
 
-      <main className="page-content">
+      {/* 3-Column Vanity Fair Layout */}
+      <VanityFairLayout
+        categoryEntries={categoryEntries}
+        latestEntries={latestEntries}
+        trendingEntries={trendingEntries}
+        onViewEntry={handleViewEntry}
+      />
 
-        <section className="front-grid">
-          <FeatureGrid
-            entries={filtered.slice(1)}
-            onViewEntry={handleViewEntry}
-          />
-          <Sidebar
-            trendingEntries={filtered}
-            quickNotesEntries={filtered}
-            onViewEntry={handleViewEntry}
-          />
-        </section>
-
-        <section className="connection-station">
-          <div className="section-header">
-            <h2>Connection Station</h2>
-            <p className="section-lede">
-              Moments stitched from across your categories.
-            </p>
-          </div>
-          <ConnectionGrid entries={entries} onViewEntry={handleViewEntry} />
-        </section>
-
-        <section className="latest-section">
-          <div className="section-header">
-            <h2>Latest Dispatches</h2>
-            <p className="section-lede">Everyday moments, headline worthy.</p>
-          </div>
-          <EntriesFeed
-            entries={filtered}
-            onViewEntry={handleViewEntry}
-            onGenerateVersions={handleGenerateVersions}
-            onDeleteEntry={handleDeleteEntry}
-          />
-        </section>
-
-        {showForm && (
-          <EntryFormModal onSuccess={handleFormSuccess} onCancel={handleFormCancel} />
-        )}
-      </main>
+      {showForm && (
+        <EntryFormModal onSuccess={handleFormSuccess} onCancel={handleFormCancel} />
+      )}
 
       <footer>
         <p>&copy; 2025 Adam Daily. Your story, your way.</p>

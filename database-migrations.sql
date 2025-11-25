@@ -60,3 +60,10 @@ CREATE POLICY "Users can delete own weekly themes"
 -- Users can read photos from their own folder
 -- Note: Adjust these policies based on your storage setup preferences
 
+-- 9. Add view_count column to entries table for tracking popularity
+ALTER TABLE entries 
+  ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0;
+
+-- 10. Create index for view_count to optimize trending queries
+CREATE INDEX IF NOT EXISTS idx_entries_view_count ON entries(view_count DESC, created_at DESC);
+

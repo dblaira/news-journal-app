@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { CreateEntryInput, WeeklyTheme } from '@/types'
+import { CreateEntryInput, WeeklyTheme, Entry } from '@/types'
 
 export async function createEntry(input: CreateEntryInput) {
   const supabase = createClient()
@@ -178,5 +178,105 @@ export async function getCurrentWeeklyTheme(userId: string): Promise<WeeklyTheme
   }
 
   return data as WeeklyTheme
+}
+
+export async function incrementViewCount(entryId: string) {
+  const supabase = createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // First, get the current view count
+  const { data: entry, error: fetchError } = await supabase
+    .from('entries')
+    .select('view_count')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError) {
+    return { error: fetchError.message }
+  }
+
+  // Increment the view count
+  const { error } = await supabase
+    .from('entries')
+    .update({
+      view_count: (entry.view_count || 0) + 1,
+    })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { success: true }
+}
+
+export async function getLatestEntryPerCategory(userId: string): Promise<Entry[]> {
+  const supabase = createClient()
+  const categories: Entry['category'][] = ['Business', 'Finance', 'Health', 'Spiritual', 'Fun', 'Social', 'Romance']
+  
+  const entries: Entry[] = []
+  
+  for (const category of categories) {
+    const { data, error } = await supabase
+      .from('entries')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('category', category)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    
+    if (!error && data) {
+      entries.push(data as Entry)
+    }
+  }
+  
+  return entries
+}
+
+export async function getTrendingEntries(userId: string, limit: number = 10): Promise<Entry[]> {
+  const supabase = createClient()
+  
+  const { data, error } = await supabase
+    .from('entries')
+    .select('*')
+    .eq('user_id', userId)
+    .order('view_count', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  
+  if (error) {
+    console.error('Error fetching trending entries:', error)
+    return []
+  }
+  
+  return (data as Entry[]) || []
+}
+
+export async function getLatestEntries(userId: string, limit: number = 20): Promise<Entry[]> {
+  const supabase = createClient()
+  
+  const { data, error } = await supabase
+    .from('entries')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  
+  if (error) {
+    console.error('Error fetching latest entries:', error)
+    return []
+  }
+  
+  return (data as Entry[]) || []
 }
 
