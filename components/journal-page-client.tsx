@@ -132,6 +132,22 @@ export function JournalPageClient({
     router.refresh()
   }
 
+  const handlePhotoUpdated = (entryId: string, photoUrl: string | null) => {
+    // Update entry in local state
+    const updatedEntries = entries.map((e) =>
+      e.id === entryId ? { ...e, photo_url: photoUrl || undefined } : e
+    )
+    setEntries(updatedEntries)
+    
+    // Update selected entry if it's the one being modified
+    if (selectedEntry?.id === entryId) {
+      setSelectedEntry({ ...selectedEntry, photo_url: photoUrl || undefined })
+    }
+    
+    // Refresh to update the 3-column layout
+    router.refresh()
+  }
+
   const handleGenerateVersions = async (id: string) => {
     const entry = entries.find((e) => e.id === id)
     if (!entry) return
@@ -338,6 +354,7 @@ export function JournalPageClient({
           onClose={handleCloseModal}
           onGenerateVersions={handleGenerateVersions}
           onDeleteEntry={handleDeleteEntry}
+          onPhotoUpdated={handlePhotoUpdated}
         />
       )}
     </div>

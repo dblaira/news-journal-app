@@ -280,3 +280,60 @@ export async function getLatestEntries(userId: string, limit: number = 20): Prom
   return (data as Entry[]) || []
 }
 
+export async function removeEntryPhoto(entryId: string) {
+  const supabase = createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Update entry to remove photo URL
+  const { error } = await supabase
+    .from('entries')
+    .update({
+      photo_url: null,
+      photo_processed: false,
+    })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/')
+  return { success: true }
+}
+
+export async function updateEntryPhoto(entryId: string, photoUrl: string) {
+  const supabase = createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  const { error } = await supabase
+    .from('entries')
+    .update({
+      photo_url: photoUrl,
+      photo_processed: true,
+    })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/')
+  return { success: true }
+}
+

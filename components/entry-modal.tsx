@@ -1,16 +1,17 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Entry, Version } from '@/types'
 import { formatEntryDateLong } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
-import { incrementViewCount } from '@/app/actions/entries'
+import { incrementViewCount, removeEntryPhoto } from '@/app/actions/entries'
 
 interface EntryModalProps {
   entry: Entry
   onClose: () => void
   onGenerateVersions: (id: string) => void
   onDeleteEntry: (id: string) => void
+  onPhotoUpdated?: (entryId: string, photoUrl: string | null) => void
 }
 
 export function EntryModal({
@@ -18,10 +19,16 @@ export function EntryModal({
   onClose,
   onGenerateVersions,
   onDeleteEntry,
+  onPhotoUpdated,
 }: EntryModalProps) {
   const formattedDate = formatEntryDateLong(entry.created_at)
   const hasVersions = Array.isArray(entry.versions) && entry.versions.length > 0
   const isGenerating = entry.generating_versions
+  
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
+  const [isRemovingPhoto, setIsRemovingPhoto] = useState(false)
+  const [currentPhotoUrl, setCurrentPhotoUrl] = useState(entry.photo_url)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Track view when modal opens
   useEffect(() => {
@@ -29,6 +36,65 @@ export function EntryModal({
       console.error('Failed to increment view count:', error)
     })
   }, [entry.id])
+
+  // Update local photo URL when entry changes
+  useEffect(() => {
+    setCurrentPhotoUrl(entry.photo_url)
+  }, [entry.photo_url])
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingPhoto(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('entryId', entry.id)
+
+      const response = await fetch('/api/upload-photo', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to upload photo')
+      }
+
+      const data = await response.json()
+      setCurrentPhotoUrl(data.photoUrl)
+      onPhotoUpdated?.(entry.id, data.photoUrl)
+    } catch (error: any) {
+      console.error('Error uploading photo:', error)
+      alert(`Failed to upload photo: ${error.message || 'Unknown error'}`)
+    } finally {
+      setIsUploadingPhoto(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleRemovePhoto = async () => {
+    if (!confirm('Are you sure you want to remove this photo?')) return
+
+    setIsRemovingPhoto(true)
+    try {
+      const result = await removeEntryPhoto(entry.id)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+      setCurrentPhotoUrl(undefined)
+      onPhotoUpdated?.(entry.id, null)
+    } catch (error: any) {
+      console.error('Error removing photo:', error)
+      alert(`Failed to remove photo: ${error.message || 'Unknown error'}`)
+    } finally {
+      setIsRemovingPhoto(false)
+    }
+  }
 
   return (
     <div
@@ -170,24 +236,128 @@ export function EntryModal({
           </p>
         )}
 
-        {entry.photo_url && (
-          <div style={{ marginBottom: '2rem' }}>
-            <img
-              src={entry.photo_url}
-              alt={entry.headline}
-              onError={(e) => {
-                console.error('Image failed to load:', entry.photo_url)
-                e.currentTarget.style.display = 'none'
-              }}
+        {/* Hidden file input for photo upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
+          onChange={handlePhotoUpload}
+          style={{ display: 'none' }}
+        />
+
+        {/* Photo Section */}
+        <div style={{ marginBottom: '2rem' }}>
+          {currentPhotoUrl ? (
+            <>
+              <img
+                src={currentPhotoUrl}
+                alt={entry.headline}
+                onError={(e) => {
+                  console.error('Image failed to load:', currentPhotoUrl)
+                  e.currentTarget.style.display = 'none'
+                }}
+                style={{
+                  width: '100%',
+                  maxHeight: '400px',
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                }}
+              />
+              <div style={{ 
+                marginTop: '0.75rem', 
+                display: 'flex', 
+                gap: '0.5rem',
+                flexWrap: 'wrap'
+              }}>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingPhoto}
+                  style={{
+                    background: 'transparent',
+                    color: '#666',
+                    border: '1px solid #ddd',
+                    padding: '0.4rem 0.8rem',
+                    cursor: isUploadingPhoto ? 'not-allowed' : 'pointer',
+                    fontSize: '0.75rem',
+                    borderRadius: '4px',
+                    fontWeight: 500,
+                    transition: 'all 0.2s ease',
+                    opacity: isUploadingPhoto ? 0.6 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isUploadingPhoto) {
+                      e.currentTarget.style.borderColor = '#DC143C'
+                      e.currentTarget.style.color = '#DC143C'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#ddd'
+                    e.currentTarget.style.color = '#666'
+                  }}
+                >
+                  {isUploadingPhoto ? 'Uploading...' : 'Change Photo'}
+                </button>
+                <button
+                  onClick={handleRemovePhoto}
+                  disabled={isRemovingPhoto}
+                  style={{
+                    background: 'transparent',
+                    color: '#DC143C',
+                    border: '1px solid #DC143C',
+                    padding: '0.4rem 0.8rem',
+                    cursor: isRemovingPhoto ? 'not-allowed' : 'pointer',
+                    fontSize: '0.75rem',
+                    borderRadius: '4px',
+                    fontWeight: 500,
+                    transition: 'all 0.2s ease',
+                    opacity: isRemovingPhoto ? 0.6 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isRemovingPhoto) {
+                      e.currentTarget.style.background = '#DC143C'
+                      e.currentTarget.style.color = '#FFFFFF'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.color = '#DC143C'
+                  }}
+                >
+                  {isRemovingPhoto ? 'Removing...' : 'Remove Photo'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingPhoto}
               style={{
                 width: '100%',
-                maxHeight: '400px',
-                objectFit: 'cover',
+                padding: '2rem',
+                background: '#f8f9fb',
+                border: '2px dashed #ddd',
                 borderRadius: '8px',
+                cursor: isUploadingPhoto ? 'not-allowed' : 'pointer',
+                color: '#666',
+                fontSize: '0.9rem',
+                transition: 'all 0.2s ease',
+                opacity: isUploadingPhoto ? 0.6 : 1,
               }}
-            />
-          </div>
-        )}
+              onMouseEnter={(e) => {
+                if (!isUploadingPhoto) {
+                  e.currentTarget.style.borderColor = '#DC143C'
+                  e.currentTarget.style.color = '#DC143C'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#ddd'
+                e.currentTarget.style.color = '#666'
+              }}
+            >
+              {isUploadingPhoto ? 'Uploading...' : '📷 Click to Add Photo'}
+            </button>
+          )}
+        </div>
 
         <div
           style={{
