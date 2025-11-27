@@ -10,12 +10,14 @@ interface EntryModalProps {
   entry: Entry
   onClose: () => void
   onGenerateVersions: (id: string) => void
+  onDeleteEntry: (id: string) => void
 }
 
 export function EntryModal({
   entry,
   onClose,
   onGenerateVersions,
+  onDeleteEntry,
 }: EntryModalProps) {
   const formattedDate = formatEntryDateLong(entry.created_at)
   const hasVersions = Array.isArray(entry.versions) && entry.versions.length > 0
@@ -63,38 +65,69 @@ export function EntryModal({
           borderRadius: 0,
         }}
       >
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '1.5rem',
-            right: '1.5rem',
-            background: 'transparent',
-            color: '#000000',
-            border: '1px solid rgba(0,0,0,0.2)',
-            padding: '0.5rem 1rem',
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-            zIndex: 10,
-            borderRadius: 0,
-            fontWeight: 600,
-            letterSpacing: '0.05rem',
-            textTransform: 'uppercase',
-            transition: 'all 0.2s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#DC143C'
-            e.currentTarget.style.color = '#FFFFFF'
-            e.currentTarget.style.borderColor = '#DC143C'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent'
-            e.currentTarget.style.color = '#000000'
-            e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'
-          }}
-        >
-          Close
-        </button>
+        <div style={{
+          position: 'absolute',
+          top: '1.5rem',
+          right: '1.5rem',
+          display: 'flex',
+          gap: '0.5rem',
+          zIndex: 10,
+        }}>
+          <button
+            onClick={() => onDeleteEntry(entry.id)}
+            style={{
+              background: 'transparent',
+              color: '#DC143C',
+              border: '1px solid #DC143C',
+              padding: '0.5rem 1rem',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              borderRadius: 0,
+              fontWeight: 600,
+              letterSpacing: '0.05rem',
+              textTransform: 'uppercase',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#DC143C'
+              e.currentTarget.style.color = '#FFFFFF'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = '#DC143C'
+            }}
+          >
+            Delete
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              color: '#000000',
+              border: '1px solid rgba(0,0,0,0.2)',
+              padding: '0.5rem 1rem',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              borderRadius: 0,
+              fontWeight: 600,
+              letterSpacing: '0.05rem',
+              textTransform: 'uppercase',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#DC143C'
+              e.currentTarget.style.color = '#FFFFFF'
+              e.currentTarget.style.borderColor = '#DC143C'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = '#000000'
+              e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'
+            }}
+          >
+            Close
+          </button>
+        </div>
 
         <div style={{ marginBottom: '1rem' }}>
           <span

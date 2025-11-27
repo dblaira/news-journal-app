@@ -115,7 +115,7 @@ export function JournalPageClient({
   }
 
   const handleDeleteEntry = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this entry?')) return
+    if (!confirm('Are you sure you want to delete this entry? This action cannot be undone.')) return
 
     const result = await deleteEntry(id)
     if (result.error) {
@@ -127,6 +127,9 @@ export function JournalPageClient({
     if (selectedEntry?.id === id) {
       setSelectedEntry(null)
     }
+    
+    // Refresh the page to update the 3-column layout data
+    router.refresh()
   }
 
   const handleGenerateVersions = async (id: string) => {
@@ -334,6 +337,7 @@ export function JournalPageClient({
           entry={selectedEntry}
           onClose={handleCloseModal}
           onGenerateVersions={handleGenerateVersions}
+          onDeleteEntry={handleDeleteEntry}
         />
       )}
     </div>
