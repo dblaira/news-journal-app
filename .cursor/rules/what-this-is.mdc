@@ -1,0 +1,56 @@
+# Adam Daily - Project Rules
+
+## What This Is
+
+A personal journal app that transforms daily entries into a "newsroom" experience. The user logs reflections throughout the day; AI rewrites them in different voices to expand clarity and emotional resonance. Part of the "Presence Infrastructure" suite—tools that watch while you live.
+
+## Core Concept
+
+- User writes journal entries with: headline, category, subheading, content, mood
+- Categories: Business, Finance, Health, Spiritual, Fun, Social, Romance
+- AI generates 4 voice versions: poetic, news feature, humorous, literary
+- Weekly themes synthesize 7 entries into a unifying narrative
+- "Apple Music Tuesday" concept: scheduled drops create ritual/anticipation
+
+## Tech Stack
+
+- Next.js 14 App Router + TypeScript
+- Supabase (PostgreSQL, Auth, Storage)
+- Anthropic Claude API (claude-sonnet-4-20250514)
+- Vercel (hosting, cron jobs)
+- Sharp for image processing
+
+## Key Patterns
+
+### Data Model
+- Entries have a `versions` array (4 AI-generated rewrites)
+- Track `generating_versions` boolean during AI processing
+- Filter all queries by `user_id` (RLS enforced)
+- Weekly themes stored separately, linked to 7 entries
+
+### AI Generation
+- Use Vercel Cron for nightly batch generation
+- Single API call for weekly theme (analyzes 7 entries together)
+- Show loading states during generation
+- Cache generated versions; only regenerate if content changes
+
+### File Conventions
+- Lowercase with dashes: `components/entry-card/`
+- Server-only utilities: `.server.ts`
+- Client components only when needed: `.client.tsx`
+- Named exports preferred
+
+### Code Style
+- Functional components, TypeScript interfaces
+- Zod for validation
+- Early returns, guard clauses
+- No semicolons
+- Descriptive booleans: `isLoading`, `hasError`, `isGenerating`
+
+## When Building Features
+
+Ask: "Does this help capture potential that would otherwise slip away?"
+
+The user is an Energetic Logger Who Doesn't Look Back—they'll input freely but won't swim upstream to analyze. Insights must surface automatically. Speed is the juice.---
+alwaysApply: true
+---
