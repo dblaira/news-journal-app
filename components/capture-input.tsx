@@ -60,7 +60,8 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
   }
 
   const handleSubmit = async () => {
-    const content = text.trim()
+    // Use transcript in voice mode, text otherwise
+    const content = mode === 'voice' ? transcript.trim() : text.trim()
     if (!content) {
       setError('Please enter some text first.')
       return
