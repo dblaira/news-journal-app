@@ -60,13 +60,24 @@ export function CaptureFAB({ onEntryCreated }: CaptureFABProps) {
       }
 
       // Upload photo if provided
+      let photoUploadFailed = false
       if (data.photo && result.data) {
-        await uploadPhoto(data.photo, result.data.id)
+        const photoError = await uploadPhoto(data.photo, result.data.id)
+        if (photoError) {
+          photoUploadFailed = true
+        }
       }
 
-      // Success
+      // Success - close and refresh
       handleClose()
       onEntryCreated()
+
+      // Notify user if photo upload failed (after modal closes so they see it)
+      if (photoUploadFailed) {
+        setTimeout(() => {
+          alert('Your entry was published, but the photo failed to upload. You can add a photo by opening the entry.')
+        }, 100)
+      }
     } catch (error: any) {
       console.error('Error publishing entry:', error)
       alert(`Failed to publish: ${error.message || 'Unknown error'}`)
@@ -75,7 +86,7 @@ export function CaptureFAB({ onEntryCreated }: CaptureFABProps) {
     }
   }
 
-  const uploadPhoto = async (photo: File, entryId: string) => {
+  const uploadPhoto = async (photo: File, entryId: string): Promise<string | null> => {
     try {
       const formData = new FormData()
       formData.append('file', photo)
@@ -89,9 +100,12 @@ export function CaptureFAB({ onEntryCreated }: CaptureFABProps) {
       if (!photoResponse.ok) {
         const errorData = await photoResponse.json()
         console.error('Photo upload failed:', errorData)
+        return errorData.error || 'Upload failed'
       }
-    } catch (photoErr) {
+      return null // Success
+    } catch (photoErr: any) {
       console.error('Error uploading photo:', photoErr)
+      return photoErr.message || 'Network error'
     }
   }
 

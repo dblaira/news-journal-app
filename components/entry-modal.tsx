@@ -32,8 +32,10 @@ export function EntryModal({
 
   // Track view when modal opens
   useEffect(() => {
-    incrementViewCount(entry.id).catch((error) => {
-      console.error('Failed to increment view count:', error)
+    incrementViewCount(entry.id).then((result) => {
+      if (result.error) {
+        console.error('Failed to increment view count:', result.error)
+      }
     })
   }, [entry.id])
 
