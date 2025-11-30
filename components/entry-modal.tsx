@@ -32,11 +32,15 @@ export function EntryModal({
 
   // Track view when modal opens
   useEffect(() => {
-    incrementViewCount(entry.id).then((result) => {
-      if (result.error) {
-        console.error('Failed to increment view count:', result.error)
-      }
-    })
+    incrementViewCount(entry.id)
+      .then((result) => {
+        if (result.error) {
+          console.error('Failed to increment view count:', result.error)
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to increment view count:', error)
+      })
   }, [entry.id])
 
   // Update local photo URL when entry changes

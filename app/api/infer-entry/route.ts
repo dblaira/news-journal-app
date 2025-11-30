@@ -94,7 +94,18 @@ Return ONLY valid JSON with no additional text, markdown, or explanation:
   }
 
   const data = await response.json()
-  const text = data.content[0].text.trim()
+  
+  // Validate response structure
+  if (!data.content || !Array.isArray(data.content) || data.content.length === 0) {
+    throw new Error('Invalid API response: missing content array')
+  }
+  
+  const firstContent = data.content[0]
+  if (!firstContent || typeof firstContent.text !== 'string') {
+    throw new Error('Invalid API response: missing text in content')
+  }
+  
+  const text = firstContent.text.trim()
 
   // Parse JSON response
   try {
