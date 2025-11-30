@@ -11,6 +11,7 @@ import { HeroStory } from './hero-story'
 import { VanityFairLayout } from './vanity-fair-layout'
 import { EntryFormModal } from './entry-form-modal'
 import { EntryModal } from './entry-modal'
+import { CaptureFAB } from './capture-fab'
 import { deriveMindsetPreset } from '@/lib/mindset'
 import { formatEntryDateLong } from '@/lib/utils'
 import { deleteEntry, updateEntryVersions, generateWeeklyTheme } from '@/app/actions/entries'
@@ -95,6 +96,11 @@ export function JournalPageClient({
 
   const handleFormSuccess = () => {
     setShowForm(false)
+    router.refresh()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleEntryCreated = () => {
     router.refresh()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -340,13 +346,17 @@ export function JournalPageClient({
         onViewEntry={handleViewEntry}
       />
 
-      {showForm && (
-        <EntryFormModal onSuccess={handleFormSuccess} onCancel={handleFormCancel} />
-      )}
-
       <footer>
         <p>&copy; 2025 Adam Daily. Your story, your way.</p>
       </footer>
+
+      {/* Floating Action Button for Quick Capture */}
+      <CaptureFAB onEntryCreated={handleEntryCreated} />
+
+      {/* Legacy form modal - kept as backup, triggered by header button */}
+      {showForm && (
+        <EntryFormModal onSuccess={handleFormSuccess} onCancel={handleFormCancel} />
+      )}
 
       {selectedEntry && (
         <EntryModal

@@ -1,0 +1,502 @@
+'use client'
+
+import { useState, useRef } from 'react'
+import { Entry } from '@/types'
+
+interface InferredData {
+  headline: string
+  subheading: string
+  category: Entry['category']
+  mood: string
+  content: string
+}
+
+interface CaptureConfirmationProps {
+  data: InferredData
+  onPublish: (data: InferredData & { photo?: File }) => void
+  onBack: () => void
+  isPublishing: boolean
+}
+
+const categories: Entry['category'][] = [
+  'Business',
+  'Finance',
+  'Health',
+  'Spiritual',
+  'Fun',
+  'Social',
+  'Romance',
+]
+
+export function CaptureConfirmation({
+  data,
+  onPublish,
+  onBack,
+  isPublishing,
+}: CaptureConfirmationProps) {
+  const [headline, setHeadline] = useState(data.headline)
+  const [subheading, setSubheading] = useState(data.subheading)
+  const [category, setCategory] = useState(data.category)
+  const [mood, setMood] = useState(data.mood)
+  const [content, setContent] = useState(data.content)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [editingField, setEditingField] = useState<string | null>(null)
+  
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setPhotoFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemovePhoto = () => {
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handlePublish = () => {
+    onPublish({
+      headline,
+      subheading,
+      category,
+      mood,
+      content,
+      photo: photoFile || undefined,
+    })
+  }
+
+  const fieldStyle = {
+    background: 'transparent',
+    border: 'none',
+    borderBottom: '1px solid transparent',
+    padding: '0.25rem 0',
+    width: '100%',
+    fontSize: 'inherit',
+    fontFamily: 'inherit',
+    color: 'inherit',
+    outline: 'none',
+    transition: 'border-color 0.2s ease',
+  }
+
+  const fieldHoverStyle = {
+    borderBottomColor: '#DC143C',
+    cursor: 'text',
+  }
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.9)',
+        zIndex: 3000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        overflowY: 'auto',
+      }}
+    >
+      <div
+        style={{
+          background: '#FFFFFF',
+          maxWidth: '700px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          padding: '2.5rem',
+          position: 'relative',
+        }}
+      >
+        {/* Header */}
+        <div style={{ marginBottom: '2rem' }}>
+          <span
+            style={{
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1rem',
+              color: '#DC143C',
+            }}
+          >
+            Review Your Entry
+          </span>
+        </div>
+
+        {/* Headline - Editable */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label
+            style={{
+              fontSize: '0.65rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08rem',
+              color: '#999',
+              display: 'block',
+              marginBottom: '0.25rem',
+            }}
+          >
+            Headline
+          </label>
+          <input
+            type="text"
+            value={headline}
+            onChange={(e) => setHeadline(e.target.value)}
+            onFocus={() => setEditingField('headline')}
+            onBlur={() => setEditingField(null)}
+            style={{
+              ...fieldStyle,
+              fontSize: '2rem',
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 400,
+              lineHeight: 1.2,
+              borderBottomColor: editingField === 'headline' ? '#DC143C' : 'transparent',
+            }}
+            onMouseEnter={(e) => {
+              if (editingField !== 'headline') {
+                e.currentTarget.style.borderBottomColor = '#ddd'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (editingField !== 'headline') {
+                e.currentTarget.style.borderBottomColor = 'transparent'
+              }
+            }}
+          />
+        </div>
+
+        {/* Subheading - Editable */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label
+            style={{
+              fontSize: '0.65rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08rem',
+              color: '#999',
+              display: 'block',
+              marginBottom: '0.25rem',
+            }}
+          >
+            Subheading
+          </label>
+          <input
+            type="text"
+            value={subheading}
+            onChange={(e) => setSubheading(e.target.value)}
+            onFocus={() => setEditingField('subheading')}
+            onBlur={() => setEditingField(null)}
+            placeholder="Add a subheading..."
+            style={{
+              ...fieldStyle,
+              fontSize: '1.1rem',
+              fontStyle: 'italic',
+              color: '#666',
+              borderBottomColor: editingField === 'subheading' ? '#DC143C' : 'transparent',
+            }}
+            onMouseEnter={(e) => {
+              if (editingField !== 'subheading') {
+                e.currentTarget.style.borderBottomColor = '#ddd'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (editingField !== 'subheading') {
+                e.currentTarget.style.borderBottomColor = 'transparent'
+              }
+            }}
+          />
+        </div>
+
+        {/* Category & Mood Row */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '2rem',
+            marginBottom: '1.5rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          {/* Category - Dropdown */}
+          <div style={{ flex: 1, minWidth: '150px' }}>
+            <label
+              style={{
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08rem',
+                color: '#999',
+                display: 'block',
+                marginBottom: '0.25rem',
+              }}
+            >
+              Category
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as Entry['category'])}
+              style={{
+                ...fieldStyle,
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                color: '#DC143C',
+                cursor: 'pointer',
+                appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right center',
+                paddingRight: '1.5rem',
+              }}
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Mood - Editable */}
+          <div style={{ flex: 1, minWidth: '150px' }}>
+            <label
+              style={{
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08rem',
+                color: '#999',
+                display: 'block',
+                marginBottom: '0.25rem',
+              }}
+            >
+              Mood
+            </label>
+            <input
+              type="text"
+              value={mood}
+              onChange={(e) => setMood(e.target.value)}
+              onFocus={() => setEditingField('mood')}
+              onBlur={() => setEditingField(null)}
+              style={{
+                ...fieldStyle,
+                fontSize: '0.95rem',
+                borderBottomColor: editingField === 'mood' ? '#DC143C' : 'transparent',
+              }}
+              onMouseEnter={(e) => {
+                if (editingField !== 'mood') {
+                  e.currentTarget.style.borderBottomColor = '#ddd'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (editingField !== 'mood') {
+                  e.currentTarget.style.borderBottomColor = 'transparent'
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Content - Editable */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label
+            style={{
+              fontSize: '0.65rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08rem',
+              color: '#999',
+              display: 'block',
+              marginBottom: '0.5rem',
+            }}
+          >
+            Your Entry
+          </label>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onFocus={() => setEditingField('content')}
+            onBlur={() => setEditingField(null)}
+            rows={6}
+            style={{
+              ...fieldStyle,
+              fontSize: '1rem',
+              lineHeight: 1.7,
+              resize: 'vertical',
+              minHeight: '120px',
+              border: '1px solid #eee',
+              borderRadius: '4px',
+              padding: '1rem',
+              borderColor: editingField === 'content' ? '#DC143C' : '#eee',
+            }}
+          />
+        </div>
+
+        {/* Photo Upload */}
+        <div style={{ marginBottom: '2rem' }}>
+          <label
+            style={{
+              fontSize: '0.65rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08rem',
+              color: '#999',
+              display: 'block',
+              marginBottom: '0.5rem',
+            }}
+          >
+            Photo (Optional)
+          </label>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            onChange={handlePhotoChange}
+            style={{ display: 'none' }}
+          />
+
+          {photoPreview ? (
+            <div style={{ position: 'relative' }}>
+              <img
+                src={photoPreview}
+                alt="Preview"
+                style={{
+                  width: '100%',
+                  maxHeight: '200px',
+                  objectFit: 'cover',
+                  borderRadius: '4px',
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleRemovePhoto}
+                style={{
+                  position: 'absolute',
+                  top: '0.5rem',
+                  right: '0.5rem',
+                  background: 'rgba(0,0,0,0.7)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '28px',
+                  height: '28px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                width: '100%',
+                padding: '1.5rem',
+                background: '#f8f9fb',
+                border: '2px dashed #ddd',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                color: '#666',
+                fontSize: '0.9rem',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#DC143C'
+                e.currentTarget.style.color = '#DC143C'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#ddd'
+                e.currentTarget.style.color = '#666'
+              }}
+            >
+              📷 Add Photo
+            </button>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            justifyContent: 'flex-end',
+            borderTop: '1px solid #eee',
+            paddingTop: '1.5rem',
+          }}
+        >
+          <button
+            type="button"
+            onClick={onBack}
+            disabled={isPublishing}
+            style={{
+              background: 'transparent',
+              color: '#666',
+              border: '1px solid #ddd',
+              padding: '0.8rem 1.5rem',
+              cursor: isPublishing ? 'not-allowed' : 'pointer',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              letterSpacing: '0.05rem',
+              textTransform: 'uppercase',
+              transition: 'all 0.2s ease',
+              opacity: isPublishing ? 0.5 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!isPublishing) {
+                e.currentTarget.style.borderColor = '#DC143C'
+                e.currentTarget.style.color = '#DC143C'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#ddd'
+              e.currentTarget.style.color = '#666'
+            }}
+          >
+            ← Back
+          </button>
+          <button
+            type="button"
+            onClick={handlePublish}
+            disabled={isPublishing || !headline.trim() || !content.trim()}
+            style={{
+              background: '#DC143C',
+              color: '#FFFFFF',
+              border: 'none',
+              padding: '0.8rem 2rem',
+              cursor: isPublishing || !headline.trim() || !content.trim() ? 'not-allowed' : 'pointer',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              letterSpacing: '0.05rem',
+              textTransform: 'uppercase',
+              transition: 'all 0.2s ease',
+              opacity: isPublishing || !headline.trim() || !content.trim() ? 0.5 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!isPublishing && headline.trim() && content.trim()) {
+                e.currentTarget.style.background = '#B01030'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#DC143C'
+            }}
+          >
+            {isPublishing ? 'Publishing...' : 'Publish'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
