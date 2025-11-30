@@ -32,6 +32,8 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
     interimTranscript,
     error: voiceError,
     isSupported: voiceSupported,
+    isProcessing: voiceProcessing,
+    mode: voiceMode,
     startListening,
     stopListening,
     resetTranscript,
@@ -132,7 +134,7 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
         padding: '1rem',
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget && !isInferring) {
+        if (e.target === e.currentTarget && !isInferring && !voiceProcessing) {
           onClose()
         }
       }}
@@ -140,7 +142,7 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
       {/* Close button */}
       <button
         onClick={onClose}
-        disabled={isInferring}
+        disabled={isInferring || voiceProcessing}
         style={{
           position: 'absolute',
           top: '1rem',
@@ -149,16 +151,16 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
           color: '#fff',
           border: 'none',
           fontSize: '2rem',
-          cursor: isInferring ? 'not-allowed' : 'pointer',
-          opacity: isInferring ? 0.5 : 0.7,
+          cursor: isInferring || voiceProcessing ? 'not-allowed' : 'pointer',
+          opacity: isInferring || voiceProcessing ? 0.5 : 0.7,
           transition: 'opacity 0.2s ease',
           zIndex: 10,
         }}
         onMouseEnter={(e) => {
-          if (!isInferring) e.currentTarget.style.opacity = '1'
+          if (!isInferring && !voiceProcessing) e.currentTarget.style.opacity = '1'
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.opacity = isInferring ? '0.5' : '0.7'
+          e.currentTarget.style.opacity = isInferring || voiceProcessing ? '0.5' : '0.7'
         }}
       >
         ×
@@ -216,37 +218,54 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
         {/* Voice mode */}
         {mode === 'voice' && (
           <div style={{ textAlign: 'center', width: '100%' }}>
+            {/* Voice mode indicator */}
+            <p style={{ 
+              color: '#666', 
+              fontSize: '0.75rem', 
+              marginBottom: '1rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1rem'
+            }}>
+              {voiceMode === 'whisper' ? '🔊 Whisper Mode' : '🎙️ Live Transcription'}
+            </p>
+            
             <button
               onClick={toggleVoice}
-              disabled={isInferring}
+              disabled={isInferring || voiceProcessing}
               style={{
                 width: '120px',
                 height: '120px',
                 borderRadius: '50%',
-                background: isListening ? '#DC143C' : 'rgba(255, 255, 255, 0.1)',
+                background: isListening ? '#DC143C' : voiceProcessing ? '#666' : 'rgba(255, 255, 255, 0.1)',
                 color: '#fff',
                 border: isListening ? '4px solid #fff' : '2px solid rgba(255, 255, 255, 0.3)',
-                cursor: isInferring ? 'not-allowed' : 'pointer',
+                cursor: isInferring || voiceProcessing ? 'not-allowed' : 'pointer',
                 fontSize: '3rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'all 0.3s ease',
-                animation: isListening ? 'pulse 1.5s infinite' : 'none',
+                animation: isListening ? 'pulse 1.5s infinite' : voiceProcessing ? 'none' : 'none',
                 margin: '0 auto 1.5rem',
+                opacity: voiceProcessing ? 0.7 : 1,
               }}
             >
-              🎤
+              {voiceProcessing ? '⏳' : '🎤'}
             </button>
             <p style={{ color: '#999', fontSize: '0.9rem', marginBottom: '1rem' }}>
-              {isListening ? 'Listening... Tap to stop' : 'Tap to start speaking'}
+              {voiceProcessing 
+                ? 'Processing audio...' 
+                : isListening 
+                  ? (voiceMode === 'whisper' ? 'Recording... Tap to stop & process' : 'Listening... Tap to stop')
+                  : 'Tap to start speaking'
+              }
             </p>
             {voiceError && (
-              <p style={{ color: '#ff6b6b', fontSize: '0.85rem' }}>{voiceError}</p>
+              <p style={{ color: '#ff6b6b', fontSize: '0.85rem', marginBottom: '1rem' }}>{voiceError}</p>
             )}
             
             {/* Voice transcript display */}
-            {displayText && (
+            {(displayText || voiceProcessing) && (
               <div
                 style={{
                   background: 'rgba(255, 255, 255, 0.05)',
@@ -257,12 +276,18 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
                   overflowY: 'auto',
                 }}
               >
-                <p style={{ color: '#fff', fontSize: '1.1rem', lineHeight: 1.6, margin: 0 }}>
-                  {displayText}
-                  {interimTranscript && (
-                    <span style={{ color: '#999' }}>{interimTranscript}</span>
-                  )}
-                </p>
+                {voiceProcessing && !displayText ? (
+                  <p style={{ color: '#999', fontSize: '1rem', margin: 0 }}>
+                    Transcribing with Whisper AI...
+                  </p>
+                ) : (
+                  <p style={{ color: '#fff', fontSize: '1.1rem', lineHeight: 1.6, margin: 0 }}>
+                    {displayText}
+                    {interimTranscript && !voiceProcessing && (
+                      <span style={{ color: '#999' }}> {interimTranscript}</span>
+                    )}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -346,9 +371,16 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
         )}
 
         {/* Submit button */}
+        {/* 
+          Button disabled during:
+          - isInferring: AI is processing the entry
+          - voiceProcessing: Whisper is transcribing audio
+          - isListening && mode === 'voice': User is actively recording (must stop first)
+          - No content: Nothing to submit
+        */}
         <button
           onClick={handleSubmit}
-          disabled={isInferring || (!text.trim() && !transcript.trim())}
+          disabled={isInferring || voiceProcessing || (mode === 'voice' && isListening) || (!text.trim() && !transcript.trim())}
           style={{
             marginTop: '2rem',
             padding: '1rem 3rem',
@@ -356,19 +388,19 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
             color: '#fff',
             border: 'none',
             borderRadius: '4px',
-            cursor: isInferring || (!text.trim() && !transcript.trim()) ? 'not-allowed' : 'pointer',
+            cursor: isInferring || voiceProcessing || (mode === 'voice' && isListening) || (!text.trim() && !transcript.trim()) ? 'not-allowed' : 'pointer',
             fontSize: '1rem',
             fontWeight: 600,
             letterSpacing: '0.05rem',
             textTransform: 'uppercase',
             transition: 'all 0.2s ease',
-            opacity: isInferring || (!text.trim() && !transcript.trim()) ? 0.5 : 1,
+            opacity: isInferring || voiceProcessing || (mode === 'voice' && isListening) || (!text.trim() && !transcript.trim()) ? 0.5 : 1,
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
           }}
           onMouseEnter={(e) => {
-            if (!isInferring && (text.trim() || transcript.trim())) {
+            if (!isInferring && !voiceProcessing && !(mode === 'voice' && isListening) && (text.trim() || transcript.trim())) {
               e.currentTarget.style.background = '#B01030'
             }
           }}
@@ -388,6 +420,10 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
               }} />
               Processing...
             </>
+          ) : voiceProcessing ? (
+            'Transcribing...'
+          ) : mode === 'voice' && isListening ? (
+            'Stop recording first'
           ) : (
             'Continue →'
           )}
