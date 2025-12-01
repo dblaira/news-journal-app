@@ -9,6 +9,7 @@ import { WeeklyThemeBanner } from './weekly-theme-banner'
 import { CategoryNav } from './category-nav'
 import { HeroStory } from './hero-story'
 import { VanityFairLayout } from './vanity-fair-layout'
+import { StoryCarousel } from './story-carousel'
 import { EntryFormModal } from './entry-form-modal'
 import { EntryModal } from './entry-modal'
 import { CaptureFAB } from './capture-fab'
@@ -300,14 +301,14 @@ export function JournalPageClient({
         <div style={{ 
           padding: '1.5rem 2rem', 
           textAlign: 'center',
-          background: 'var(--bg-panel)',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border-color)',
-          marginBottom: '2rem'
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '0',
+          border: 'none',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         }}>
           <p style={{ 
             marginBottom: '1rem', 
-            color: 'var(--text-secondary)',
+            color: 'var(--text-hero-muted)',
             fontSize: '0.95rem'
           }}>
             You have {entries.length} entries. Generate your weekly theme!
@@ -327,16 +328,22 @@ export function JournalPageClient({
       {/* Debug info - remove in production */}
       {process.env.NODE_ENV === 'development' && (
         <div style={{ 
-          padding: '0.5rem', 
+          padding: '0.5rem 1.5rem', 
           fontSize: '0.75rem', 
-          color: 'var(--text-muted)',
-          background: 'rgba(0,0,0,0.2)',
-          borderRadius: '4px',
-          marginBottom: '1rem'
+          color: 'var(--text-hero-muted)',
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '0',
         }}>
           Debug: {entries.length} entries, Weekly theme: {weeklyTheme ? 'exists' : 'none'}
         </div>
       )}
+
+      {/* Story Carousel - Latest Stories */}
+      <StoryCarousel
+        entries={latestEntries}
+        title="LATEST STORIES"
+        onViewEntry={handleViewEntry}
+      />
 
       {/* 3-Column Vanity Fair Layout */}
       <VanityFairLayout

@@ -41,8 +41,17 @@ export function VanityFairLayout({
 
   return (
     <div className="vanity-fair-layout bg-black text-white py-10">
+      {/* Section Title */}
+      <div className="px-4 md:px-6 mb-8 max-w-7xl mx-auto">
+        <div className="border-t border-b border-neutral-800 py-3">
+          <h2 className="text-sm font-bold tracking-widest text-white uppercase">
+            All Stories
+          </h2>
+        </div>
+      </div>
+
       {/* 3-Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 px-6 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 px-4 md:px-6 max-w-7xl mx-auto">
         
         {/* LEFT COLUMN — Category Stories (3 columns) */}
         <aside className="md:col-span-3 space-y-8">
