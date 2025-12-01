@@ -56,12 +56,12 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
   if (entries.length === 0) return null
 
   return (
-    <div className="story-carousel bg-black py-8">
+    <div className="story-carousel bg-white py-8">
       {/* Section Title */}
       {title && (
-        <div className="px-6 mb-6 max-w-7xl mx-auto">
-          <div className="border-t border-b border-neutral-800 py-3">
-            <h2 className="text-sm font-bold tracking-widest text-white uppercase">
+        <div className="px-4 md:px-6 mb-6 max-w-7xl mx-auto">
+          <div className="border-t border-b border-neutral-200 py-3">
+            <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase">
               {title}
             </h2>
           </div>
@@ -71,7 +71,7 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
       {/* Horizontal Scroll Container */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-6"
+        className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-4 md:px-6"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
@@ -93,7 +93,7 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
               <div className="flex gap-4 items-start">
                 {/* Thumbnail */}
                 {!hasImageError && (
-                  <div className="w-24 h-24 flex-shrink-0 overflow-hidden bg-neutral-800">
+                  <div className="w-24 h-24 flex-shrink-0 overflow-hidden bg-neutral-100">
                     <img
                       src={imageUrl}
                       alt={entry.headline}
@@ -106,12 +106,12 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {/* Category */}
-                  <span className="text-xs font-bold tracking-wider text-red-500 uppercase">
+                  <span className="text-xs font-bold tracking-wider text-red-600 uppercase">
                     {entry.category}
                   </span>
 
                   {/* Headline */}
-                  <h3 className="text-white text-sm font-semibold leading-tight mt-1 line-clamp-3 group-hover:text-neutral-300 transition-colors">
+                  <h3 className="text-neutral-900 text-sm font-semibold leading-tight mt-1 line-clamp-3 group-hover:text-neutral-600 transition-colors">
                     {entry.headline}
                   </h3>
 
@@ -135,8 +135,8 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
               onClick={() => scrollToIndex(index)}
               className={`w-2 h-2 rounded-full transition-all duration-200 ${
                 index === activeIndex
-                  ? 'bg-white'
-                  : 'bg-neutral-600 hover:bg-neutral-400'
+                  ? 'bg-neutral-900'
+                  : 'bg-neutral-300 hover:bg-neutral-400'
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -153,4 +153,3 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
     </div>
   )
 }
-

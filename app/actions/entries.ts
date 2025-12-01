@@ -203,17 +203,24 @@ export async function incrementViewCount(entryId: string) {
     return { error: fetchError.message }
   }
 
-  // Increment the view count
-  const { error } = await supabase
+  // Increment the view count and return the updated row to verify it was updated
+  const { data: updatedEntry, error } = await supabase
     .from('entries')
     .update({
       view_count: (entry.view_count || 0) + 1,
     })
     .eq('id', entryId)
     .eq('user_id', user.id)
+    .select('id')
+    .single()
 
   if (error) {
     return { error: error.message }
+  }
+
+  // Verify the update actually affected a row
+  if (!updatedEntry) {
+    return { error: 'Entry not found or was deleted' }
   }
 
   return { success: true }

@@ -40,11 +40,11 @@ export function VanityFairLayout({
   })
 
   return (
-    <div className="vanity-fair-layout bg-black text-white py-10">
+    <div className="vanity-fair-layout bg-white text-neutral-900 py-10">
       {/* Section Title */}
       <div className="px-4 md:px-6 mb-8 max-w-7xl mx-auto">
-        <div className="border-t border-b border-neutral-800 py-3">
-          <h2 className="text-sm font-bold tracking-widest text-white uppercase">
+        <div className="border-t border-b border-neutral-200 py-3">
+          <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase">
             All Stories
           </h2>
         </div>
@@ -60,8 +60,8 @@ export function VanityFairLayout({
             if (!entry) {
               return (
                 <div key={category} className="opacity-50">
-                  <h2 className="uppercase text-xs text-neutral-400 mb-2">{category}</h2>
-                  <p className="text-sm text-neutral-500">No entries yet</p>
+                  <h2 className="uppercase text-xs text-neutral-500 mb-2">{category}</h2>
+                  <p className="text-sm text-neutral-400">No entries yet</p>
                 </div>
               )
             }
@@ -81,18 +81,18 @@ export function VanityFairLayout({
                     />
                   </div>
                 )}
-                <h2 className="uppercase text-xs text-neutral-400 tracking-wider mb-1">
+                <h2 className="uppercase text-xs text-red-600 tracking-wider mb-1 font-bold">
                   {entry.category}
                 </h2>
-                <h3 className="text-lg font-semibold mt-1 hover:underline leading-tight group-hover:text-neutral-300 transition-colors">
+                <h3 className="text-lg font-semibold mt-1 hover:underline leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
                   {entry.headline}
                 </h3>
                 {entry.subheading && (
-                  <p className="text-sm text-neutral-400 mt-2 italic">
+                  <p className="text-sm text-neutral-500 mt-2 italic">
                     {entry.subheading}
                   </p>
                 )}
-                <p className="text-xs text-neutral-500 mt-2">
+                <p className="text-xs text-neutral-400 mt-2 uppercase tracking-wide">
                   {formatEntryDateShort(entry.created_at)}
                 </p>
               </div>
@@ -104,7 +104,7 @@ export function VanityFairLayout({
         <section className="md:col-span-6 space-y-8 md:px-4">
           {latestEntries.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-neutral-400">No entries yet. Create your first entry to get started.</p>
+              <p className="text-neutral-500">No entries yet. Create your first entry to get started.</p>
             </div>
           ) : (
             latestEntries.map((entry) => {
@@ -128,22 +128,22 @@ export function VanityFairLayout({
                     </div>
                   )}
                   <div className="mb-2">
-                    <span className="uppercase text-xs tracking-wider text-neutral-400">
+                    <span className="uppercase text-xs tracking-wider text-red-600 font-bold">
                       {entry.category}
                     </span>
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-bold leading-tight mb-2 hover:underline group-hover:text-neutral-300 transition-colors">
+                  <h2 className="text-2xl md:text-3xl font-bold leading-tight mb-2 hover:underline text-neutral-900 group-hover:text-neutral-600 transition-colors">
                     {entry.headline}
                   </h2>
                   {entry.subheading && (
-                    <p className="text-lg text-neutral-300 italic mb-3">
+                    <p className="text-lg text-neutral-600 italic mb-3">
                       {entry.subheading}
                     </p>
                   )}
-                  <p className="text-neutral-300 leading-relaxed mb-3">
+                  <p className="text-neutral-600 leading-relaxed mb-3">
                     {truncate(entry.content, 200)}
                   </p>
-                  <div className="flex items-center gap-4 text-sm text-neutral-400">
+                  <div className="flex items-center gap-4 text-sm text-neutral-500">
                     <span>{formatEntryDateShort(entry.created_at)}</span>
                     {entry.view_count && entry.view_count > 0 && (
                       <span className="flex items-center gap-1">
@@ -161,11 +161,11 @@ export function VanityFairLayout({
         {/* RIGHT COLUMN — Trending Stories (3 columns) */}
         <aside className="md:col-span-3 space-y-6">
           <div>
-            <h2 className="uppercase text-xs text-orange-400 font-semibold tracking-wider mb-4">
+            <h2 className="uppercase text-xs text-orange-500 font-semibold tracking-wider mb-4">
               Trending Stories
             </h2>
             {trendingEntries.length === 0 ? (
-              <p className="text-sm text-neutral-500">No trending stories yet</p>
+              <p className="text-sm text-neutral-400">No trending stories yet</p>
             ) : (
               <div className="space-y-6">
                 {trendingEntries.map((entry) => {
@@ -189,14 +189,14 @@ export function VanityFairLayout({
                         </div>
                       )}
                       <div className="mb-1">
-                        <span className="uppercase text-xs text-neutral-400 tracking-wider">
+                        <span className="uppercase text-xs text-red-600 tracking-wider font-bold">
                           {entry.category}
                         </span>
                       </div>
-                      <h3 className="text-base font-semibold hover:underline leading-tight group-hover:text-neutral-300 transition-colors mb-1">
+                      <h3 className="text-base font-semibold hover:underline leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors mb-1">
                         {entry.headline}
                       </h3>
-                      <div className="flex items-center gap-2 text-xs text-neutral-500">
+                      <div className="flex items-center gap-2 text-xs text-neutral-400 uppercase tracking-wide">
                         <span>{formatEntryDateShort(entry.created_at)}</span>
                         {entry.view_count && entry.view_count > 0 && (
                           <span className="flex items-center gap-1">
@@ -216,4 +216,3 @@ export function VanityFairLayout({
     </div>
   )
 }
-

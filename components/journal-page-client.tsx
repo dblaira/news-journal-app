@@ -301,14 +301,14 @@ export function JournalPageClient({
         <div style={{ 
           padding: '1.5rem 2rem', 
           textAlign: 'center',
-          background: 'rgba(255, 255, 255, 0.05)',
+          background: '#F5F0E8',
           borderRadius: '0',
           border: 'none',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          borderBottom: '2px solid var(--color-red)',
         }}>
           <p style={{ 
             marginBottom: '1rem', 
-            color: 'var(--text-hero-muted)',
+            color: '#666666',
             fontSize: '0.95rem'
           }}>
             You have {entries.length} entries. Generate your weekly theme!
@@ -330,32 +330,36 @@ export function JournalPageClient({
         <div style={{ 
           padding: '0.5rem 1.5rem', 
           fontSize: '0.75rem', 
-          color: 'var(--text-hero-muted)',
-          background: 'rgba(255,255,255,0.05)',
+          color: '#666666',
+          background: '#F5F0E8',
           borderRadius: '0',
+          borderBottom: '2px solid var(--color-red)',
         }}>
           Debug: {entries.length} entries, Weekly theme: {weeklyTheme ? 'exists' : 'none'}
         </div>
       )}
 
-      {/* Story Carousel - Latest Stories */}
-      <StoryCarousel
-        entries={latestEntries}
-        title="LATEST STORIES"
-        onViewEntry={handleViewEntry}
-      />
+      {/* WHITE SECTION - Latest Stories, Category Layout, Footer */}
+      <div className="white-content-section" style={{ background: '#FFFFFF' }}>
+        {/* Story Carousel - Latest Stories */}
+        <StoryCarousel
+          entries={latestEntries}
+          title="LATEST STORIES"
+          onViewEntry={handleViewEntry}
+        />
 
-      {/* 3-Column Vanity Fair Layout */}
-      <VanityFairLayout
-        categoryEntries={categoryEntries}
-        latestEntries={latestEntries}
-        trendingEntries={trendingEntries}
-        onViewEntry={handleViewEntry}
-      />
+        {/* 3-Column Vanity Fair Layout */}
+        <VanityFairLayout
+          categoryEntries={categoryEntries}
+          latestEntries={latestEntries}
+          trendingEntries={trendingEntries}
+          onViewEntry={handleViewEntry}
+        />
 
-      <footer>
-        <p>&copy; 2025 Adam Daily. Your story, your way.</p>
-      </footer>
+        <footer>
+          <p>&copy; 2025 Adam Daily. Your story, your way.</p>
+        </footer>
+      </div>
 
       {/* Floating Action Button for Quick Capture */}
       <CaptureFAB onEntryCreated={handleEntryCreated} />
