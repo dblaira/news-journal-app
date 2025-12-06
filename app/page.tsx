@@ -5,7 +5,7 @@ import { Entry, WeeklyTheme } from '@/types'
 import { getCurrentWeeklyTheme, getLatestEntryPerCategory, getLatestEntries, getTrendingEntries } from '@/app/actions/entries'
 
 async function getEntries(userId: string): Promise<Entry[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('entries')
     .select('*')
@@ -23,9 +23,9 @@ async function getEntries(userId: string): Promise<Entry[]> {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: { search?: string }
+  searchParams: Promise<{ search?: string }>
 }) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -35,7 +35,8 @@ export default async function HomePage({
   }
 
   const entries = await getEntries(user.id)
-  const searchQuery = searchParams.search?.toLowerCase() || ''
+  const resolvedSearchParams = await searchParams
+  const searchQuery = resolvedSearchParams.search?.toLowerCase() || ''
   const currentTheme = await getCurrentWeeklyTheme(user.id)
   
   // Fetch data for 3-column layout
