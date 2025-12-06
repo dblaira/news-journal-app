@@ -191,35 +191,21 @@ export async function incrementViewCount(entryId: string) {
     return { error: 'Unauthorized' }
   }
 
-  // First, get the current view count
-  const { data: entry, error: fetchError } = await supabase
-    .from('entries')
-    .select('view_count')
-    .eq('id', entryId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (fetchError) {
-    return { error: fetchError.message }
-  }
-
-  // Increment the view count and return the updated row to verify it was updated
-  const { data: updatedEntry, error } = await supabase
-    .from('entries')
-    .update({
-      view_count: (entry.view_count || 0) + 1,
+  // Use atomic database function to avoid race conditions
+  // This prevents the read-modify-write race where concurrent requests
+  // could read the same value and both increment to the same result
+  const { data: updated, error } = await supabase
+    .rpc('increment_entry_view_count', {
+      entry_id: entryId,
+      owner_id: user.id,
     })
-    .eq('id', entryId)
-    .eq('user_id', user.id)
-    .select('id')
-    .single()
 
   if (error) {
     return { error: error.message }
   }
 
-  // Verify the update actually affected a row
-  if (!updatedEntry) {
+  // The function returns false if no rows were updated (entry not found)
+  if (!updated) {
     return { error: 'Entry not found or was deleted' }
   }
 
