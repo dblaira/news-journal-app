@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     const apiKey = process.env.ANTHROPIC_API_KEY
 
     if (!apiKey) {

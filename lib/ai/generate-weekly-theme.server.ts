@@ -3,7 +3,7 @@ import { Entry } from '@/types'
 import { createWeeklyThemePrompt, parseWeeklyThemeResponse } from '@/lib/ai/weekly-theme-prompt'
 
 export async function generateWeeklyThemeLogic(entryIds: string[], userId: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   if (entryIds.length !== 7) {
     throw new Error('Exactly 7 entry IDs are required')
