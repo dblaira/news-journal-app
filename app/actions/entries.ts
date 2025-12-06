@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { CreateEntryInput, WeeklyTheme, Entry } from '@/types'
 
 export async function createEntry(input: CreateEntryInput) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const {
     data: { user },
@@ -37,7 +37,7 @@ export async function createEntry(input: CreateEntryInput) {
 }
 
 export async function deleteEntry(id: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const {
     data: { user },
@@ -62,7 +62,7 @@ export async function deleteEntry(id: string) {
 }
 
 export async function updateEntryVersions(id: string, versions: any[], generating: boolean) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const {
     data: { user },
@@ -90,7 +90,7 @@ export async function updateEntryVersions(id: string, versions: any[], generatin
 }
 
 export async function generateWeeklyTheme(entryIds: string[]) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const {
     data: { user },
@@ -134,7 +134,7 @@ export async function generateWeeklyTheme(entryIds: string[]) {
 }
 
 export async function getWeeklyThemes(userId: string): Promise<WeeklyTheme[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('weekly_themes')
@@ -151,7 +151,7 @@ export async function getWeeklyThemes(userId: string): Promise<WeeklyTheme[]> {
 }
 
 export async function getCurrentWeeklyTheme(userId: string): Promise<WeeklyTheme | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   // Calculate current week start (Monday)
   const now = new Date()
@@ -181,7 +181,7 @@ export async function getCurrentWeeklyTheme(userId: string): Promise<WeeklyTheme
 }
 
 export async function incrementViewCount(entryId: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const {
     data: { user },
@@ -227,7 +227,7 @@ export async function incrementViewCount(entryId: string) {
 }
 
 export async function getLatestEntryPerCategory(userId: string): Promise<Entry[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const categories: Entry['category'][] = ['Business', 'Finance', 'Health', 'Spiritual', 'Fun', 'Social', 'Romance']
   
   const entries: Entry[] = []
@@ -251,7 +251,7 @@ export async function getLatestEntryPerCategory(userId: string): Promise<Entry[]
 }
 
 export async function getTrendingEntries(userId: string, limit: number = 10): Promise<Entry[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('entries')
@@ -270,7 +270,7 @@ export async function getTrendingEntries(userId: string, limit: number = 10): Pr
 }
 
 export async function getLatestEntries(userId: string, limit: number = 20): Promise<Entry[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('entries')
@@ -288,7 +288,7 @@ export async function getLatestEntries(userId: string, limit: number = 20): Prom
 }
 
 export async function removeEntryPhoto(entryId: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const {
     data: { user },
@@ -317,7 +317,7 @@ export async function removeEntryPhoto(entryId: string) {
 }
 
 export async function updateEntryPhoto(entryId: string, photoUrl: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const {
     data: { user },
