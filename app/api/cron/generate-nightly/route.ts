@@ -121,9 +121,9 @@ export async function GET(request: NextRequest) {
 async function generateVersionsForEntry(entry: Entry, apiKey: string) {
   const styles = [
     {
-      name: 'poetic',
-      title: 'Fragmented/Poetic',
-      prompt: createPoeticPrompt(entry),
+      name: 'literary',
+      title: 'Literary/Personal Essay',
+      prompt: createLiteraryPrompt(entry),
     },
     {
       name: 'news',
@@ -131,20 +131,43 @@ async function generateVersionsForEntry(entry: Entry, apiKey: string) {
       prompt: createNewsPrompt(entry),
     },
     {
-      name: 'humorous',
-      title: 'Observational/Humorous',
-      prompt: createHumorousPrompt(entry),
-    },
-    {
-      name: 'literary',
-      title: 'Literary/Personal Essay',
-      prompt: createLiteraryPrompt(entry),
+      name: 'poetic',
+      title: 'Poetic',
+      prompt: createPoeticPrompt(entry),
     },
   ]
 
   const results = await Promise.all(
     styles.map(async (style) => {
       const content = await callClaudeAPI(style.prompt, apiKey)
+      
+      // Parse structured JSON response for news style
+      if (style.name === 'news') {
+        try {
+          const cleanedContent = content
+            .replace(/^```json\s*/i, '')
+            .replace(/^```\s*/i, '')
+            .replace(/\s*```$/i, '')
+            .trim()
+          
+          const parsed = JSON.parse(cleanedContent)
+          return {
+            name: style.name,
+            title: style.title,
+            content: `${parsed.headline}\n\n${parsed.body}`,
+            headline: parsed.headline,
+            body: parsed.body,
+          }
+        } catch (e) {
+          console.error('Failed to parse news JSON:', e)
+          return {
+            name: style.name,
+            title: style.title,
+            content: content,
+          }
+        }
+      }
+      
       return {
         name: style.name,
         title: style.title,
@@ -191,7 +214,7 @@ async function callClaudeAPI(prompt: string, apiKey: string): Promise<string> {
 }
 
 function createPoeticPrompt(entry: Entry): string {
-  return `Transform this journal entry into a fragmented, poetic style. Use short lines, white space, and evocative imagery. Make it feel contemplative and artistic.
+  return `Transform this journal entry into a poetic style. Use evocative imagery, rhythm, and carefully chosen language. Make it feel contemplative and artistic without being fragmented or disjointed.
 
 Entry:
 Category: ${entry.category}
@@ -202,11 +225,11 @@ Mood: ${entry.mood || 'not specified'}
 Content:
 ${entry.content}
 
-Write ONLY the transformed version in a fragmented, poetic style. No preamble or explanation.`
+Write ONLY the transformed version in a poetic style. No preamble or explanation.`
 }
 
 function createNewsPrompt(entry: Entry): string {
-  return `Rewrite this journal entry as a compelling news feature article in the style of the New York Times. Use journalistic structure, vivid details, and make it feel significant.
+  return `Rewrite this journal entry as a compelling news feature article in the style of the New York Times. Use journalistic structure and make it feel significant. IMPORTANT: Only include facts and details that are explicitly present in the original entry—do not invent quotes, statistics, or embellish with fabricated details.
 
 Entry:
 Category: ${entry.category}
@@ -217,26 +240,17 @@ Mood: ${entry.mood || 'not specified'}
 Content:
 ${entry.content}
 
-Write ONLY the news article version. No preamble or explanation.`
+Return your response as valid JSON with this exact structure:
+{
+  "headline": "Your compelling news headline here",
+  "body": "The full article body text here"
 }
 
-function createHumorousPrompt(entry: Entry): string {
-  return `Rewrite this journal entry in an observational, humorous style. Keep it conversational and witty, finding the absurd or ironic elements while staying true to the original meaning.
-
-Entry:
-Category: ${entry.category}
-Headline: ${entry.headline}
-${entry.subheading ? `Subheading: ${entry.subheading}` : ''}
-Mood: ${entry.mood || 'not specified'}
-
-Content:
-${entry.content}
-
-Write ONLY the humorous version. No preamble or explanation.`
+Write ONLY the JSON object. No preamble, explanation, or markdown formatting.`
 }
 
 function createLiteraryPrompt(entry: Entry): string {
-  return `Rewrite this journal entry as a literary personal essay. Make it thoughtful, introspective, and beautifully written. Explore the deeper meanings and universal themes.
+  return `Rewrite this journal entry as a literary personal essay. Make it thoughtful, introspective, and beautifully written. Keep metaphors sparse so each one carries more weight. Explore the deeper meanings and universal themes with a lean, economical prose style.
 
 Entry:
 Category: ${entry.category}

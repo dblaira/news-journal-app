@@ -455,7 +455,7 @@ export function EntryModal({
                   <div
                     key={version.name}
                     style={{
-                      maxWidth: '48rem',
+                      maxWidth: '650px',
                       margin: '0 auto 2rem',
                       padding: '2rem 3rem',
                       background: '#FAF9F6',
@@ -478,10 +478,10 @@ export function EntryModal({
                     </h4>
                     <div
                       style={{
-                        fontFamily: "'Georgia', 'Times New Roman', serif",
-                        fontSize: '1.1rem',
-                        lineHeight: 2,
-                        color: '#374151',
+                        fontFamily: "'Georgia', serif",
+                        fontSize: '1.25rem',
+                        lineHeight: 1.8,
+                        color: '#2c2c2c',
                         textAlign: 'justify',
                       }}
                     >
@@ -489,12 +489,11 @@ export function EntryModal({
                       <span
                         style={{
                           float: 'left',
-                          fontSize: '4.5rem',
-                          fontWeight: 700,
+                          fontSize: '3.5em',
+                          fontWeight: 'bold',
                           lineHeight: 0.8,
-                          paddingRight: '0.75rem',
-                          paddingTop: '0.25rem',
-                          color: '#7f1d1d',
+                          paddingRight: '8px',
+                          color: '#8b0000',
                         }}
                       >
                         {version.content.charAt(0)}
