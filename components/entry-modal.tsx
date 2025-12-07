@@ -448,41 +448,250 @@ export function EntryModal({
               ✨ AI Generated Versions ✨
             </h3>
 
-            {entry.versions!.map((version: Version) => (
-              <div
-                key={version.name}
-                style={{
-                  background: '#f0f9f1',
-                  padding: '2rem',
-                  borderRadius: '8px',
-                  marginBottom: '2rem',
-                  borderLeft: '4px solid #4CAF50',
-                }}
-              >
-                <h4
-                  style={{
-                    fontSize: '1rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                    marginBottom: '1rem',
-                    color: '#2e7d32',
-                  }}
-                >
-                  {version.title}
-                </h4>
+            {entry.versions!.map((version: Version) => {
+              // Literary/Personal Essay Style
+              if (version.name === 'literary') {
+                return (
+                  <div
+                    key={version.name}
+                    style={{
+                      maxWidth: '48rem',
+                      margin: '0 auto 2rem',
+                      padding: '2rem 3rem',
+                      background: '#FAF9F6',
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)',
+                      minHeight: '400px',
+                    }}
+                  >
+                    <h4
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '2px',
+                        marginBottom: '1.5rem',
+                        color: '#8B4513',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {version.title}
+                    </h4>
+                    <div
+                      style={{
+                        fontFamily: "'Georgia', 'Times New Roman', serif",
+                        fontSize: '1.1rem',
+                        lineHeight: 2,
+                        color: '#374151',
+                        textAlign: 'justify',
+                      }}
+                    >
+                      {/* Drop cap for first letter */}
+                      <span
+                        style={{
+                          float: 'left',
+                          fontSize: '4.5rem',
+                          fontWeight: 700,
+                          lineHeight: 0.8,
+                          paddingRight: '0.75rem',
+                          paddingTop: '0.25rem',
+                          color: '#7f1d1d',
+                        }}
+                      >
+                        {version.content.charAt(0)}
+                      </span>
+                      <span style={{ whiteSpace: 'pre-wrap' }}>
+                        {version.content.slice(1)}
+                      </span>
+                    </div>
+                    {/* Decorative separator */}
+                    <div
+                      style={{
+                        marginTop: '3rem',
+                        textAlign: 'center',
+                        color: '#9CA3AF',
+                        fontSize: '1.5rem',
+                      }}
+                    >
+                      ❦
+                    </div>
+                  </div>
+                )
+              }
+
+              // News Feature Style
+              if (version.name === 'news') {
+                const newsHeadline = version.headline || version.content.split('\n')[0]
+                const newsBody = version.body || version.content.split('\n').slice(1).join('\n')
+                
+                return (
+                  <div
+                    key={version.name}
+                    style={{
+                      maxWidth: '56rem',
+                      margin: '0 auto 2rem',
+                      background: '#F1F1F1',
+                      color: '#000000',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                      overflow: 'hidden',
+                      minHeight: '400px',
+                      border: '1px solid #D1D5DB',
+                    }}
+                  >
+                    <div style={{ padding: '2rem 3rem' }}>
+                      <h4
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '2px',
+                          marginBottom: '1rem',
+                          color: '#6B7280',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {version.title}
+                      </h4>
+                      {/* Double border headline */}
+                      <div
+                        style={{
+                          borderBottom: '3px double #000000',
+                          paddingBottom: '1.5rem',
+                          marginBottom: '1.5rem',
+                        }}
+                      >
+                        <h1
+                          style={{
+                            fontFamily: "'Playfair Display', 'Times New Roman', serif",
+                            fontSize: '2.5rem',
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            lineHeight: 1.1,
+                            letterSpacing: '-0.02em',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {newsHeadline}
+                        </h1>
+                      </div>
+
+                      {/* Article body with dateline */}
+                      <div
+                        style={{
+                          fontFamily: "'Georgia', 'Times New Roman', serif",
+                          textAlign: 'justify',
+                          lineHeight: 1.6,
+                          columnCount: 2,
+                          columnGap: '2rem',
+                        }}
+                      >
+                        <p style={{ marginBottom: '1rem' }}>
+                          <span
+                            style={{
+                              fontFamily: "'Helvetica Neue', Arial, sans-serif",
+                              fontWeight: 700,
+                              fontSize: '0.7rem',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.1em',
+                              marginRight: '0.5rem',
+                              color: '#4B5563',
+                            }}
+                          >
+                            SPECIAL REPORT —
+                          </span>
+                          <span style={{ whiteSpace: 'pre-wrap' }}>{newsBody}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+
+              // Poetic Style
+              if (version.name === 'poetic') {
+                return (
+                  <div
+                    key={version.name}
+                    style={{
+                      maxWidth: '40rem',
+                      margin: '0 auto 2rem',
+                      padding: '3rem 4rem',
+                      background: '#f4ebd0',
+                      boxShadow: 'inset 0 0 80px rgba(139, 69, 19, 0.15), 0 10px 30px rgba(0,0,0,0.1)',
+                      borderRadius: '2px',
+                      minHeight: '400px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <h4
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '3px',
+                        marginBottom: '2rem',
+                        color: '#8B7355',
+                      }}
+                    >
+                      {version.title}
+                    </h4>
+                    <div
+                      style={{
+                        fontFamily: "'Georgia', 'Times New Roman', serif",
+                        fontStyle: 'italic',
+                        fontSize: '1.25rem',
+                        color: '#5c4b37',
+                        textAlign: 'center',
+                        whiteSpace: 'pre-wrap',
+                        lineHeight: 2,
+                        letterSpacing: '0.03em',
+                      }}
+                    >
+                      {version.content}
+                    </div>
+                  </div>
+                )
+              }
+
+              // Fallback for unknown styles
+              return (
                 <div
+                  key={version.name}
                   style={{
-                    fontSize: '1rem',
-                    lineHeight: 1.8,
-                    color: '#1b5e20',
-                    whiteSpace: 'pre-wrap',
+                    background: '#f0f9f1',
+                    padding: '2rem',
+                    borderRadius: '8px',
+                    marginBottom: '2rem',
+                    borderLeft: '4px solid #4CAF50',
                   }}
                 >
-                  {version.content}
+                  <h4
+                    style={{
+                      fontSize: '1rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      marginBottom: '1rem',
+                      color: '#2e7d32',
+                    }}
+                  >
+                    {version.title}
+                  </h4>
+                  <div
+                    style={{
+                      fontSize: '1rem',
+                      lineHeight: 1.8,
+                      color: '#1b5e20',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {version.content}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <div
@@ -499,7 +708,7 @@ export function EntryModal({
             <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>✨</div>
             <h3 style={{ margin: '0 0 1rem 0' }}>Generate AI Versions</h3>
             <p style={{ margin: '0 0 1.5rem 0' }}>
-              See your journal entry rewritten in 4 different styles by AI.
+              See your journal entry rewritten in 3 different styles by AI.
             </p>
             <button
               onClick={() => {

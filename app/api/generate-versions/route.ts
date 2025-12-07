@@ -55,6 +55,36 @@ async function generateAllVersions(entry: Entry, apiKey: string) {
   const results = await Promise.all(
     styles.map(async (style) => {
       const content = await callClaudeAPI(style.prompt, apiKey)
+      
+      // Parse structured JSON response for news style
+      if (style.name === 'news') {
+        try {
+          // Clean potential markdown code fences
+          const cleanedContent = content
+            .replace(/^```json\s*/i, '')
+            .replace(/^```\s*/i, '')
+            .replace(/\s*```$/i, '')
+            .trim()
+          
+          const parsed = JSON.parse(cleanedContent)
+          return {
+            name: style.name,
+            title: style.title,
+            content: `${parsed.headline}\n\n${parsed.body}`, // Fallback combined content
+            headline: parsed.headline,
+            body: parsed.body,
+          }
+        } catch (e) {
+          // Fallback if JSON parsing fails - use content as-is
+          console.error('Failed to parse news JSON:', e)
+          return {
+            name: style.name,
+            title: style.title,
+            content: content,
+          }
+        }
+      }
+      
       return {
         name: style.name,
         title: style.title,
@@ -127,7 +157,13 @@ Mood: ${entry.mood || 'not specified'}
 Content:
 ${entry.content}
 
-Write ONLY the news article version. No preamble or explanation.`
+Return your response as valid JSON with this exact structure:
+{
+  "headline": "Your compelling news headline here",
+  "body": "The full article body text here"
+}
+
+Write ONLY the JSON object. No preamble, explanation, or markdown formatting.`
 }
 
 function createLiteraryPrompt(entry: Entry): string {

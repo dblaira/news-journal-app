@@ -21,6 +21,9 @@ export interface Version {
   name: string
   title: string
   content: string
+  // Structured content for news style
+  headline?: string
+  body?: string
 }
 
 export interface WeeklyTheme {
