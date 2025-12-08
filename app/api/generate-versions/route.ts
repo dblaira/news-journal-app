@@ -142,7 +142,13 @@ Mood: ${entry.mood || 'not specified'}
 Content:
 ${entry.content}
 
-Write ONLY the transformed version in a poetic style. No preamble or explanation.`
+IMPORTANT FORMATTING RULES:
+- Write ONLY the poetic version
+- Do NOT include a title, heading, or any introductory line
+- Do NOT use markdown formatting (no asterisks, no bold, no italics)
+- Do NOT use decorative symbols or ornaments
+- Start directly with the first line of poetry/prose
+- Use plain text only`
 }
 
 function createNewsPrompt(entry: Entry): string {
@@ -178,6 +184,12 @@ Mood: ${entry.mood || 'not specified'}
 Content:
 ${entry.content}
 
-Write ONLY the literary essay version. No preamble or explanation.`
+IMPORTANT FORMATTING RULES:
+- Write ONLY the essay body text
+- Do NOT include a title, heading, or any introductory line
+- Do NOT use markdown formatting (no asterisks, no bold, no italics)
+- Do NOT use decorative symbols or ornaments
+- Start directly with the first sentence of prose
+- Use plain text only`
 }
 
