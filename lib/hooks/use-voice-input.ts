@@ -83,6 +83,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
+  const pendingWhisperStartRef = useRef(false)
 
   // Check for Web Speech API support
   const checkWebSpeechSupport = useCallback(() => {
@@ -119,21 +120,35 @@ export function useVoiceInput(): UseVoiceInputReturn {
     recognition.onerror = (event) => {
       setIsListening(false)
       
-      // If Web Speech fails, try Whisper fallback
+      // For permission/service errors, try Whisper fallback immediately
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        setError('Microphone access denied. Please allow microphone access.')
+        // Web Speech permission denied - try Whisper which uses a different permission flow
+        if (checkMediaRecorderSupport()) {
+          console.log('Web Speech denied, switching to Whisper fallback')
+          pendingWhisperStartRef.current = true
+          setMode('whisper')
+          setError(null)
+          setInterimTranscript('Switching to Whisper...')
+          return // Don't set error, let Whisper try
+        } else {
+          setError('Microphone access denied. Please allow microphone access.')
+        }
       } else if (event.error === 'network' || event.error === 'no-speech') {
-        // These errors might indicate Web Speech isn't working well
-        // Could switch to Whisper here, but for now just show error
         switch (event.error) {
           case 'no-speech':
             setError('No speech detected. Please try again.')
             break
           case 'network':
-            setError('Network error. Trying Whisper fallback...')
             // Auto-switch to Whisper mode
             if (checkMediaRecorderSupport()) {
+              console.log('Network error, switching to Whisper fallback')
+              pendingWhisperStartRef.current = true
               setMode('whisper')
+              setError(null)
+              setInterimTranscript('Switching to Whisper...')
+              return
+            } else {
+              setError('Network error. Please try again.')
             }
             break
           default:
@@ -284,6 +299,14 @@ export function useVoiceInput(): UseVoiceInputReturn {
       }
     }
   }, [])
+
+  // Auto-start Whisper when mode switches from webSpeech to whisper due to error
+  useEffect(() => {
+    if (mode === 'whisper' && pendingWhisperStartRef.current) {
+      pendingWhisperStartRef.current = false
+      startWhisperRecording()
+    }
+  }, [mode, startWhisperRecording])
 
   // Stop Whisper recording
   const stopWhisperRecording = useCallback(() => {
