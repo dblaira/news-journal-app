@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useVoiceInput } from '@/lib/hooks/use-voice-input'
-import { Entry } from '@/types'
+import { Entry, EntryType } from '@/types'
 
 interface InferredData {
   headline: string
@@ -10,6 +10,8 @@ interface InferredData {
   category: Entry['category']
   mood: string
   content: string
+  entry_type: EntryType
+  due_date: string | null
 }
 
 interface CaptureInputProps {

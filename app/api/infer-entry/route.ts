@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { EntryType } from '@/types'
 
 export interface InferredEntry {
   headline: string
   subheading: string
   category: 'Business' | 'Finance' | 'Health' | 'Spiritual' | 'Fun' | 'Social' | 'Romance'
   mood: string
+  // Unified entry system fields
+  entry_type: EntryType
+  due_date: string | null
 }
 
 export async function POST(request: NextRequest) {
@@ -49,12 +53,25 @@ export async function POST(request: NextRequest) {
 }
 
 async function inferEntryMetadata(content: string, apiKey: string): Promise<InferredEntry> {
+  // Get current date for relative date inference
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+  
   const prompt = `You are analyzing a personal journal entry to extract metadata. Based on the following journal entry text, infer:
 
 1. headline: A punchy, newsworthy headline that captures the essence (5-10 words, like a newspaper headline)
 2. subheading: Brief context or teaser that adds detail (10-20 words)
 3. category: The single best fitting category from EXACTLY one of these options: Business, Finance, Health, Spiritual, Fun, Social, Romance
 4. mood: The emotional tone in 1-2 words (e.g., "reflective", "energized", "grateful", "determined")
+5. entry_type: Classify as ONE of these:
+   - "story": Reflections, experiences, observations, things that happened, feelings, insights, diary entries
+   - "action": Commitments, tasks, things to do, reminders, follow-ups, intentions with implied accountability (e.g., "I need to...", "I should...", "Don't forget to...", "Remember to...")
+   - "note": Facts, references, information to remember, quotes, links, things to look up later, lists of items
+6. due_date: If entry_type is "action" and a deadline is mentioned or implied, return the date as ISO format (YYYY-MM-DD). Today's date is ${todayStr}. Convert relative dates:
+   - "tomorrow" = the day after ${todayStr}
+   - "next week" = 7 days from ${todayStr}
+   - "by Friday" = the upcoming Friday
+   - If no deadline is mentioned, return null
 
 Journal Entry:
 """
@@ -62,7 +79,7 @@ ${content}
 """
 
 Return ONLY valid JSON with no additional text, markdown, or explanation:
-{"headline": "...", "subheading": "...", "category": "...", "mood": "..."}`
+{"headline": "...", "subheading": "...", "category": "...", "mood": "...", "entry_type": "...", "due_date": "..." or null}`
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -117,11 +134,29 @@ Return ONLY valid JSON with no additional text, markdown, or explanation:
       parsed.category = 'Fun' // Default fallback
     }
 
+    // Validate entry_type
+    const validEntryTypes: EntryType[] = ['story', 'action', 'note']
+    const entryType: EntryType = validEntryTypes.includes(parsed.entry_type) 
+      ? parsed.entry_type 
+      : 'story' // Default to story if not recognized
+
+    // Validate and parse due_date
+    let dueDate: string | null = null
+    if (parsed.due_date && entryType === 'action') {
+      // Validate ISO date format
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+      if (dateRegex.test(parsed.due_date)) {
+        dueDate = parsed.due_date
+      }
+    }
+
     return {
       headline: parsed.headline || 'Untitled Entry',
       subheading: parsed.subheading || '',
       category: parsed.category,
       mood: parsed.mood || 'reflective',
+      entry_type: entryType,
+      due_date: dueDate,
     }
   } catch {
     // If JSON parsing fails, create defaults
@@ -131,6 +166,8 @@ Return ONLY valid JSON with no additional text, markdown, or explanation:
       subheading: '',
       category: 'Fun',
       mood: 'reflective',
+      entry_type: 'story',
+      due_date: null,
     }
   }
 }

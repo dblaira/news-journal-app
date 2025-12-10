@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Entry } from '@/types'
+import { Entry, EntryType } from '@/types'
 
 interface InferredData {
   headline: string
@@ -9,6 +9,8 @@ interface InferredData {
   category: Entry['category']
   mood: string
   content: string
+  entry_type: EntryType
+  due_date: string | null
 }
 
 interface CaptureConfirmationProps {
@@ -17,6 +19,12 @@ interface CaptureConfirmationProps {
   onBack: () => void
   isPublishing: boolean
 }
+
+const entryTypes: { id: EntryType; label: string; icon: string }[] = [
+  { id: 'story', label: 'Story', icon: '📖' },
+  { id: 'action', label: 'Action', icon: '✓' },
+  { id: 'note', label: 'Note', icon: '📝' },
+]
 
 const categories: Entry['category'][] = [
   'Business',
@@ -39,6 +47,8 @@ export function CaptureConfirmation({
   const [category, setCategory] = useState(data.category)
   const [mood, setMood] = useState(data.mood)
   const [content, setContent] = useState(data.content)
+  const [entryType, setEntryType] = useState<EntryType>(data.entry_type || 'story')
+  const [dueDate, setDueDate] = useState<string>(data.due_date || '')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [editingField, setEditingField] = useState<string | null>(null)
@@ -72,6 +82,8 @@ export function CaptureConfirmation({
       category,
       mood,
       content,
+      entry_type: entryType,
+      due_date: entryType === 'action' && dueDate ? dueDate : null,
       photo: photoFile || undefined,
     })
   }
@@ -304,6 +316,117 @@ export function CaptureConfirmation({
             />
           </div>
         </div>
+
+        {/* Entry Type Pills */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label
+            style={{
+              fontSize: '0.65rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08rem',
+              color: '#999',
+              display: 'block',
+              marginBottom: '0.5rem',
+            }}
+          >
+            Entry Type
+          </label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {entryTypes.map((type) => (
+              <button
+                key={type.id}
+                type="button"
+                onClick={() => setEntryType(type.id)}
+                style={{
+                  flex: 1,
+                  padding: '0.6rem 1rem',
+                  border: entryType === type.id ? '2px solid #DC143C' : '1px solid #ddd',
+                  borderRadius: '6px',
+                  background: entryType === type.id ? '#FDF2F4' : '#fff',
+                  color: entryType === type.id ? '#DC143C' : '#666',
+                  fontSize: '0.85rem',
+                  fontWeight: entryType === type.id ? 600 : 400,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.4rem',
+                }}
+                onMouseEnter={(e) => {
+                  if (entryType !== type.id) {
+                    e.currentTarget.style.borderColor = '#DC143C'
+                    e.currentTarget.style.color = '#DC143C'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (entryType !== type.id) {
+                    e.currentTarget.style.borderColor = '#ddd'
+                    e.currentTarget.style.color = '#666'
+                  }
+                }}
+              >
+                <span>{type.icon}</span>
+                <span>{type.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Due Date - Only shown for actions */}
+        {entryType === 'action' && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label
+              style={{
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08rem',
+                color: '#999',
+                display: 'block',
+                marginBottom: '0.25rem',
+              }}
+            >
+              Due Date (Optional)
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              style={{
+                ...fieldStyle,
+                fontSize: '0.95rem',
+                padding: '0.5rem',
+                border: '1px solid #eee',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#DC143C'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = '#eee'
+              }}
+            />
+            {dueDate && (
+              <button
+                type="button"
+                onClick={() => setDueDate('')}
+                style={{
+                  marginLeft: '0.5rem',
+                  padding: '0.3rem 0.6rem',
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#999',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Content - Editable */}
         <div style={{ marginBottom: '1.5rem' }}>

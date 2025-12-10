@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { CaptureInput } from './capture-input'
 import { CaptureConfirmation } from './capture-confirmation'
-import { Entry } from '@/types'
+import { Entry, EntryType } from '@/types'
 
 interface InferredData {
   headline: string
@@ -11,6 +11,8 @@ interface InferredData {
   category: Entry['category']
   mood: string
   content: string
+  entry_type: EntryType
+  due_date: string | null
 }
 
 interface CaptureFABProps {
@@ -53,6 +55,8 @@ export function CaptureFAB({ onEntryCreated }: CaptureFABProps) {
         category: data.category,
         content: data.content,
         mood: data.mood,
+        entry_type: data.entry_type,
+        due_date: data.due_date,
       })
 
       if (result.error) {

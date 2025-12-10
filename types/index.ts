@@ -1,3 +1,6 @@
+// Entry types for the unified entry system
+export type EntryType = 'story' | 'action' | 'note'
+
 export interface Entry {
   id: string
   headline: string
@@ -15,6 +18,11 @@ export interface Entry {
   photo_processed?: boolean
   week_theme_id?: string
   view_count?: number
+  // Unified entry system fields
+  entry_type: EntryType
+  due_date?: string | null
+  recurrence_rule?: string | null
+  completed_at?: string | null
 }
 
 export interface Version {
@@ -45,5 +53,9 @@ export interface CreateEntryInput {
   content: string
   mood?: string
   photo_url?: string
+  // Unified entry system fields
+  entry_type?: EntryType
+  due_date?: string | null
+  recurrence_rule?: string | null
 }
 

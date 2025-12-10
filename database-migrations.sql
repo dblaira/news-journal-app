@@ -67,3 +67,48 @@ ALTER TABLE entries
 -- 10. Create index for view_count to optimize trending queries
 CREATE INDEX IF NOT EXISTS idx_entries_view_count ON entries(view_count DESC, created_at DESC);
 
+-- 10b. Create RPC function for atomic view count increment
+-- This prevents race conditions when multiple requests try to increment simultaneously
+CREATE OR REPLACE FUNCTION increment_entry_view_count(entry_id UUID, owner_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  rows_updated INTEGER;
+BEGIN
+  UPDATE entries
+  SET view_count = COALESCE(view_count, 0) + 1
+  WHERE id = entry_id AND user_id = owner_id;
+  
+  GET DIAGNOSTICS rows_updated = ROW_COUNT;
+  RETURN rows_updated > 0;
+END;
+$$;
+
+-- =============================================================================
+-- V4 UNIFIED ENTRY SYSTEM MIGRATIONS
+-- Adds support for entry types: story, action, note
+-- Run these SQL commands in your Supabase SQL Editor
+-- =============================================================================
+
+-- 11. Add entry_type column with default 'story' for backward compatibility
+-- Using TEXT with CHECK constraint instead of enum for flexibility
+ALTER TABLE entries 
+  ADD COLUMN IF NOT EXISTS entry_type TEXT DEFAULT 'story' 
+    CHECK (entry_type IN ('story', 'action', 'note'));
+
+-- 12. Add action-specific columns
+ALTER TABLE entries 
+  ADD COLUMN IF NOT EXISTS due_date TIMESTAMP WITH TIME ZONE,
+  ADD COLUMN IF NOT EXISTS recurrence_rule TEXT,
+  ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP WITH TIME ZONE;
+
+-- 13. Create indexes for efficient querying by type and due date
+CREATE INDEX IF NOT EXISTS idx_entries_type ON entries(user_id, entry_type);
+CREATE INDEX IF NOT EXISTS idx_entries_incomplete_actions ON entries(user_id, due_date) 
+  WHERE entry_type = 'action' AND completed_at IS NULL;
+
+-- 14. Update existing entries to have entry_type = 'story' (in case default didn't apply)
+UPDATE entries SET entry_type = 'story' WHERE entry_type IS NULL;
+
