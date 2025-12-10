@@ -47,8 +47,9 @@ export async function middleware(request: NextRequest) {
       error,
     } = await supabase.auth.getUser()
 
-    // Always allow access to login page and debug pages
+    // Always allow access to login page, auth callback, and debug pages
     if (request.nextUrl.pathname === '/login' || 
+        request.nextUrl.pathname.startsWith('/auth/') ||
         request.nextUrl.pathname === '/debug-auth' || 
         request.nextUrl.pathname === '/debug-photo') {
       // Only redirect away from login if user is definitely authenticated
