@@ -14,7 +14,7 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: 'Adam Daily - Personal Newsroom',
+  title: 'Personal Press - Your Story, Your Way',
   description: 'Your story, your way.',
 }
 

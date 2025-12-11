@@ -21,7 +21,7 @@ export function Header({ issueTagline, onNewEntry }: HeaderProps) {
   return (
     <header className="site-header">
       <div className="brand-block">
-        <span className="brand-title">Adam Daily</span>
+        <span className="brand-title">Personal Press</span>
         <span className="brand-edition" id="issueTagline">
           {issueTagline}
         </span>

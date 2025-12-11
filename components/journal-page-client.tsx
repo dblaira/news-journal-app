@@ -357,7 +357,7 @@ export function JournalPageClient({
         />
 
         <footer>
-          <p>&copy; 2025 Adam Daily. Your story, your way.</p>
+          <p>&copy; 2025 Personal Press. Your story, your way.</p>
         </footer>
       </div>
 
