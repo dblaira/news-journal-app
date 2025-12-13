@@ -75,12 +75,15 @@ async function generateAllVersions(entry: Entry, apiKey: string) {
             body: parsed.body,
           }
         } catch (e) {
-          // Fallback if JSON parsing fails - use content as-is
+          // Fallback if JSON parsing fails - provide explicit empty headline/body
+          // to avoid naive string splitting on malformed JSON in the modal
           console.error('Failed to parse news JSON:', e)
           return {
             name: style.name,
             title: style.title,
             content: content,
+            headline: 'News Feature',
+            body: content,
           }
         }
       }

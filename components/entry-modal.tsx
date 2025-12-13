@@ -587,8 +587,11 @@ export function EntryModal({
 
               // News Feature Style
               if (version.name === 'news') {
-                const newsHeadline = version.headline || version.content.split('\n')[0]
-                const newsBody = version.body || version.content.split('\n').slice(1).join('\n')
+                // Use structured headline/body if available
+                // Fallback to splitting only if content looks like prose (not JSON/error)
+                const contentLooksLikeJson = version.content.trim().startsWith('{') || version.content.trim().startsWith('[')
+                const newsHeadline = version.headline || (contentLooksLikeJson ? 'News Feature' : version.content.split('\n')[0])
+                const newsBody = version.body || (contentLooksLikeJson ? version.content : version.content.split('\n').slice(1).join('\n'))
                 
                 return (
                   <div
