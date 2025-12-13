@@ -23,6 +23,8 @@ export interface Entry {
   due_date?: string | null
   recurrence_rule?: string | null
   completed_at?: string | null
+  // Pin feature
+  pinned_at?: string | null
 }
 
 export interface Version {

@@ -112,3 +112,17 @@ CREATE INDEX IF NOT EXISTS idx_entries_incomplete_actions ON entries(user_id, du
 -- 14. Update existing entries to have entry_type = 'story' (in case default didn't apply)
 UPDATE entries SET entry_type = 'story' WHERE entry_type IS NULL;
 
+-- =============================================================================
+-- V5 PIN FEATURE MIGRATIONS
+-- Adds support for pinning entries (max 2 per entry type)
+-- =============================================================================
+
+-- 15. Add pinned_at timestamp column for pin feature
+ALTER TABLE entries 
+  ADD COLUMN IF NOT EXISTS pinned_at TIMESTAMP WITH TIME ZONE;
+
+-- 16. Create index for efficient pinned queries
+-- Partial index only includes pinned entries for better performance
+CREATE INDEX IF NOT EXISTS idx_entries_pinned ON entries(user_id, entry_type, pinned_at DESC) 
+  WHERE pinned_at IS NOT NULL;
+

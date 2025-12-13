@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Entry, Version } from '@/types'
 import { formatEntryDateLong } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
-import { incrementViewCount, removeEntryPhoto } from '@/app/actions/entries'
+import { incrementViewCount, removeEntryPhoto, togglePin } from '@/app/actions/entries'
 
 interface EntryModalProps {
   entry: Entry
@@ -12,6 +12,7 @@ interface EntryModalProps {
   onGenerateVersions: (id: string) => void
   onDeleteEntry: (id: string) => void
   onPhotoUpdated?: (entryId: string, photoUrl: string | null) => void
+  onPinToggled?: (entryId: string, isPinned: boolean) => void
 }
 
 export function EntryModal({
@@ -20,6 +21,7 @@ export function EntryModal({
   onGenerateVersions,
   onDeleteEntry,
   onPhotoUpdated,
+  onPinToggled,
 }: EntryModalProps) {
   const formattedDate = formatEntryDateLong(entry.created_at)
   const hasVersions = Array.isArray(entry.versions) && entry.versions.length > 0
@@ -28,6 +30,8 @@ export function EntryModal({
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
   const [isRemovingPhoto, setIsRemovingPhoto] = useState(false)
   const [currentPhotoUrl, setCurrentPhotoUrl] = useState(entry.photo_url)
+  const [isPinned, setIsPinned] = useState(!!entry.pinned_at)
+  const [isTogglingPin, setIsTogglingPin] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Track view when modal opens
@@ -47,6 +51,38 @@ export function EntryModal({
   useEffect(() => {
     setCurrentPhotoUrl(entry.photo_url)
   }, [entry.photo_url])
+
+  // Update pin state when entry changes
+  useEffect(() => {
+    setIsPinned(!!entry.pinned_at)
+  }, [entry.pinned_at])
+
+  const handleTogglePin = async () => {
+    setIsTogglingPin(true)
+    const previousPinState = isPinned
+    
+    // Optimistic update
+    setIsPinned(!isPinned)
+    
+    try {
+      const result = await togglePin(entry.id)
+      if (result.error) {
+        // Revert on error
+        setIsPinned(previousPinState)
+        alert(result.error)
+      } else {
+        // Notify parent of pin change
+        onPinToggled?.(entry.id, result.pinned ?? !previousPinState)
+      }
+    } catch (error) {
+      // Revert on error
+      setIsPinned(previousPinState)
+      console.error('Failed to toggle pin:', error)
+      alert('Failed to toggle pin. Please try again.')
+    } finally {
+      setIsTogglingPin(false)
+    }
+  }
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -170,6 +206,38 @@ export function EntryModal({
             }}
           >
             Delete
+          </button>
+          <button
+            onClick={handleTogglePin}
+            disabled={isTogglingPin}
+            style={{
+              background: isPinned ? '#228B22' : 'transparent',
+              color: isPinned ? '#FFFFFF' : '#228B22',
+              border: '1px solid #228B22',
+              padding: '0.5rem 1rem',
+              cursor: isTogglingPin ? 'not-allowed' : 'pointer',
+              fontSize: '0.85rem',
+              borderRadius: 0,
+              fontWeight: 600,
+              letterSpacing: '0.05rem',
+              textTransform: 'uppercase',
+              transition: 'all 0.2s ease',
+              opacity: isTogglingPin ? 0.6 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!isTogglingPin) {
+                e.currentTarget.style.background = '#228B22'
+                e.currentTarget.style.color = '#FFFFFF'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isTogglingPin) {
+                e.currentTarget.style.background = isPinned ? '#228B22' : 'transparent'
+                e.currentTarget.style.color = isPinned ? '#FFFFFF' : '#228B22'
+              }
+            }}
+          >
+            {isTogglingPin ? '...' : isPinned ? 'Unpin' : 'Pin'}
           </button>
           <button
             onClick={onClose}

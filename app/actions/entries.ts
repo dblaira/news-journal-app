@@ -330,3 +330,106 @@ export async function updateEntryPhoto(entryId: string, photoUrl: string) {
   return { success: true }
 }
 
+// =============================================================================
+// PIN FEATURE
+// =============================================================================
+
+export async function togglePin(entryId: string) {
+  const supabase = await createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // First, get the entry to check its current pin state and entry_type
+  const { data: entry, error: fetchError } = await supabase
+    .from('entries')
+    .select('id, entry_type, pinned_at')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError || !entry) {
+    return { error: 'Entry not found' }
+  }
+
+  // If already pinned, unpin it
+  if (entry.pinned_at) {
+    const { error: updateError } = await supabase
+      .from('entries')
+      .update({ pinned_at: null })
+      .eq('id', entryId)
+      .eq('user_id', user.id)
+
+    if (updateError) {
+      return { error: updateError.message }
+    }
+
+    revalidatePath('/')
+    return { success: true, pinned: false }
+  }
+
+  // If not pinned, check how many are already pinned for this entry_type
+  const { count, error: countError } = await supabase
+    .from('entries')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('entry_type', entry.entry_type)
+    .not('pinned_at', 'is', null)
+
+  if (countError) {
+    return { error: countError.message }
+  }
+
+  // Maximum 2 pinned items per entry type
+  if (count !== null && count >= 2) {
+    return { error: `Maximum 2 pinned ${entry.entry_type}s allowed. Unpin one first.` }
+  }
+
+  // Pin the entry
+  const { error: pinError } = await supabase
+    .from('entries')
+    .update({ pinned_at: new Date().toISOString() })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (pinError) {
+    return { error: pinError.message }
+  }
+
+  revalidatePath('/')
+  return { success: true, pinned: true }
+}
+
+export async function getPinnedEntries(userId: string): Promise<{
+  stories: Entry[]
+  notes: Entry[]
+  actions: Entry[]
+}> {
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase
+    .from('entries')
+    .select('*')
+    .eq('user_id', userId)
+    .not('pinned_at', 'is', null)
+    .order('pinned_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching pinned entries:', error)
+    return { stories: [], notes: [], actions: [] }
+  }
+
+  const entries = (data as Entry[]) || []
+  
+  return {
+    stories: entries.filter(e => e.entry_type === 'story'),
+    notes: entries.filter(e => e.entry_type === 'note'),
+    actions: entries.filter(e => e.entry_type === 'action'),
+  }
+}
+

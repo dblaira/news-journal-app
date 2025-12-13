@@ -25,7 +25,9 @@ interface JournalPageClientProps {
   initialWeeklyTheme?: WeeklyTheme | null
   categoryEntries: Entry[]
   latestEntries: Entry[]
-  trendingEntries: Entry[]
+  pinnedStories: Entry[]
+  pinnedNotes: Entry[]
+  pinnedActions: Entry[]
 }
 
 export function JournalPageClient({
@@ -35,7 +37,9 @@ export function JournalPageClient({
   initialWeeklyTheme,
   categoryEntries,
   latestEntries,
-  trendingEntries,
+  pinnedStories,
+  pinnedNotes,
+  pinnedActions,
 }: JournalPageClientProps) {
   const router = useRouter()
   const [entries, setEntries] = useState<Entry[]>(initialEntries)
@@ -249,6 +253,22 @@ export function JournalPageClient({
     alert(`${theme.headline}\n\n${theme.subtitle}\n\n${theme.theme_content}`)
   }
 
+  const handlePinToggled = (entryId: string, isPinned: boolean) => {
+    // Update local state to reflect pin change
+    const updatedEntries = entries.map((e) =>
+      e.id === entryId ? { ...e, pinned_at: isPinned ? new Date().toISOString() : null } : e
+    )
+    setEntries(updatedEntries)
+    
+    // Update selected entry if it's the one being pinned/unpinned
+    if (selectedEntry?.id === entryId) {
+      setSelectedEntry({ ...selectedEntry, pinned_at: isPinned ? new Date().toISOString() : null })
+    }
+    
+    // Refresh to update the pinned sections in the layout
+    router.refresh()
+  }
+
   return (
     <div className="page-shell">
       <Header issueTagline={issueTagline} onNewEntry={handleCreateEntry} />
@@ -352,7 +372,9 @@ export function JournalPageClient({
         <VanityFairLayout
           categoryEntries={categoryEntries}
           latestEntries={latestEntries}
-          trendingEntries={trendingEntries}
+          pinnedStories={pinnedStories}
+          pinnedNotes={pinnedNotes}
+          pinnedActions={pinnedActions}
           onViewEntry={handleViewEntry}
         />
 
@@ -376,6 +398,7 @@ export function JournalPageClient({
           onGenerateVersions={handleGenerateVersions}
           onDeleteEntry={handleDeleteEntry}
           onPhotoUpdated={handlePhotoUpdated}
+          onPinToggled={handlePinToggled}
         />
       )}
     </div>

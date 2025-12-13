@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { JournalPageClient } from '@/components/journal-page-client'
 import { Entry, WeeklyTheme } from '@/types'
-import { getCurrentWeeklyTheme, getLatestEntryPerCategory, getLatestEntries, getTrendingEntries } from '@/app/actions/entries'
+import { getCurrentWeeklyTheme, getLatestEntryPerCategory, getLatestEntries, getPinnedEntries } from '@/app/actions/entries'
 
 async function getEntries(userId: string): Promise<Entry[]> {
   const supabase = await createClient()
@@ -42,7 +42,7 @@ export default async function HomePage({
   // Fetch data for 3-column layout
   const categoryEntries = await getLatestEntryPerCategory(user.id)
   const latestEntries = await getLatestEntries(user.id, 20)
-  const trendingEntries = await getTrendingEntries(user.id, 10)
+  const pinnedEntries = await getPinnedEntries(user.id)
 
   return (
     <JournalPageClient
@@ -52,7 +52,9 @@ export default async function HomePage({
       initialWeeklyTheme={currentTheme}
       categoryEntries={categoryEntries}
       latestEntries={latestEntries}
-      trendingEntries={trendingEntries}
+      pinnedStories={pinnedEntries.stories}
+      pinnedNotes={pinnedEntries.notes}
+      pinnedActions={pinnedEntries.actions}
     />
   )
 }

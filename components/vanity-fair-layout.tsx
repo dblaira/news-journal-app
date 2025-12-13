@@ -8,7 +8,9 @@ import { useState, useEffect } from 'react'
 interface VanityFairLayoutProps {
   categoryEntries: Entry[]
   latestEntries: Entry[]
-  trendingEntries: Entry[]
+  pinnedStories: Entry[]
+  pinnedNotes: Entry[]
+  pinnedActions: Entry[]
   onViewEntry: (id: string) => void
 }
 
@@ -17,7 +19,9 @@ const categories: Entry['category'][] = ['Business', 'Finance', 'Health', 'Spiri
 export function VanityFairLayout({
   categoryEntries,
   latestEntries,
-  trendingEntries,
+  pinnedStories,
+  pinnedNotes,
+  pinnedActions,
   onViewEntry,
 }: VanityFairLayoutProps) {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
@@ -39,14 +43,26 @@ export function VanityFairLayout({
     categoryMap.set(entry.category, entry)
   })
 
+  // Check if there are any pinned items
+  const hasPinnedItems = pinnedStories.length > 0 || pinnedNotes.length > 0 || pinnedActions.length > 0
+
   return (
     <div className="vanity-fair-layout bg-white text-neutral-900 py-10">
-      {/* Section Title */}
+      {/* Section Titles - All Stories and Pinned */}
       <div className="px-4 md:px-6 mb-8 max-w-7xl mx-auto">
         <div className="border-t border-b border-neutral-200 py-3">
-          <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase">
-            All Stories
-          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <div className="md:col-span-9">
+              <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase">
+                All Stories
+              </h2>
+            </div>
+            <div className="md:col-span-3">
+              <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase">
+                Pinned
+              </h2>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -158,17 +174,16 @@ export function VanityFairLayout({
           )}
         </section>
 
-        {/* RIGHT COLUMN — Trending Stories (3 columns) */}
+        {/* RIGHT COLUMN — Pinned Items (3 columns) */}
         <aside className="md:col-span-3 space-y-6">
-          <div>
-            <h2 className="uppercase text-xs text-orange-500 font-semibold tracking-wider mb-4">
-              Trending Stories
-            </h2>
-            {trendingEntries.length === 0 ? (
-              <p className="text-sm text-neutral-400">No trending stories yet</p>
-            ) : (
-              <div className="space-y-6">
-                {trendingEntries.map((entry) => {
+          {/* Pinned Stories */}
+          {pinnedStories.length > 0 && (
+            <div>
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-4 pb-2 border-b border-neutral-200">
+                Stories
+              </h3>
+              <div className="space-y-4">
+                {pinnedStories.map((entry) => {
                   const imageUrl = entry.photo_url || getCategoryImage(entry.category)
                   const hasImageError = imageErrors.has(entry.id)
 
@@ -183,7 +198,7 @@ export function VanityFairLayout({
                           <img
                             src={imageUrl}
                             alt={entry.headline}
-                            className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="w-full h-28 object-cover transition-transform duration-300 group-hover:scale-105"
                             onError={() => handleImageError(entry.id)}
                           />
                         </div>
@@ -193,24 +208,93 @@ export function VanityFairLayout({
                           {entry.category}
                         </span>
                       </div>
-                      <h3 className="text-base font-semibold hover:underline leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors mb-1">
+                      <h4 className="text-sm font-semibold hover:underline leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
                         {entry.headline}
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs text-neutral-400 uppercase tracking-wide">
-                        <span>{formatEntryDateShort(entry.created_at)}</span>
-                        {entry.view_count && entry.view_count > 0 && (
-                          <span className="flex items-center gap-1">
-                            <span>👁</span>
-                            <span>{entry.view_count}</span>
-                          </span>
-                        )}
-                      </div>
+                      </h4>
+                      <p className="text-xs text-neutral-400 mt-1 uppercase tracking-wide">
+                        {formatEntryDateShort(entry.created_at)}
+                      </p>
                     </div>
                   )
                 })}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Pinned Notes */}
+          {pinnedNotes.length > 0 && (
+            <div>
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-4 pb-2 border-b border-neutral-200">
+                Notes
+              </h3>
+              <div className="space-y-4">
+                {pinnedNotes.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="cursor-pointer group p-3 bg-neutral-50 hover:bg-neutral-100 transition-colors"
+                    onClick={() => onViewEntry(entry.id)}
+                  >
+                    <div className="mb-1">
+                      <span className="uppercase text-xs text-blue-600 tracking-wider font-bold">
+                        Note
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-semibold leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
+                      {entry.headline}
+                    </h4>
+                    <p className="text-xs text-neutral-500 mt-1 line-clamp-2">
+                      {truncate(entry.content, 80)}
+                    </p>
+                    <p className="text-xs text-neutral-400 mt-2 uppercase tracking-wide">
+                      {formatEntryDateShort(entry.created_at)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pinned Actions */}
+          {pinnedActions.length > 0 && (
+            <div>
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-4 pb-2 border-b border-neutral-200">
+                Actions
+              </h3>
+              <div className="space-y-4">
+                {pinnedActions.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="cursor-pointer group p-3 bg-amber-50 hover:bg-amber-100 transition-colors border-l-2 border-amber-400"
+                    onClick={() => onViewEntry(entry.id)}
+                  >
+                    <div className="mb-1">
+                      <span className="uppercase text-xs text-amber-600 tracking-wider font-bold">
+                        Action
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-semibold leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
+                      {entry.headline}
+                    </h4>
+                    {entry.due_date && (
+                      <p className="text-xs text-amber-600 mt-1 font-medium">
+                        Due: {formatEntryDateShort(entry.due_date)}
+                      </p>
+                    )}
+                    <p className="text-xs text-neutral-400 mt-1 uppercase tracking-wide">
+                      {formatEntryDateShort(entry.created_at)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Empty state when no pinned items */}
+          {!hasPinnedItems && (
+            <p className="text-sm text-neutral-400 italic">
+              No pinned items yet. Pin entries to keep them visible here.
+            </p>
+          )}
         </aside>
       </div>
     </div>
