@@ -357,6 +357,9 @@ export async function togglePin(entryId: string) {
     return { error: 'Entry not found' }
   }
 
+  // Default to 'story' if entry_type is not set (legacy entries)
+  const entryType = entry.entry_type || 'story'
+
   // If already pinned, unpin it
   if (entry.pinned_at) {
     const { error: updateError } = await supabase
@@ -378,7 +381,7 @@ export async function togglePin(entryId: string) {
     .from('entries')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
-    .eq('entry_type', entry.entry_type)
+    .eq('entry_type', entryType)
     .not('pinned_at', 'is', null)
 
   if (countError) {
@@ -387,7 +390,7 @@ export async function togglePin(entryId: string) {
 
   // Maximum 2 pinned items per entry type
   if (count !== null && count >= 2) {
-    return { error: `Maximum 2 pinned ${entry.entry_type}s allowed. Unpin one first.` }
+    return { error: `Maximum 2 pinned ${entryType}s allowed. Unpin one first.` }
   }
 
   // Pin the entry
@@ -426,8 +429,9 @@ export async function getPinnedEntries(userId: string): Promise<{
 
   const entries = (data as Entry[]) || []
   
+  // Default undefined entry_type to 'story' for legacy entries
   return {
-    stories: entries.filter(e => e.entry_type === 'story'),
+    stories: entries.filter(e => (e.entry_type || 'story') === 'story'),
     notes: entries.filter(e => e.entry_type === 'note'),
     actions: entries.filter(e => e.entry_type === 'action'),
   }

@@ -19,7 +19,9 @@ export interface Entry {
   week_theme_id?: string
   view_count?: number
   // Unified entry system fields
-  entry_type: EntryType
+  // Optional to handle migration period where legacy entries may lack this column
+  // Defaults to 'story' in database and should default in code
+  entry_type?: EntryType
   due_date?: string | null
   recurrence_rule?: string | null
   completed_at?: string | null
