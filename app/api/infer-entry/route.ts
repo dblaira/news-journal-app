@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { content } = await request.json()
+    const { content, selectedType } = await request.json()
 
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return NextResponse.json(
@@ -41,6 +41,15 @@ export async function POST(request: NextRequest) {
     }
 
     const inferred = await inferEntryMetadata(content.trim(), apiKey)
+
+    // If user selected a type, use it instead of AI inference
+    if (selectedType && ['story', 'action', 'note'].includes(selectedType)) {
+      inferred.entry_type = selectedType as EntryType
+      // If user didn't select action, clear due_date
+      if (selectedType !== 'action') {
+        inferred.due_date = null
+      }
+    }
 
     return NextResponse.json(inferred)
   } catch (error) {

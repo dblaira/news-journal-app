@@ -21,13 +21,22 @@ interface CaptureInputProps {
 
 type InputMode = 'voice' | 'type' | 'paste'
 
+const entryTypeOptions: { id: EntryType; label: string; icon: string }[] = [
+  { id: 'story', label: 'Story', icon: '📖' },
+  { id: 'note', label: 'Note', icon: '📝' },
+  { id: 'action', label: 'Action', icon: '✓' },
+]
+
 export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
   const [mode, setMode] = useState<InputMode>('type')
   const [text, setText] = useState('')
   const [isInferring, setIsInferring] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedType, setSelectedType] = useState<EntryType>('story')
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const typeDropdownRef = useRef<HTMLDivElement>(null)
   const {
     isListening,
     transcript,
@@ -55,6 +64,21 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
     }
   }, [transcript])
 
+  // Close type dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target as Node)) {
+        setShowTypeDropdown(false)
+      }
+    }
+    if (showTypeDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showTypeDropdown])
+
   // Handle paste detection
   const handlePaste = (e: React.ClipboardEvent) => {
     if (mode === 'paste') {
@@ -78,7 +102,7 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
       const response = await fetch('/api/infer-entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, selectedType }),
       })
 
       if (!response.ok) {
@@ -91,6 +115,8 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
       onCapture({
         ...inferred,
         content,
+        // Use user-selected type, override AI inference
+        entry_type: selectedType,
       })
     } catch (err: any) {
       console.error('Error inferring entry:', err)
@@ -141,6 +167,104 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
         }
       }}
     >
+      {/* Floating Type Badge */}
+      <div
+        ref={typeDropdownRef}
+        style={{
+          position: 'absolute',
+          top: '1rem',
+          left: '1rem',
+          zIndex: 10,
+        }}
+      >
+        <button
+          onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+          disabled={isInferring}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.5rem 1rem',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '20px',
+            color: '#fff',
+            fontSize: '0.85rem',
+            fontWeight: 500,
+            cursor: isInferring ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s ease',
+            opacity: isInferring ? 0.5 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (!isInferring) {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+          }}
+        >
+          <span>{entryTypeOptions.find(t => t.id === selectedType)?.icon}</span>
+          <span>{entryTypeOptions.find(t => t.id === selectedType)?.label}</span>
+          <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>▼</span>
+        </button>
+
+        {/* Dropdown */}
+        {showTypeDropdown && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 0.5rem)',
+              left: 0,
+              background: '#1a1a1a',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              minWidth: '140px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            {entryTypeOptions.map((type) => (
+              <button
+                key={type.id}
+                onClick={() => {
+                  setSelectedType(type.id)
+                  setShowTypeDropdown(false)
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  background: selectedType === type.id ? 'rgba(220, 20, 60, 0.2)' : 'transparent',
+                  border: 'none',
+                  color: selectedType === type.id ? '#DC143C' : '#fff',
+                  fontSize: '0.85rem',
+                  fontWeight: selectedType === type.id ? 600 : 400,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'background 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedType !== type.id) {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = selectedType === type.id ? 'rgba(220, 20, 60, 0.2)' : 'transparent'
+                }}
+              >
+                <span>{type.icon}</span>
+                <span>{type.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Close button */}
       <button
         onClick={onClose}

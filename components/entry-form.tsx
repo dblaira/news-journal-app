@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CreateEntryInput, Entry } from '@/types'
+import { CreateEntryInput, Entry, EntryType } from '@/types'
 import { createEntry } from '@/app/actions/entries'
 
 interface EntryFormProps {
@@ -19,6 +19,12 @@ const categories: CreateEntryInput['category'][] = [
   'Romance',
 ]
 
+const entryTypes: { id: EntryType; label: string }[] = [
+  { id: 'story', label: 'Story' },
+  { id: 'note', label: 'Note' },
+  { id: 'action', label: 'Action' },
+]
+
 export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -30,6 +36,7 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
     subheading: '',
     content: '',
     mood: '',
+    entry_type: 'story',
   })
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,6 +108,7 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
       <form id="journalForm" onSubmit={handleSubmit}>
         <div className="form-grid">
           <div className="form-column">
+            {/* Headline */}
             <div className="form-group">
               <label htmlFor="headline">Headline</label>
               <input
@@ -116,28 +124,7 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="category">Category</label>
-              <select
-                id="category"
-                required
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    category: e.target.value as CreateEntryInput['category'],
-                  })
-                }
-                disabled={isSubmitting}
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+            {/* Subheading */}
             <div className="form-group">
               <label htmlFor="subheading">Subheading (optional)</label>
               <input
@@ -150,6 +137,53 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
                 }
                 disabled={isSubmitting}
               />
+            </div>
+
+            {/* Category and Type row */}
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label htmlFor="category">Category</label>
+                <select
+                  id="category"
+                  required
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      category: e.target.value as CreateEntryInput['category'],
+                    })
+                  }
+                  disabled={isSubmitting}
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group" style={{ flex: 1 }}>
+                <label htmlFor="entry_type">Type</label>
+                <select
+                  id="entry_type"
+                  required
+                  value={formData.entry_type || 'story'}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      entry_type: e.target.value as EntryType,
+                    })
+                  }
+                  disabled={isSubmitting}
+                >
+                  {entryTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
