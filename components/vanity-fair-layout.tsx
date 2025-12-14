@@ -66,6 +66,114 @@ export function VanityFairLayout({
         </div>
       </div>
 
+      {/* MOBILE ONLY: Pinned Items at Top */}
+      {hasPinnedItems && (
+        <div className="md:hidden px-4 mb-8 max-w-7xl mx-auto">
+          {/* Pinned Stories - Mobile */}
+          {pinnedStories.length > 0 && (
+            <div className="mb-6">
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-3 pb-2 border-b border-neutral-200">
+                Pinned Stories
+              </h3>
+              <div className="space-y-3">
+                {pinnedStories.map((entry) => {
+                  const imageUrl = entry.photo_url || getCategoryImage(entry.category)
+                  const hasImageError = imageErrors.has(entry.id)
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className="cursor-pointer group flex gap-3"
+                      onClick={() => onViewEntry(entry.id)}
+                    >
+                      {!hasImageError && (
+                        <div className="w-20 h-20 flex-shrink-0 overflow-hidden">
+                          <img
+                            src={imageUrl}
+                            alt={entry.headline}
+                            className="w-full h-full object-cover"
+                            onError={() => handleImageError(entry.id)}
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="uppercase text-xs text-red-600 tracking-wider font-bold">
+                          {entry.category}
+                        </span>
+                        <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1">
+                          {entry.headline}
+                        </h4>
+                        <p className="text-xs text-neutral-400 mt-1 uppercase">
+                          {formatEntryDateShort(entry.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Pinned Notes - Mobile */}
+          {pinnedNotes.length > 0 && (
+            <div className="mb-6">
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-3 pb-2 border-b border-neutral-200">
+                Pinned Notes
+              </h3>
+              <div className="space-y-3">
+                {pinnedNotes.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="cursor-pointer p-3 bg-neutral-50"
+                    onClick={() => onViewEntry(entry.id)}
+                  >
+                    <span className="uppercase text-xs text-blue-600 tracking-wider font-bold">
+                      Note
+                    </span>
+                    <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1">
+                      {entry.headline}
+                    </h4>
+                    <p className="text-xs text-neutral-400 mt-1 uppercase">
+                      {formatEntryDateShort(entry.created_at)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pinned Actions - Mobile */}
+          {pinnedActions.length > 0 && (
+            <div className="mb-6">
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-3 pb-2 border-b border-neutral-200">
+                Pinned Actions
+              </h3>
+              <div className="space-y-3">
+                {pinnedActions.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="cursor-pointer p-3 bg-amber-50 border-l-2 border-amber-400"
+                    onClick={() => onViewEntry(entry.id)}
+                  >
+                    <span className="uppercase text-xs text-amber-600 tracking-wider font-bold">
+                      Action
+                    </span>
+                    <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1">
+                      {entry.headline}
+                    </h4>
+                    {entry.due_date && (
+                      <p className="text-xs text-amber-600 mt-1 font-medium">
+                        Due: {formatEntryDateShort(entry.due_date)}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 3-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 px-4 md:px-6 max-w-7xl mx-auto">
         
@@ -174,8 +282,8 @@ export function VanityFairLayout({
           )}
         </section>
 
-        {/* RIGHT COLUMN — Pinned Items (3 columns) */}
-        <aside className="md:col-span-3 space-y-6">
+        {/* RIGHT COLUMN — Pinned Items (3 columns) - Hidden on mobile, shown at top instead */}
+        <aside className="hidden md:block md:col-span-3 space-y-6">
           {/* Pinned Stories */}
           {pinnedStories.length > 0 && (
             <div>
