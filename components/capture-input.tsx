@@ -167,104 +167,6 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
         }
       }}
     >
-      {/* Floating Type Badge */}
-      <div
-        ref={typeDropdownRef}
-        style={{
-          position: 'absolute',
-          top: '1rem',
-          left: '1rem',
-          zIndex: 10,
-        }}
-      >
-        <button
-          onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-          disabled={isInferring}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.5rem 1rem',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '20px',
-            color: '#fff',
-            fontSize: '0.85rem',
-            fontWeight: 500,
-            cursor: isInferring ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s ease',
-            opacity: isInferring ? 0.5 : 1,
-          }}
-          onMouseEnter={(e) => {
-            if (!isInferring) {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-          }}
-        >
-          <span>{entryTypeOptions.find(t => t.id === selectedType)?.icon}</span>
-          <span>{entryTypeOptions.find(t => t.id === selectedType)?.label}</span>
-          <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>▼</span>
-        </button>
-
-        {/* Dropdown */}
-        {showTypeDropdown && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 0.5rem)',
-              left: 0,
-              background: '#1a1a1a',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              minWidth: '140px',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-            }}
-          >
-            {entryTypeOptions.map((type) => (
-              <button
-                key={type.id}
-                onClick={() => {
-                  setSelectedType(type.id)
-                  setShowTypeDropdown(false)
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  width: '100%',
-                  padding: '0.75rem 1rem',
-                  background: selectedType === type.id ? 'rgba(220, 20, 60, 0.2)' : 'transparent',
-                  border: 'none',
-                  color: selectedType === type.id ? '#DC143C' : '#fff',
-                  fontSize: '0.85rem',
-                  fontWeight: selectedType === type.id ? 600 : 400,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'background 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedType !== type.id) {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = selectedType === type.id ? 'rgba(220, 20, 60, 0.2)' : 'transparent'
-                }}
-              >
-                <span>{type.icon}</span>
-                <span>{type.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Close button */}
       <button
         onClick={onClose}
@@ -306,39 +208,138 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
           paddingTop: '3rem',
         }}
       >
-        {/* Mode tabs */}
+        {/* Mode tabs row with type selector */}
         <div
           style={{
             display: 'flex',
-            gap: '0.5rem',
+            alignItems: 'center',
+            gap: '1rem',
             marginBottom: '1.5rem',
           }}
         >
-          {[
-            { id: 'voice' as InputMode, label: '🎤 Voice', disabled: !voiceSupported },
-            { id: 'type' as InputMode, label: '⌨️ Type', disabled: false },
-            { id: 'paste' as InputMode, label: '📋 Paste', disabled: false },
-          ].map((tab) => (
+          {/* Input mode tabs */}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {[
+              { id: 'voice' as InputMode, label: '🎤 Voice', disabled: !voiceSupported },
+              { id: 'type' as InputMode, label: '⌨️ Type', disabled: false },
+              { id: 'paste' as InputMode, label: '📋 Paste', disabled: false },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleModeChange(tab.id)}
+                disabled={tab.disabled || isInferring}
+                style={{
+                  padding: '0.6rem 1.2rem',
+                  background: mode === tab.id ? '#DC143C' : 'rgba(255, 255, 255, 0.1)',
+                  color: tab.disabled ? '#666' : '#fff',
+                  border: 'none',
+                  borderRadius: '20px',
+                  cursor: tab.disabled || isInferring ? 'not-allowed' : 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: 500,
+                  transition: 'all 0.2s ease',
+                  opacity: tab.disabled ? 0.5 : 1,
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.2)' }} />
+
+          {/* Type selector - inline with mode tabs */}
+          <div ref={typeDropdownRef} style={{ position: 'relative' }}>
             <button
-              key={tab.id}
-              onClick={() => handleModeChange(tab.id)}
-              disabled={tab.disabled || isInferring}
+              onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+              disabled={isInferring}
               style={{
-                padding: '0.6rem 1.2rem',
-                background: mode === tab.id ? '#DC143C' : 'rgba(255, 255, 255, 0.1)',
-                color: tab.disabled ? '#666' : '#fff',
-                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.6rem 1rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
                 borderRadius: '20px',
-                cursor: tab.disabled || isInferring ? 'not-allowed' : 'pointer',
+                color: '#fff',
                 fontSize: '0.85rem',
                 fontWeight: 500,
+                cursor: isInferring ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s ease',
-                opacity: tab.disabled ? 0.5 : 1,
+                opacity: isInferring ? 0.5 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!isInferring) {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
               }}
             >
-              {tab.label}
+              <span>{entryTypeOptions.find(t => t.id === selectedType)?.icon}</span>
+              <span>{entryTypeOptions.find(t => t.id === selectedType)?.label}</span>
+              <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>▼</span>
             </button>
-          ))}
+
+            {/* Dropdown */}
+            {showTypeDropdown && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 0.5rem)',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: '#1a1a1a',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  minWidth: '140px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                  zIndex: 100,
+                }}
+              >
+                {entryTypeOptions.map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => {
+                      setSelectedType(type.id)
+                      setShowTypeDropdown(false)
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      background: selectedType === type.id ? 'rgba(220, 20, 60, 0.2)' : 'transparent',
+                      border: 'none',
+                      color: selectedType === type.id ? '#DC143C' : '#fff',
+                      fontSize: '0.85rem',
+                      fontWeight: selectedType === type.id ? 600 : 400,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'background 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedType !== type.id) {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = selectedType === type.id ? 'rgba(220, 20, 60, 0.2)' : 'transparent'
+                    }}
+                  >
+                    <span>{type.icon}</span>
+                    <span>{type.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Voice mode */}
