@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 
 export function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -213,15 +212,11 @@ export function AuthForm() {
 
         {/* Right Column - Iceberg Image */}
         <div className="hidden md:flex items-center justify-center p-8 lg:p-12">
-          <div className="relative w-full max-w-lg aspect-square">
-            <Image
-              src="/iceberg_login.png"
-              alt="Iceberg illustration - what you see is just the surface"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
+          <img
+            src="/iceberg_login.png"
+            alt="Iceberg illustration - what you see is just the surface"
+            className="w-full max-w-lg object-contain"
+          />
         </div>
       </div>
     </div>
