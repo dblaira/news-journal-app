@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -99,72 +100,130 @@ export function AuthForm() {
   }
 
   return (
-    <div className="login-container">
-      <h1 id="form-title">{isSignUp ? 'Sign Up' : 'Sign In'}</h1>
-      <p className="subtitle">Welcome back to your news journal</p>
+    <div className="min-h-screen bg-black flex flex-col">
+      {/* Header */}
+      <header className="px-6 py-5 border-b border-neutral-800">
+        <h1 
+          className="text-xl md:text-2xl tracking-[0.2em] text-white uppercase"
+          style={{ fontFamily: "'Playfair Display', 'Times New Roman', serif" }}
+        >
+          Personal Press
+        </h1>
+      </header>
 
-      {error && (
-        <div className="error-message" style={{ display: 'block' }}>
-          {error}
+      {/* Main Content - Two Column Layout */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2">
+        {/* Left Column - Form */}
+        <div className="flex items-center justify-center px-6 py-12 md:px-12 lg:px-20">
+          <div className="w-full max-w-md">
+            {/* Headline */}
+            <h2 
+              className="text-3xl md:text-4xl lg:text-5xl text-white leading-tight mb-10"
+              style={{ fontFamily: "'Playfair Display', 'Times New Roman', serif" }}
+            >
+              {isSignUp ? 'Create your account' : 'Welcome back to your news journal'}
+            </h2>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-sm">
+                {success}
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email Field */}
+              <div className="space-y-2">
+                <label 
+                  htmlFor="email" 
+                  className="block text-xs uppercase tracking-wider text-neutral-400 font-medium"
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  required
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-colors disabled:opacity-50"
+                />
+              </div>
+
+              {/* Password Field */}
+              <div className="space-y-2">
+                <label 
+                  htmlFor="password" 
+                  className="block text-xs uppercase tracking-wider text-neutral-400 font-medium"
+                >
+                  Password
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  required
+                  placeholder="••••••••"
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-colors disabled:opacity-50"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3.5 bg-[#DC143C] hover:bg-[#B01030] text-white font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading
+                  ? isSignUp
+                    ? 'Creating Account...'
+                    : 'Signing In...'
+                  : isSignUp
+                  ? 'Create Account'
+                  : 'Sign In'}
+              </button>
+            </form>
+
+            {/* Toggle Auth Mode */}
+            <p className="mt-8 text-center text-neutral-400 text-sm">
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="text-[#DC143C] hover:text-[#ff3355] font-medium transition-colors"
+              >
+                {isSignUp ? 'Sign In' : 'Sign Up'}
+              </button>
+            </p>
+          </div>
         </div>
-      )}
-      {success && (
-        <div className="success-message" style={{ display: 'block' }}>
-          {success}
+
+        {/* Right Column - Iceberg Image */}
+        <div className="hidden md:flex items-center justify-center p-8 lg:p-12">
+          <div className="relative w-full max-w-lg aspect-square">
+            <Image
+              src="/iceberg-login.png"
+              alt="Iceberg illustration - what you see is just the surface"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
         </div>
-      )}
-
-      <form id="auth-form" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            required
-            placeholder="your@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            required
-            placeholder="••••••••"
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-
-        <button type="submit" id="submit-btn" disabled={isLoading}>
-          {isLoading
-            ? isSignUp
-              ? 'Creating Account...'
-              : 'Signing In...'
-            : isSignUp
-            ? 'Create Account'
-            : 'Sign In'}
-        </button>
-      </form>
-
-      <div className="toggle-auth">
-        <span id="toggle-text">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-        </span>
-        <a href="#" id="toggle-link" onClick={(e) => {
-          e.preventDefault()
-          toggleMode()
-        }}>
-          {isSignUp ? 'Sign In' : 'Sign Up'}
-        </a>
       </div>
     </div>
   )
 }
-
