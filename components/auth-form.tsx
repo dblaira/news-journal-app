@@ -215,7 +215,7 @@ export function AuthForm() {
         <div className="hidden md:flex items-center justify-center p-8 lg:p-12">
           <div className="relative w-full max-w-lg aspect-square">
             <Image
-              src="/iceberg-login.png"
+              src="/iceberg_login.png"
               alt="Iceberg illustration - what you see is just the surface"
               fill
               className="object-contain"
