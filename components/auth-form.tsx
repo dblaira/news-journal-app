@@ -99,21 +99,30 @@ export function AuthForm() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
-      {/* Header */}
-      <header className="px-6 py-5 border-b border-neutral-800">
-        <h1 
-          className="text-xl md:text-2xl tracking-[0.2em] text-white uppercase"
-          style={{ fontFamily: "'Playfair Display', 'Times New Roman', serif" }}
-        >
-          Personal Press
-        </h1>
-      </header>
+    <div className="min-h-screen flex">
+      {/* Left Column - White Background with Iceberg Image */}
+      <div className="hidden md:flex md:w-1/2 bg-white items-center justify-center p-8 lg:p-12">
+        <img
+          src="/Ice-berg-motif.png"
+          alt="Iceberg illustration - what you see is just the surface"
+          className="w-full max-w-xl object-contain invert"
+        />
+      </div>
 
-      {/* Main Content - Two Column Layout */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2">
-        {/* Left Column - Form */}
-        <div className="flex items-center justify-center px-6 py-12 md:px-12 lg:px-20">
+      {/* Right Column - Black Background with Form */}
+      <div className="w-full md:w-1/2 bg-black flex flex-col min-h-screen">
+        {/* Personal Press Branding */}
+        <header className="px-6 py-8 md:px-12 lg:px-16">
+          <h1 
+            className="text-xl md:text-2xl tracking-[0.2em] text-white uppercase"
+            style={{ fontFamily: "'Playfair Display', 'Times New Roman', serif" }}
+          >
+            Personal Press
+          </h1>
+        </header>
+
+        {/* Form Container */}
+        <div className="flex-1 flex items-center justify-center px-6 pb-12 md:px-12 lg:px-16">
           <div className="w-full max-w-md">
             {/* Headline */}
             <h2 
@@ -208,15 +217,6 @@ export function AuthForm() {
               </button>
             </p>
           </div>
-        </div>
-
-        {/* Right Column - Iceberg Image */}
-        <div className="hidden md:flex items-center justify-center p-8 lg:p-12">
-          <img
-            src="/Ice-berg-motif.png"
-            alt="Iceberg illustration - what you see is just the surface"
-            className="w-full max-w-lg object-contain"
-          />
         </div>
       </div>
     </div>
