@@ -213,7 +213,7 @@ export function AuthForm() {
         {/* Right Column - Iceberg Image */}
         <div className="hidden md:flex items-center justify-center p-8 lg:p-12">
           <img
-            src="/iceberg_login.png"
+            src="/Ice-berg-motif.png"
             alt="Iceberg illustration - what you see is just the surface"
             className="w-full max-w-lg object-contain"
           />
