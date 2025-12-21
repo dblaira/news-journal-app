@@ -103,9 +103,9 @@ export function AuthForm() {
       {/* Left Column - White Background with Iceberg Image */}
       <div className="hidden md:flex md:w-1/2 bg-white items-center justify-center p-8 lg:p-12">
         <img
-          src="/Ice-berg-motif.png"
+          src="/iceberg_login.png"
           alt="Iceberg illustration - what you see is just the surface"
-          className="w-full max-w-xl object-contain invert"
+          className="w-full max-w-xl object-contain"
         />
       </div>
 
