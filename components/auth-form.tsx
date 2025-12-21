@@ -112,7 +112,7 @@ export function AuthForm() {
       {/* Right Column - Black Background with Form */}
       <div className="w-full md:w-1/2 bg-black flex flex-col min-h-screen">
         {/* Personal Press Branding */}
-        <header className="px-6 py-8 md:px-12 lg:px-16">
+        <header className="px-6 py-8 md:px-12 lg:px-16 text-center">
           <h1 
             className="text-xl md:text-2xl tracking-[0.2em] text-white uppercase"
             style={{ fontFamily: "'Playfair Display', 'Times New Roman', serif" }}
