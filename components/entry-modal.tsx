@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Entry, Version } from '@/types'
 import { formatEntryDateLong } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
-import { incrementViewCount, removeEntryPhoto, togglePin } from '@/app/actions/entries'
+import { incrementViewCount, removeEntryPhoto, togglePin, updateEntryContent } from '@/app/actions/entries'
+import { TiptapEditor } from './editor/TiptapEditor'
 
 interface EntryModalProps {
   entry: Entry
@@ -13,6 +14,7 @@ interface EntryModalProps {
   onDeleteEntry: (id: string) => void
   onPhotoUpdated?: (entryId: string, photoUrl: string | null) => void
   onPinToggled?: (entryId: string, isPinned: boolean) => void
+  onContentUpdated?: (entryId: string, content: string) => void
 }
 
 export function EntryModal({
@@ -22,6 +24,7 @@ export function EntryModal({
   onDeleteEntry,
   onPhotoUpdated,
   onPinToggled,
+  onContentUpdated,
 }: EntryModalProps) {
   const formattedDate = formatEntryDateLong(entry.created_at)
   const hasVersions = Array.isArray(entry.versions) && entry.versions.length > 0
@@ -33,6 +36,12 @@ export function EntryModal({
   const [isPinned, setIsPinned] = useState(!!entry.pinned_at)
   const [isTogglingPin, setIsTogglingPin] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedContent, setEditedContent] = useState(entry.content)
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
   // Track view when modal opens
   useEffect(() => {
@@ -56,6 +65,44 @@ export function EntryModal({
   useEffect(() => {
     setIsPinned(!!entry.pinned_at)
   }, [entry.pinned_at])
+
+  // Update edited content when entry changes
+  useEffect(() => {
+    setEditedContent(entry.content)
+    setIsEditing(false)
+  }, [entry.id, entry.content])
+
+  // Handle save content
+  const handleSaveContent = async (content: string) => {
+    setIsSaving(true)
+    try {
+      const result = await updateEntryContent(entry.id, content)
+      if (result.error) {
+        console.error('Failed to save content:', result.error)
+        alert('Failed to save changes. Please try again.')
+      } else {
+        setLastSaved(new Date())
+        onContentUpdated?.(entry.id, content)
+      }
+    } catch (error) {
+      console.error('Failed to save content:', error)
+      alert('Failed to save changes. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Handle cancel editing
+  const handleCancelEdit = () => {
+    setEditedContent(entry.content)
+    setIsEditing(false)
+  }
+
+  // Handle manual save and exit edit mode
+  const handleSaveAndClose = async () => {
+    await handleSaveContent(editedContent)
+    setIsEditing(false)
+  }
 
   const handleTogglePin = async () => {
     setIsTogglingPin(true)
@@ -181,6 +228,32 @@ export function EntryModal({
           gap: '0.5rem',
           zIndex: 10,
         }}>
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            style={{
+              background: isEditing ? '#2563EB' : 'transparent',
+              color: isEditing ? '#FFFFFF' : '#2563EB',
+              border: '1px solid #2563EB',
+              padding: '0.5rem 1rem',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              borderRadius: 0,
+              fontWeight: 600,
+              letterSpacing: '0.05rem',
+              textTransform: 'uppercase',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#2563EB'
+              e.currentTarget.style.color = '#FFFFFF'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = isEditing ? '#2563EB' : 'transparent'
+              e.currentTarget.style.color = isEditing ? '#FFFFFF' : '#2563EB'
+            }}
+          >
+            {isEditing ? 'Editing' : 'Edit'}
+          </button>
           <button
             onClick={() => onDeleteEntry(entry.id)}
             style={{
@@ -451,35 +524,97 @@ export function EntryModal({
         {/* Original Entry */}
         <div
           style={{
-            background: '#f8f9fb',
-            border: '1px solid #dfe3ef',
+            background: isEditing ? '#1a1a2e' : '#f8f9fb',
+            border: isEditing ? '1px solid #374151' : '1px solid #dfe3ef',
             padding: '2rem',
             borderRadius: '12px',
             marginBottom: '2.5rem',
+            transition: 'all 0.2s ease',
           }}
         >
-          <h3
-            style={{
-              fontSize: '1rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '1.2rem',
-              color: '#1c1f2e',
-            }}
-          >
-            📝 Your Original Entry
-          </h3>
-          <div
-            style={{
-              fontSize: '1rem',
-              lineHeight: 1.85,
-              color: '#1f2333',
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {entry.content}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            marginBottom: '1.2rem',
+          }}>
+            <h3
+              style={{
+                fontSize: '1rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                color: isEditing ? '#E5E7EB' : '#1c1f2e',
+                margin: 0,
+              }}
+            >
+              {isEditing ? '✏️ Editing Entry' : '📝 Your Original Entry'}
+            </h3>
+            {isEditing && (
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                {lastSaved && (
+                  <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>
+                    {isSaving ? 'Saving...' : `Saved ${lastSaved.toLocaleTimeString()}`}
+                  </span>
+                )}
+                <button
+                  onClick={handleCancelEdit}
+                  style={{
+                    background: 'transparent',
+                    color: '#9CA3AF',
+                    border: '1px solid #4B5563',
+                    padding: '0.4rem 0.8rem',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    borderRadius: '4px',
+                    fontWeight: 500,
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveAndClose}
+                  disabled={isSaving}
+                  style={{
+                    background: '#22C55E',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    padding: '0.4rem 0.8rem',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    fontSize: '0.75rem',
+                    borderRadius: '4px',
+                    fontWeight: 600,
+                    opacity: isSaving ? 0.6 : 1,
+                  }}
+                >
+                  {isSaving ? 'Saving...' : 'Save & Close'}
+                </button>
+              </div>
+            )}
           </div>
+          
+          {isEditing ? (
+            <TiptapEditor
+              content={editedContent}
+              onChange={setEditedContent}
+              onSave={handleSaveContent}
+              editable={true}
+              autoSaveDelay={2000}
+            />
+          ) : (
+            <div
+              onClick={() => setIsEditing(true)}
+              style={{
+                fontSize: '1rem',
+                lineHeight: 1.85,
+                color: '#1f2333',
+                whiteSpace: 'pre-wrap',
+                cursor: 'pointer',
+              }}
+              title="Click to edit"
+              dangerouslySetInnerHTML={{ __html: entry.content }}
+            />
+          )}
         </div>
 
         {/* Versions Section */}

@@ -89,6 +89,36 @@ export async function updateEntryVersions(id: string, versions: any[], generatin
   return { success: true }
 }
 
+export async function updateEntryContent(entryId: string, content: string) {
+  const supabase = await createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  const { data, error } = await supabase
+    .from('entries')
+    .update({
+      content,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .select()
+    .single()
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/')
+  return { data, success: true }
+}
+
 export async function generateWeeklyTheme(entryIds: string[]) {
   const supabase = await createClient()
   
