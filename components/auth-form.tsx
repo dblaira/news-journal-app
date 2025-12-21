@@ -126,7 +126,7 @@ export function AuthForm() {
           <div className="w-full max-w-md">
             {/* Headline */}
             <h2 
-              className="text-3xl md:text-4xl lg:text-5xl text-white leading-tight mb-10"
+              className="text-3xl md:text-4xl lg:text-5xl text-white leading-tight mb-10 text-center"
               style={{ fontFamily: "'Playfair Display', 'Times New Roman', serif" }}
             >
               {isSignUp ? 'Create your account' : 'Welcome back to your news journal'}
