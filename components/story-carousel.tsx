@@ -20,19 +20,35 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
     setImageErrors((prev) => new Set(prev).add(entryId))
   }
 
-  // Calculate which card is most visible
+  // Calculate which card is most visible by finding the card closest to viewport center
   const handleScroll = useCallback(() => {
     if (!scrollContainerRef.current) return
     
     const container = scrollContainerRef.current
-    const scrollLeft = container.scrollLeft
-    const cardWidth = 300 + 16 // card width + gap
-    const newIndex = Math.round(scrollLeft / cardWidth)
+    const cards = container.querySelectorAll('[data-carousel-card]')
+    if (cards.length === 0) return
     
-    if (newIndex !== activeIndex && newIndex >= 0 && newIndex < entries.length) {
-      setActiveIndex(newIndex)
+    const containerRect = container.getBoundingClientRect()
+    const containerCenter = containerRect.left + containerRect.width / 2
+    
+    let closestIndex = 0
+    let closestDistance = Infinity
+    
+    cards.forEach((card, index) => {
+      const cardRect = card.getBoundingClientRect()
+      const cardCenter = cardRect.left + cardRect.width / 2
+      const distance = Math.abs(containerCenter - cardCenter)
+      
+      if (distance < closestDistance) {
+        closestDistance = distance
+        closestIndex = index
+      }
+    })
+    
+    if (closestIndex !== activeIndex) {
+      setActiveIndex(closestIndex)
     }
-  }, [activeIndex, entries.length])
+  }, [activeIndex])
 
   useEffect(() => {
     const container = scrollContainerRef.current
@@ -46,11 +62,17 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
   const scrollToIndex = (index: number) => {
     if (!scrollContainerRef.current) return
     
-    const cardWidth = 300 + 16 // card width + gap
-    scrollContainerRef.current.scrollTo({
-      left: index * cardWidth,
-      behavior: 'smooth'
-    })
+    const cards = scrollContainerRef.current.querySelectorAll('[data-carousel-card]')
+    const targetCard = cards[index] as HTMLElement
+    
+    if (targetCard) {
+      // Use scrollIntoView for reliable cross-browser behavior
+      targetCard.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      })
+    }
   }
 
   if (entries.length === 0) return null
@@ -85,6 +107,7 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
           return (
             <div
               key={entry.id}
+              data-carousel-card
               className="flex-shrink-0 snap-center cursor-pointer group"
               style={{ width: '300px' }}
               onClick={() => onViewEntry?.(entry.id)}
