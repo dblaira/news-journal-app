@@ -55,10 +55,10 @@ function generateBusinessSVG(): string {
   // Arial Black, uppercase, tight letter-spacing
   const svg = `
     <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-      <rect width="400" height="400" fill="#F5F5F5"/>
+      <rect width="400" height="400" fill="#FFFFFF"/>
       <text x="200" y="210" 
             font-family="Arial Black, Impact, sans-serif" 
-            font-size="52" 
+            font-size="60" 
             font-weight="900"
             letter-spacing="-3"
             fill="#1A1A1A" 
@@ -74,14 +74,14 @@ function generateFinanceSVG(): string {
   // Monospace, lowercase, with ledger underline
   const svg = `
     <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-      <rect width="400" height="400" fill="#F5F5F5"/>
+      <rect width="400" height="400" fill="#FFFFFF"/>
       <text x="200" y="200" 
             font-family="Courier New, Courier, monospace" 
-            font-size="42"
+            font-size="48"
             fill="#2D3436" 
             text-anchor="middle" 
             dominant-baseline="middle">finance.</text>
-      <line x1="100" y1="235" x2="300" y2="235" stroke="#2D3436" stroke-width="1"/>
+      <line x1="90" y1="240" x2="310" y2="240" stroke="#2D3436" stroke-width="1"/>
     </svg>
   `.trim().replace(/\s+/g, ' ')
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
@@ -92,14 +92,14 @@ function generateHealthSVG(): string {
   // Light weight, dramatically wide letter-spacing
   const letters = 'HEALTH'.split('')
   const letterElements = letters.map((letter, i) => 
-    `<tspan x="${80 + i * 45}" y="210">${letter}</tspan>`
+    `<tspan x="${65 + i * 48}" y="210">${letter}</tspan>`
   ).join('')
   
   const svg = `
     <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-      <rect width="400" height="400" fill="#F5F5F5"/>
+      <rect width="400" height="400" fill="#FFFFFF"/>
       <text font-family="Arial, Helvetica, sans-serif" 
-            font-size="36"
+            font-size="42"
             font-weight="200"
             fill="#4A4A4A" 
             text-anchor="middle" 
@@ -120,10 +120,10 @@ function generateSpiritualSVG(): string {
           <stop offset="100%" style="stop-color:#2C3E50;stop-opacity:0.2"/>
         </linearGradient>
       </defs>
-      <rect width="400" height="400" fill="#F5F5F5"/>
+      <rect width="400" height="400" fill="#FFFFFF"/>
       <text x="200" y="210" 
             font-family="Georgia, Times New Roman, serif" 
-            font-size="44"
+            font-size="50"
             font-style="italic"
             fill="url(#spiritualGradient)" 
             text-anchor="middle" 
@@ -137,10 +137,10 @@ function generateFunSVG(): string {
   // "The Spark" - Elegant, cursive, playful pink
   const svg = `
     <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-      <rect width="400" height="400" fill="#F5F5F5"/>
+      <rect width="400" height="400" fill="#FFFFFF"/>
       <text x="200" y="215" 
             font-family="Brush Script MT, Segoe Script, cursive" 
-            font-size="72"
+            font-size="82"
             fill="#FF69B4" 
             text-anchor="middle" 
             dominant-baseline="middle">Fun</text>
@@ -154,11 +154,11 @@ function generateSocialSVG(): string {
   // Lowercase, letters literally touch each other
   const svg = `
     <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-      <rect width="400" height="400" fill="#F5F5F5"/>
+      <rect width="400" height="400" fill="#FFFFFF"/>
       <text x="200" y="210" 
             font-family="Georgia, serif" 
-            font-size="48"
-            letter-spacing="-6"
+            font-size="54"
+            letter-spacing="-7"
             fill="#34495E" 
             text-anchor="middle" 
             dominant-baseline="middle">social</text>
@@ -172,10 +172,10 @@ function generateRomanceSVG(): string {
   // Georgia italic with tilde ornaments
   const svg = `
     <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-      <rect width="400" height="400" fill="#F5F5F5"/>
+      <rect width="400" height="400" fill="#FFFFFF"/>
       <text x="200" y="210" 
             font-family="Georgia, Garamond, serif" 
-            font-size="40"
+            font-size="46"
             font-style="italic"
             font-weight="300"
             fill="#8E44AD" 
@@ -189,10 +189,10 @@ function generateRomanceSVG(): string {
 function generateDefaultSVG(text: string): string {
   const svg = `
     <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-      <rect width="400" height="400" fill="#F5F5F5"/>
+      <rect width="400" height="400" fill="#FFFFFF"/>
       <text x="200" y="210" 
             font-family="Georgia, serif" 
-            font-size="42"
+            font-size="48"
             fill="#6C7A89" 
             text-anchor="middle" 
             dominant-baseline="middle">${text}</text>
