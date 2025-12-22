@@ -193,7 +193,7 @@ export function AuthForm() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 bg-white hover:bg-white/90 text-black font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3.5 bg-[#DC143C] hover:bg-[#B01030] text-white font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading
                   ? isSignUp
@@ -211,7 +211,7 @@ export function AuthForm() {
               <button
                 type="button"
                 onClick={toggleMode}
-                className="text-white hover:text-white/80 font-medium underline transition-colors"
+                className="text-[#DC143C] hover:text-[#ff3355] font-medium transition-colors"
               >
                 {isSignUp ? 'Sign In' : 'Sign Up'}
               </button>
