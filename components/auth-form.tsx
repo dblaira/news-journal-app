@@ -100,13 +100,13 @@ export function AuthForm() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Column - Pure White Background with Iceberg Image */}
+      {/* Left Column - Background matches image background color */}
       <div 
         className="hidden md:flex md:w-1/2 items-center justify-center p-8 lg:p-12"
-        style={{ backgroundColor: '#FFFFFF' }}
+        style={{ backgroundColor: '#F8F8F8' }}
       >
         <img
-          src="/ice-berg-tranindigo.png"
+          src="/Ice-berg-indigo.png"
           alt="Iceberg illustration - what you see is just the surface"
           className="w-full max-w-xl object-contain"
         />
