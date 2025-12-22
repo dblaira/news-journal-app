@@ -100,7 +100,7 @@ export function AuthForm() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Column - White Background with Iceberg Image */}
+      {/* Left Column - Pure White Background with Iceberg Image */}
       <div className="hidden md:flex md:w-1/2 bg-white items-center justify-center p-8 lg:p-12">
         <img
           src="/iceberg_login.png"
@@ -109,7 +109,7 @@ export function AuthForm() {
         />
       </div>
 
-      {/* Right Column - Black Background with Form */}
+      {/* Right Column - Pure Black Background with Form */}
       <div className="w-full md:w-1/2 bg-black flex flex-col min-h-screen">
         {/* Personal Press Branding */}
         <header className="px-6 py-8 md:px-12 lg:px-16 text-center">
@@ -152,7 +152,7 @@ export function AuthForm() {
               <div className="space-y-2">
                 <label 
                   htmlFor="email" 
-                  className="block text-xs uppercase tracking-wider text-neutral-400 font-medium"
+                  className="block text-xs uppercase tracking-wider text-white/70 font-medium"
                 >
                   Email
                 </label>
@@ -164,7 +164,7 @@ export function AuthForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
-                  className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-black border border-white/30 rounded text-white placeholder-white/40 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-colors disabled:opacity-50"
                 />
               </div>
 
@@ -172,7 +172,7 @@ export function AuthForm() {
               <div className="space-y-2">
                 <label 
                   htmlFor="password" 
-                  className="block text-xs uppercase tracking-wider text-neutral-400 font-medium"
+                  className="block text-xs uppercase tracking-wider text-white/70 font-medium"
                 >
                   Password
                 </label>
@@ -185,7 +185,7 @@ export function AuthForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="w-full px-4 py-3 bg-neutral-900 border border-neutral-700 rounded text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-black border border-white/30 rounded text-white placeholder-white/40 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-colors disabled:opacity-50"
                 />
               </div>
 
@@ -193,7 +193,7 @@ export function AuthForm() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 bg-[#DC143C] hover:bg-[#B01030] text-white font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3.5 bg-white hover:bg-white/90 text-black font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading
                   ? isSignUp
@@ -206,12 +206,12 @@ export function AuthForm() {
             </form>
 
             {/* Toggle Auth Mode */}
-            <p className="mt-8 text-center text-neutral-400 text-sm">
+            <p className="mt-8 text-center text-white/70 text-sm">
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
                 type="button"
                 onClick={toggleMode}
-                className="text-[#DC143C] hover:text-[#ff3355] font-medium transition-colors"
+                className="text-white hover:text-white/80 font-medium underline transition-colors"
               >
                 {isSignUp ? 'Sign In' : 'Sign Up'}
               </button>
