@@ -134,15 +134,16 @@ function generateSpiritualSVG(): string {
 }
 
 function generateFunSVG(): string {
-  // "The Oddball" - Playful, unpredictable, energetic
-  // Varied sizes, rotations, and baselines
+  // "The Spark" - Elegant, cursive, playful pink
   const svg = `
     <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
       <rect width="400" height="400" fill="#F5F5F5"/>
-      <text x="115" y="195" font-family="Comic Sans MS, cursive" font-size="58" fill="#E67E22" transform="rotate(-8 115 195)">F</text>
-      <text x="155" y="225" font-family="Comic Sans MS, cursive" font-size="38" fill="#9B59B6" transform="rotate(5 155 225)">u</text>
-      <text x="190" y="190" font-family="Comic Sans MS, cursive" font-size="52" fill="#27AE60" transform="rotate(-3 190 190)">N</text>
-      <text x="245" y="215" font-family="Comic Sans MS, cursive" font-size="32" fill="#E74C3C" transform="rotate(12 245 215)">!</text>
+      <text x="200" y="215" 
+            font-family="Brush Script MT, Segoe Script, cursive" 
+            font-size="72"
+            fill="#FF69B4" 
+            text-anchor="middle" 
+            dominant-baseline="middle">Fun</text>
     </svg>
   `.trim().replace(/\s+/g, ' ')
   return `data:image/svg+xml,${encodeURIComponent(svg)}`

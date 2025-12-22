@@ -115,3 +115,36 @@
   padding: 0;
 }
 
+/* Placeholder for empty editor (Tiptap Placeholder extension) */
+.tiptap-content .ProseMirror .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9CA3AF;
+  pointer-events: none;
+  height: 0;
+}
+
+.tiptap-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9CA3AF;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Light mode overrides */
+.tiptap-content.bg-white .ProseMirror blockquote {
+  border-left-color: #D1D5DB;
+  color: #6B7280;
+}
+
+.tiptap-content.bg-white .ProseMirror code {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.tiptap-content.bg-white .ProseMirror pre {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+}
+

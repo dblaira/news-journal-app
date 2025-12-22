@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
+import Placeholder from '@tiptap/extension-placeholder'
 import { useEffect, useRef, useCallback } from 'react'
 import { Toolbar } from './Toolbar'
 
@@ -13,6 +14,8 @@ interface TiptapEditorProps {
   onSave?: (html: string) => void
   editable?: boolean
   autoSaveDelay?: number
+  variant?: 'light' | 'dark'
+  placeholder?: string
 }
 
 export function TiptapEditor({
@@ -21,6 +24,8 @@ export function TiptapEditor({
   onSave,
   editable = true,
   autoSaveDelay = 2000,
+  variant = 'dark',
+  placeholder,
 }: TiptapEditorProps) {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastSavedContentRef = useRef(content)
@@ -35,6 +40,9 @@ export function TiptapEditor({
       TaskList,
       TaskItem.configure({
         nested: true,
+      }),
+      Placeholder.configure({
+        placeholder: placeholder || 'Write something...',
       }),
     ],
     content,
@@ -87,12 +95,19 @@ export function TiptapEditor({
     }
   }, [editor, onSave])
 
+  const isLight = variant === 'light'
+  
   return (
-    <div className="tiptap-editor border border-neutral-700 rounded overflow-hidden">
-      {editable && <Toolbar editor={editor} />}
+    <div className={`tiptap-editor border rounded overflow-hidden ${isLight ? 'border-neutral-300' : 'border-neutral-700'}`}>
+      {editable && <Toolbar editor={editor} variant={variant} />}
       <EditorContent
         editor={editor}
-        className="tiptap-content bg-neutral-900 text-white p-4 min-h-[200px] prose prose-invert prose-sm max-w-none focus:outline-none"
+        className={`tiptap-content p-4 min-h-[200px] prose prose-sm max-w-none focus:outline-none ${
+          isLight 
+            ? 'bg-white text-neutral-900' 
+            : 'bg-neutral-900 text-white prose-invert'
+        }`}
+        data-placeholder={placeholder}
       />
     </div>
   )

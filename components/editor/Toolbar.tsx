@@ -4,20 +4,33 @@ import { Editor } from '@tiptap/react'
 
 interface ToolbarProps {
   editor: Editor | null
+  variant?: 'light' | 'dark'
 }
 
-export function Toolbar({ editor }: ToolbarProps) {
+export function Toolbar({ editor, variant = 'dark' }: ToolbarProps) {
   if (!editor) return null
+
+  const isLight = variant === 'light'
 
   const buttonClass = (isActive: boolean) =>
     `px-2 py-1 text-sm rounded transition-colors ${
       isActive
-        ? 'bg-neutral-700 text-white'
-        : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white'
+        ? isLight 
+          ? 'bg-neutral-200 text-neutral-900'
+          : 'bg-neutral-700 text-white'
+        : isLight
+          ? 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900'
+          : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white'
     }`
 
+  const dividerClass = isLight ? 'w-px bg-neutral-300 mx-1' : 'w-px bg-neutral-700 mx-1'
+
   return (
-    <div className="flex flex-wrap gap-1 p-2 bg-neutral-900 border-b border-neutral-700 rounded-t">
+    <div className={`flex flex-wrap gap-1 p-2 border-b rounded-t ${
+      isLight 
+        ? 'bg-neutral-50 border-neutral-300' 
+        : 'bg-neutral-900 border-neutral-700'
+    }`}>
       {/* Text Formatting */}
       <button
         type="button"
@@ -44,7 +57,7 @@ export function Toolbar({ editor }: ToolbarProps) {
         <s>S</s>
       </button>
 
-      <div className="w-px bg-neutral-700 mx-1" />
+      <div className={dividerClass} />
 
       {/* Headings */}
       <button
@@ -64,7 +77,7 @@ export function Toolbar({ editor }: ToolbarProps) {
         H2
       </button>
 
-      <div className="w-px bg-neutral-700 mx-1" />
+      <div className={dividerClass} />
 
       {/* Lists */}
       <button

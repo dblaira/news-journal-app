@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { CreateEntryInput, Entry, EntryType } from '@/types'
 import { createEntry } from '@/app/actions/entries'
+import { TiptapEditor } from '@/components/editor/TiptapEditor'
 
 interface EntryFormProps {
   onSuccess: () => void
@@ -190,16 +191,12 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
           <div className="form-column">
             <div className="form-group">
               <label htmlFor="content">Your Story</label>
-              <textarea
-                id="content"
-                rows={12}
-                required
+              <TiptapEditor
+                content={formData.content}
+                onChange={(html) => setFormData({ ...formData, content: html })}
+                variant="light"
                 placeholder="Write your journal entry here..."
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
-                }
-                disabled={isSubmitting}
+                editable={!isSubmitting}
               />
             </div>
 
