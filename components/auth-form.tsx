@@ -103,7 +103,7 @@ export function AuthForm() {
       {/* Left Column - Background matches image background color */}
       <div 
         className="hidden md:flex md:w-1/2 items-center justify-center p-8 lg:p-12"
-        style={{ backgroundColor: '#F8F8F8' }}
+        style={{ backgroundColor: '#FAFAFA' }}
       >
         <img
           src="/Ice-berg-indigo.png"
