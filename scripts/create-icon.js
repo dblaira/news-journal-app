@@ -8,10 +8,9 @@ async function createAppleTouchIcon() {
   try {
     await sharp(inputPath)
       .resize(180, 180, {
-        fit: 'contain',
-        background: { r: 0, g: 0, b: 0, alpha: 1 } // Black background
+        fit: 'cover',
+        position: 'center'
       })
-      .negate({ alpha: false }) // Invert colors for white iceberg on black
       .png()
       .toFile(outputPath)
     
@@ -21,10 +20,9 @@ async function createAppleTouchIcon() {
     const output192Path = path.join(__dirname, '../public/icon-192.png')
     await sharp(inputPath)
       .resize(192, 192, {
-        fit: 'contain',
-        background: { r: 0, g: 0, b: 0, alpha: 1 }
+        fit: 'cover',
+        position: 'center'
       })
-      .negate({ alpha: false })
       .png()
       .toFile(output192Path)
     
@@ -34,10 +32,9 @@ async function createAppleTouchIcon() {
     const output512Path = path.join(__dirname, '../public/icon-512.png')
     await sharp(inputPath)
       .resize(512, 512, {
-        fit: 'contain',
-        background: { r: 0, g: 0, b: 0, alpha: 1 }
+        fit: 'cover',
+        position: 'center'
       })
-      .negate({ alpha: false })
       .png()
       .toFile(output512Path)
     
