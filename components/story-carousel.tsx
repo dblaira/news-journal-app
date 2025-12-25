@@ -81,7 +81,7 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
     <div className="story-carousel bg-white py-8">
       {/* Section Title */}
       {title && (
-        <div className="px-4 md:px-6 mb-6 max-w-[1400px] mx-auto">
+        <div className="px-4 md:px-6 mb-6 max-w-[1600px] mx-auto">
           <div className="border-t border-b border-neutral-200 py-3">
             <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase">
               {title}
