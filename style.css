@@ -56,7 +56,7 @@ body {
 }
 
 .page-shell {
-    max-width: 1240px;
+    width: 100%;
     margin: 0 auto;
     padding: 0;
     display: flex;
@@ -321,7 +321,7 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: none;
     overflow-x: auto;
-    max-width: 1240px;
+    width: 100%;
     margin: 0 auto;
 }
 
@@ -376,7 +376,7 @@ body {
 
 .hero-section {
     position: relative;
-    max-width: 1240px;
+    width: 100%;
     margin: 0 auto;
 }
 
