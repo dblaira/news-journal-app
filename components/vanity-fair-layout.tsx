@@ -49,7 +49,7 @@ export function VanityFairLayout({
   return (
     <div className="vanity-fair-layout bg-white text-neutral-900 py-10">
       {/* Section Titles - All Stories and Pinned */}
-      <div className="px-4 md:px-6 mb-8 max-w-[1600px] mx-auto">
+      <div className="px-4 md:px-6 mb-8 mx-auto">
         <div className="border-t border-b border-neutral-200 py-3">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
             <div className="md:col-span-9">
@@ -68,7 +68,7 @@ export function VanityFairLayout({
 
       {/* MOBILE ONLY: Pinned Items at Top */}
       {hasPinnedItems && (
-        <div className="md:hidden px-4 mb-8 max-w-[1600px] mx-auto">
+        <div className="md:hidden px-4 mb-8 mx-auto">
           {/* Pinned Stories - Mobile */}
           {pinnedStories.length > 0 && (
             <div className="mb-6">
@@ -175,7 +175,7 @@ export function VanityFairLayout({
       )}
 
       {/* 3-Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 px-4 md:px-6 max-w-[1600px] mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 px-4 md:px-6 mx-auto">
         
         {/* LEFT COLUMN — Category Stories (3 columns) */}
         <aside className="md:col-span-3 space-y-8">
