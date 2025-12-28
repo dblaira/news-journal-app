@@ -1,0 +1,32 @@
+## Delegation Algorithm: [Task Name]
+
+**CONTEXT:**
+[One sentence on why this matters and what the ultimate goal is.]
+
+**TRIGGER:**
+[When should this task happen? e.g., "Every Monday," "When I receive an invoice," "When I ask for X"]
+
+**THE ALGORITHM (RULES):**
+Please follow this decision logic:
+1. First, check [Database/Calendar/Inventory]. IF [Condition exists], THEN [Action].
+2. Search for [X].
+3. FILTER results based on:
+   - Rule A: If [Condition], keep.
+   - Rule B: If [Condition], discard.
+4. DECISION:
+   - If [Result matches criteria], then [Draft email / Book meeting / Buy].
+   - If [Result is unclear], then [Ask me for clarification].
+
+**CONSTRAINTS (The "Don'ts"):**
+- Budget cap: $[Amount]
+- Time cap: [Minutes/Hours]
+- Never do: [Specific Action]
+
+**OUTPUT FORMAT:**
+[e.g., "Send me a summary on Slack," "Update the Notion Database," "Draft a Gmail reply"]
+
+---
+## 🤖 AI Context & Notes
+* **Goal:** This file is used to govern the decision logic for purchasing.
+* **Reference:** Based on the "Delegation by Algorithm" conversation.
+* **Reminder:** If I reference this file in Chat, prioritize the "Constraints" section above all else.
