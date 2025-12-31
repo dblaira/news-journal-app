@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Entry } from '@/types'
-import { formatEntryDateLong, truncateHtml } from '@/lib/utils'
+import { formatEntryDateLong } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
 
 interface HeroStoryProps {
@@ -61,7 +61,11 @@ export function HeroStory({
           </div>
           <h1>{entry.headline}</h1>
           {entry.subheading && <p style={{ fontSize: '1.2rem', fontStyle: 'italic', marginTop: '0.5rem' }}>{entry.subheading}</p>}
-          <p style={{ marginTop: '1rem' }}>{truncateHtml(entry.content, 300)}</p>
+          <div 
+            className="rendered-content hero-preview"
+            style={{ marginTop: '1rem' }}
+            dangerouslySetInnerHTML={{ __html: entry.content }}
+          />
           <div className="hero-actions">
             <button
               type="button"
