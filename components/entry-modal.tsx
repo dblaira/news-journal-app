@@ -603,12 +603,12 @@ export function EntryModal({
             />
           ) : (
             <div
+              className="rendered-content"
               onClick={() => setIsEditing(true)}
               style={{
                 fontSize: '1rem',
                 lineHeight: 1.85,
                 color: '#1f2333',
-                whiteSpace: 'pre-wrap',
                 cursor: 'pointer',
               }}
               title="Click to edit"

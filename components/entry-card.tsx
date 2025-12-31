@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Entry } from '@/types'
-import { formatEntryDateLong, formatEntryDateShort, truncate } from '@/lib/utils'
+import { formatEntryDateLong, formatEntryDateShort, truncateHtml } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
 
 interface EntryCardProps {
@@ -80,7 +80,7 @@ export function EntryCard({
         {entry.subheading && (
           <p className="entry-subheading">{entry.subheading}</p>
         )}
-        <p className="entry-content">{truncate(entry.content, 200)}</p>
+        <p className="entry-content">{truncateHtml(entry.content, 200)}</p>
       </div>
       <div className="entry-footer">
         <div>
