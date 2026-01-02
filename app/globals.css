@@ -231,6 +231,8 @@
   overflow-x: auto;
   margin: 1em 0;
   border: 1px solid #E5E7EB;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .rendered-content pre code {

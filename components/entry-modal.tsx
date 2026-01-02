@@ -1,11 +1,16 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Entry, Version } from '@/types'
-import { formatEntryDateLong } from '@/lib/utils'
+import dynamic from 'next/dynamic'
+import { Entry, Version, MindMap, ReactFlowNode, ReactFlowEdge } from '@/types'
+import { formatEntryDateLong, stripHtml } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
 import { incrementViewCount, removeEntryPhoto, togglePin, updateEntryContent } from '@/app/actions/entries'
 import { TiptapEditor } from './editor/TiptapEditor'
+import { generateMindMap, toReactFlowFormat } from '@/lib/mindmap/utils'
+
+// Dynamic import for MindMapCanvas to avoid SSR issues with ReactFlow
+const MindMapCanvas = dynamic(() => import('./mindmap/MindMapCanvas'), { ssr: false })
 
 interface EntryModalProps {
   entry: Entry
@@ -42,6 +47,11 @@ export function EntryModal({
   const [editedContent, setEditedContent] = useState(entry.content)
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+
+  // Mind map state
+  const [showMindMap, setShowMindMap] = useState(false)
+  const [mindMapData, setMindMapData] = useState<{ nodes: ReactFlowNode[]; edges: ReactFlowEdge[]; title: string } | null>(null)
+  const [isGeneratingMindMap, setIsGeneratingMindMap] = useState(false)
 
   // Track view when modal opens
   useEffect(() => {
@@ -96,6 +106,27 @@ export function EntryModal({
   const handleCancelEdit = () => {
     setEditedContent(entry.content)
     setIsEditing(false)
+  }
+
+  // Handle mind map generation
+  const handleGenerateMindMap = async () => {
+    setIsGeneratingMindMap(true)
+    try {
+      // Strip HTML from content for cleaner LLM processing
+      const plainText = stripHtml(entry.content)
+      const textWithContext = `Title: ${entry.headline}\n${entry.subheading ? `Subtitle: ${entry.subheading}\n` : ''}Category: ${entry.category}\n\n${plainText}`
+      
+      const mindMap = await generateMindMap(textWithContext, entry.id)
+      const { nodes, edges } = toReactFlowFormat(mindMap)
+      
+      setMindMapData({ nodes, edges, title: mindMap.title })
+      setShowMindMap(true)
+    } catch (error) {
+      console.error('Failed to generate mind map:', error)
+      alert('Failed to generate mind map. Please try again.')
+    } finally {
+      setIsGeneratingMindMap(false)
+    }
   }
 
   // Handle manual save and exit edit mode
@@ -995,9 +1026,49 @@ export function EntryModal({
             >
               📄 Export PDF
             </button>
+            <button
+              onClick={handleGenerateMindMap}
+              disabled={isGeneratingMindMap}
+              style={{
+                background: 'transparent',
+                color: '#6B21A8',
+                border: '1px solid #6B21A8',
+                padding: '0.8rem 1.8rem',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                letterSpacing: '0.08rem',
+                textTransform: 'uppercase',
+                borderRadius: 0,
+                cursor: isGeneratingMindMap ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                opacity: isGeneratingMindMap ? 0.6 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!isGeneratingMindMap) {
+                  e.currentTarget.style.background = '#6B21A8'
+                  e.currentTarget.style.color = '#FFFFFF'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = '#6B21A8'
+              }}
+            >
+              {isGeneratingMindMap ? '🧠 Generating...' : '🧠 Mind Map'}
+            </button>
           </div>
         )}
       </div>
+
+      {/* Mind Map Modal */}
+      {showMindMap && mindMapData && (
+        <MindMapCanvas
+          initialNodes={mindMapData.nodes}
+          initialEdges={mindMapData.edges}
+          title={mindMapData.title}
+          onClose={() => setShowMindMap(false)}
+        />
+      )}
     </div>
   )
 }
