@@ -63,3 +63,55 @@ export interface CreateEntryInput {
   recurrence_rule?: string | null
 }
 
+// Mind Map types
+export type MindMapNodeType = 'concept' | 'action' | 'question' | 'theme'
+export type MindMapRelationshipType = 'causes' | 'supports' | 'contrasts' | 'contains' | 'related'
+
+export interface MindMapNode {
+  id: string
+  label: string
+  description?: string
+  position: { x: number; y: number }
+  nodeType: MindMapNodeType
+  priority?: string
+}
+
+export interface MindMapEdge {
+  id: string
+  source: string
+  target: string
+  relationshipType: MindMapRelationshipType
+  label?: string
+}
+
+export interface MindMap {
+  id?: string
+  title: string
+  sourceText?: string
+  sourceEntryId?: string
+  nodes: MindMapNode[]
+  edges: MindMapEdge[]
+}
+
+// React Flow format (what the component expects)
+export interface ReactFlowNode {
+  id: string
+  type?: string
+  position: { x: number; y: number }
+  data: {
+    label: string
+    description?: string
+    nodeType: string
+    priority?: string
+  }
+}
+
+export interface ReactFlowEdge {
+  id: string
+  source: string
+  target: string
+  label?: string
+  type?: string
+  animated?: boolean
+}
+
