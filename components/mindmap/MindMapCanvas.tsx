@@ -16,6 +16,7 @@ import ReactFlow, {
   BackgroundVariant,
   OnSelectionChangeParams,
   ReactFlowInstance,
+  ReactFlowProvider,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import '@reactflow/node-resizer/dist/style.css'
@@ -265,6 +266,7 @@ export default function MindMapCanvas({
 
       {/* Canvas */}
       <div style={{ flex: 1, position: 'relative' }}>
+        <ReactFlowProvider>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -320,6 +322,7 @@ export default function MindMapCanvas({
         )}
 
         {Legend}
+        </ReactFlowProvider>
       </div>
     </div>
   )
