@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Entry, EntryType } from '@/types'
+import { Entry, EntryType, ImageExtraction } from '@/types'
 
 interface InferredData {
   headline: string
@@ -11,6 +11,9 @@ interface InferredData {
   content: string
   entry_type: EntryType
   due_date: string | null
+  // Multimodal fields from image capture
+  image_url?: string
+  image_extracted_data?: ImageExtraction
 }
 
 interface CaptureConfirmationProps {
@@ -85,6 +88,9 @@ export function CaptureConfirmation({
       entry_type: entryType,
       due_date: entryType === 'action' && dueDate ? dueDate : null,
       photo: photoFile || undefined,
+      // Pass through the multimodal image data (already uploaded)
+      image_url: data.image_url,
+      image_extracted_data: data.image_extracted_data,
     })
   }
 
@@ -462,92 +468,200 @@ export function CaptureConfirmation({
           />
         </div>
 
-        {/* Photo Upload */}
-        <div style={{ marginBottom: '2rem' }}>
-          <label
-            style={{
-              fontSize: '0.65rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08rem',
-              color: '#999',
-              display: 'block',
-              marginBottom: '0.5rem',
-            }}
-          >
-            Photo (Optional)
-          </label>
-          
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp"
-            onChange={handlePhotoChange}
-            style={{ display: 'none' }}
-          />
-
-          {photoPreview ? (
+        {/* Pre-attached Image from Capture Phase */}
+        {data.image_url && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label
+              style={{
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08rem',
+                color: '#999',
+                display: 'block',
+                marginBottom: '0.5rem',
+              }}
+            >
+              Attached Image
+            </label>
             <div style={{ position: 'relative' }}>
               <img
-                src={photoPreview}
-                alt="Preview"
+                src={data.image_url}
+                alt="Attached"
                 style={{
                   width: '100%',
                   maxHeight: '200px',
                   objectFit: 'cover',
                   borderRadius: '4px',
+                  border: '2px solid #DC143C',
                 }}
               />
-              <button
-                type="button"
-                onClick={handleRemovePhoto}
+              <div
                 style={{
                   position: 'absolute',
                   top: '0.5rem',
-                  right: '0.5rem',
-                  background: 'rgba(0,0,0,0.7)',
+                  left: '0.5rem',
+                  background: '#DC143C',
                   color: 'white',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '28px',
-                  height: '28px',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
                 }}
               >
-                ×
-              </button>
+                ✓ Uploaded
+              </div>
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
+            
+            {/* Show extracted data if available */}
+            {data.image_extracted_data && (
+              <div
+                style={{
+                  marginTop: '0.75rem',
+                  padding: '0.75rem 1rem',
+                  background: '#f0f9ff',
+                  borderRadius: '4px',
+                  border: '1px solid #bae6fd',
+                }}
+              >
+                <div style={{ fontSize: '0.7rem', color: '#0369a1', fontWeight: 600, marginBottom: '0.25rem', textTransform: 'uppercase' }}>
+                  🤖 AI Detected: {data.image_extracted_data.imageType}
+                </div>
+                {data.image_extracted_data.purchase && (
+                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                    <strong>{data.image_extracted_data.purchase.productName}</strong>
+                    <span style={{ color: '#6B7280' }}> • ${data.image_extracted_data.purchase.price} • {data.image_extracted_data.purchase.seller}</span>
+                  </div>
+                )}
+                {data.image_extracted_data.receipt && (
+                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                    <strong>{data.image_extracted_data.receipt.merchant}</strong>
+                    <span style={{ color: '#6B7280' }}> • ${data.image_extracted_data.receipt.total}</span>
+                  </div>
+                )}
+                {data.image_extracted_data.media && (
+                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                    <strong>{data.image_extracted_data.media.title}</strong>
+                    {data.image_extracted_data.media.author && (
+                      <span style={{ color: '#6B7280' }}> by {data.image_extracted_data.media.author}</span>
+                    )}
+                  </div>
+                )}
+                {data.image_extracted_data.imageType === 'photo' && data.image_extracted_data.summary && (
+                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                    {data.image_extracted_data.summary}
+                  </div>
+                )}
+                {data.image_extracted_data.suggestedTags?.length > 0 && (
+                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                    {data.image_extracted_data.suggestedTags.map((tag, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          background: '#e0f2fe',
+                          color: '#0369a1',
+                          padding: '0.15rem 0.4rem',
+                          borderRadius: '3px',
+                          fontSize: '0.7rem',
+                        }}
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Additional Photo Upload (optional, separate from captured image) */}
+        {!data.image_url && (
+          <div style={{ marginBottom: '2rem' }}>
+            <label
               style={{
-                width: '100%',
-                padding: '1.5rem',
-                background: '#f8f9fb',
-                border: '2px dashed #ddd',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                color: '#666',
-                fontSize: '0.9rem',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#DC143C'
-                e.currentTarget.style.color = '#DC143C'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#ddd'
-                e.currentTarget.style.color = '#666'
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08rem',
+                color: '#999',
+                display: 'block',
+                marginBottom: '0.5rem',
               }}
             >
-              📷 Add Photo
-            </button>
-          )}
-        </div>
+              Photo (Optional)
+            </label>
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              onChange={handlePhotoChange}
+              style={{ display: 'none' }}
+            />
+
+            {photoPreview ? (
+              <div style={{ position: 'relative' }}>
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  style={{
+                    width: '100%',
+                    maxHeight: '200px',
+                    objectFit: 'cover',
+                    borderRadius: '4px',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  style={{
+                    position: 'absolute',
+                    top: '0.5rem',
+                    right: '0.5rem',
+                    background: 'rgba(0,0,0,0.7)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '28px',
+                    height: '28px',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  width: '100%',
+                  padding: '1.5rem',
+                  background: '#f8f9fb',
+                  border: '2px dashed #ddd',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  color: '#666',
+                  fontSize: '0.9rem',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#DC143C'
+                  e.currentTarget.style.color = '#DC143C'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#ddd'
+                  e.currentTarget.style.color = '#666'
+                }}
+              >
+                📷 Add Photo
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Actions */}
         <div
