@@ -37,7 +37,8 @@ export function EntryModal({
   
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
   const [isRemovingPhoto, setIsRemovingPhoto] = useState(false)
-  const [currentPhotoUrl, setCurrentPhotoUrl] = useState(entry.photo_url)
+  // Prefer image_url (from multimodal capture) over photo_url
+  const [currentPhotoUrl, setCurrentPhotoUrl] = useState(entry.image_url || entry.photo_url)
   const [isPinned, setIsPinned] = useState(!!entry.pinned_at)
   const [isTogglingPin, setIsTogglingPin] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -66,10 +67,10 @@ export function EntryModal({
       })
   }, [entry.id])
 
-  // Update local photo URL when entry changes
+  // Update local photo URL when entry changes (prefer image_url from multimodal capture)
   useEffect(() => {
-    setCurrentPhotoUrl(entry.photo_url)
-  }, [entry.photo_url])
+    setCurrentPhotoUrl(entry.image_url || entry.photo_url)
+  }, [entry.image_url, entry.photo_url])
 
   // Update pin state when entry changes
   useEffect(() => {
@@ -441,6 +442,70 @@ export function EntryModal({
                   borderRadius: '8px',
                 }}
               />
+              
+              {/* Display AI-extracted data from multimodal capture */}
+              {entry.image_extracted_data && (
+                <div
+                  style={{
+                    marginTop: '0.75rem',
+                    padding: '0.75rem 1rem',
+                    background: '#f0f9ff',
+                    borderRadius: '6px',
+                    border: '1px solid #bae6fd',
+                  }}
+                >
+                  <div style={{ fontSize: '0.7rem', color: '#0369a1', fontWeight: 600, marginBottom: '0.25rem', textTransform: 'uppercase' }}>
+                    🤖 AI Detected: {entry.image_extracted_data.imageType}
+                  </div>
+                  {entry.image_extracted_data.purchase && (
+                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                      <strong>{entry.image_extracted_data.purchase.productName}</strong>
+                      <span style={{ color: '#6B7280' }}> • ${entry.image_extracted_data.purchase.price} • {entry.image_extracted_data.purchase.seller}</span>
+                    </div>
+                  )}
+                  {entry.image_extracted_data.receipt && (
+                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                      <strong>{entry.image_extracted_data.receipt.merchant}</strong>
+                      <span style={{ color: '#6B7280' }}> • ${entry.image_extracted_data.receipt.total}</span>
+                    </div>
+                  )}
+                  {entry.image_extracted_data.media && (
+                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                      <strong>{entry.image_extracted_data.media.title}</strong>
+                      {entry.image_extracted_data.media.author && (
+                        <span style={{ color: '#6B7280' }}> by {entry.image_extracted_data.media.author}</span>
+                      )}
+                    </div>
+                  )}
+                  {entry.image_extracted_data.travel && (
+                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                      <strong>{entry.image_extracted_data.travel.type}</strong>
+                      {entry.image_extracted_data.travel.destination && (
+                        <span style={{ color: '#6B7280' }}> → {entry.image_extracted_data.travel.destination}</span>
+                      )}
+                    </div>
+                  )}
+                  {entry.image_extracted_data.suggestedTags && entry.image_extracted_data.suggestedTags.length > 0 && (
+                    <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                      {entry.image_extracted_data.suggestedTags.map((tag: string, i: number) => (
+                        <span
+                          key={i}
+                          style={{
+                            background: '#e0f2fe',
+                            color: '#0369a1',
+                            padding: '0.15rem 0.4rem',
+                            borderRadius: '3px',
+                            fontSize: '0.7rem',
+                          }}
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div style={{ 
                 marginTop: '0.75rem', 
                 display: 'flex', 

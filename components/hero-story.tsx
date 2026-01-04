@@ -48,7 +48,8 @@ export function HeroStory({
     )
   }
 
-  const imageUrl = entry.photo_url || getCategoryImage(entry.category)
+  // Prefer image_url (from multimodal capture), then photo_url, then category image
+  const imageUrl = entry.image_url || entry.photo_url || getCategoryImage(entry.category)
   const formattedDate = formatEntryDateLong(entry.created_at)
 
   return (
