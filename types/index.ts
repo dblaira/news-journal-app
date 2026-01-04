@@ -1,6 +1,9 @@
 // Entry types for the unified entry system
 export type EntryType = 'story' | 'action' | 'note'
 
+// Re-export multimodal types for convenience
+export type { ImageExtraction, ImageAttachment } from './multimodal'
+
 export interface Entry {
   id: string
   headline: string
@@ -27,6 +30,9 @@ export interface Entry {
   completed_at?: string | null
   // Pin feature
   pinned_at?: string | null
+  // Multimodal capture fields
+  image_url?: string
+  image_extracted_data?: import('./multimodal').ImageExtraction
 }
 
 export interface Version {
@@ -61,6 +67,9 @@ export interface CreateEntryInput {
   entry_type?: EntryType
   due_date?: string | null
   recurrence_rule?: string | null
+  // Multimodal capture fields
+  image_url?: string
+  image_extracted_data?: import('./multimodal').ImageExtraction
 }
 
 // Mind Map types

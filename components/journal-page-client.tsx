@@ -384,7 +384,7 @@ export function JournalPageClient({
       </div>
 
       {/* Floating Action Button for Quick Capture */}
-      <CaptureFAB onEntryCreated={handleEntryCreated} />
+      <CaptureFAB onEntryCreated={handleEntryCreated} userId={userId} />
 
       {/* Legacy form modal - kept as backup, triggered by header button */}
       {showForm && (

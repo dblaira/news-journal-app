@@ -20,7 +20,9 @@ export function EntryCard({
 }: EntryCardProps) {
   const [imageError, setImageError] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
-  const imageUrl = entry.photo_url || getCategoryImage(entry.category)
+  // Prefer image_url (from multimodal capture), then photo_url, then category image
+  const imageUrl = entry.image_url || entry.photo_url || getCategoryImage(entry.category)
+  const hasMultimodalImage = Boolean(entry.image_url)
 
   useEffect(() => {
     setIsMounted(true)
@@ -84,6 +86,47 @@ export function EntryCard({
           className="rendered-content card-preview entry-content"
           dangerouslySetInnerHTML={{ __html: entry.content }}
         />
+        
+        {/* Show extracted purchase/receipt data if available */}
+        {entry.image_extracted_data?.purchase && (
+          <div
+            style={{
+              marginTop: '0.75rem',
+              padding: '0.5rem 0.75rem',
+              background: 'var(--bg-panel-alt)',
+              borderRadius: '6px',
+              fontSize: '0.8rem',
+              borderLeft: '3px solid var(--accent-crimson)',
+            }}
+          >
+            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+              💰 {entry.image_extracted_data.purchase.productName}
+            </div>
+            <div style={{ color: 'var(--text-muted)', marginTop: '2px' }}>
+              ${entry.image_extracted_data.purchase.price} • {entry.image_extracted_data.purchase.seller}
+            </div>
+          </div>
+        )}
+        
+        {entry.image_extracted_data?.receipt && (
+          <div
+            style={{
+              marginTop: '0.75rem',
+              padding: '0.5rem 0.75rem',
+              background: 'var(--bg-panel-alt)',
+              borderRadius: '6px',
+              fontSize: '0.8rem',
+              borderLeft: '3px solid var(--accent-gold)',
+            }}
+          >
+            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+              🧾 {entry.image_extracted_data.receipt.merchant}
+            </div>
+            <div style={{ color: 'var(--text-muted)', marginTop: '2px' }}>
+              ${entry.image_extracted_data.receipt.total} • {entry.image_extracted_data.receipt.date}
+            </div>
+          </div>
+        )}
       </div>
       <div className="entry-footer">
         <div>

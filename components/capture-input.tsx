@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useVoiceInput } from '@/lib/hooks/use-voice-input'
-import { Entry, EntryType } from '@/types'
+import { Entry, EntryType, ImageExtraction } from '@/types'
+import { ImageAttachment } from '@/types/multimodal'
+import ImageAttachmentButton from './capture/ImageAttachmentButton'
+import { useMultimodalCapture } from '@/hooks/useMultimodalCapture'
 
 interface InferredData {
   headline: string
@@ -12,11 +15,15 @@ interface InferredData {
   content: string
   entry_type: EntryType
   due_date: string | null
+  // Multimodal fields
+  image_url?: string
+  image_extracted_data?: ImageExtraction
 }
 
 interface CaptureInputProps {
   onCapture: (data: InferredData) => void
   onClose: () => void
+  userId?: string
 }
 
 type InputMode = 'voice' | 'type' | 'paste'
@@ -27,16 +34,19 @@ const entryTypeOptions: { id: EntryType; label: string; icon: string }[] = [
   { id: 'action', label: 'Action', icon: '✓' },
 ]
 
-export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
+export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) {
   const [mode, setMode] = useState<InputMode>('type')
   const [text, setText] = useState('')
   const [isInferring, setIsInferring] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<EntryType>('story')
   const [showTypeDropdown, setShowTypeDropdown] = useState(false)
+  const [imageAttachment, setImageAttachment] = useState<ImageAttachment | null>(null)
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typeDropdownRef = useRef<HTMLDivElement>(null)
+  
+  const { processImage, isProcessingImage, processingStep } = useMultimodalCapture()
   const {
     isListening,
     transcript,
@@ -90,8 +100,10 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
   const handleSubmit = async () => {
     // Use transcript in voice mode, text otherwise
     const content = mode === 'voice' ? transcript.trim() : text.trim()
-    if (!content) {
-      setError('Please enter some text first.')
+    
+    // Allow submission if there's text OR an image
+    if (!content && !imageAttachment) {
+      setError('Please enter some text or attach an image.')
       return
     }
 
@@ -99,10 +111,35 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
     setError(null)
 
     try {
+      let finalContent = content
+      let imageUrl: string | undefined
+      let imageExtractedData: ImageExtraction | undefined
+
+      // Process image if attached
+      if (imageAttachment && userId) {
+        const imageResult = await processImage(imageAttachment, content, userId)
+        if (imageResult.imageUrl) {
+          imageUrl = imageResult.imageUrl
+        }
+        if (imageResult.extractedData) {
+          imageExtractedData = imageResult.extractedData
+          // Use AI-generated narrative if available and user didn't provide text
+          if (imageResult.finalContent && !content) {
+            finalContent = imageResult.finalContent
+          }
+        }
+      }
+
+      // If we have image-extracted data with a suggested type, use it (unless user explicitly chose)
+      const effectiveType = imageExtractedData?.suggestedEntryType || selectedType
+
       const response = await fetch('/api/infer-entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, selectedType }),
+        body: JSON.stringify({ 
+          content: finalContent || imageExtractedData?.combinedNarrative || 'Image capture', 
+          selectedType: effectiveType 
+        }),
       })
 
       if (!response.ok) {
@@ -114,9 +151,10 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
       
       onCapture({
         ...inferred,
-        content,
-        // Use user-selected type, override AI inference
-        entry_type: selectedType,
+        content: finalContent || imageExtractedData?.combinedNarrative || inferred.content,
+        entry_type: effectiveType,
+        image_url: imageUrl,
+        image_extracted_data: imageExtractedData,
       })
     } catch (err: any) {
       console.error('Error inferring entry:', err)
@@ -162,7 +200,7 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
         padding: '1rem',
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget && !isInferring && !voiceProcessing) {
+        if (e.target === e.currentTarget && !isInferring && !voiceProcessing && !isProcessingImage) {
           onClose()
         }
       }}
@@ -170,7 +208,7 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
       {/* Close button */}
       <button
         onClick={onClose}
-        disabled={isInferring || voiceProcessing}
+        disabled={isInferring || voiceProcessing || isProcessingImage}
         style={{
           position: 'absolute',
           top: '1rem',
@@ -179,16 +217,16 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
           color: '#fff',
           border: 'none',
           fontSize: '2rem',
-          cursor: isInferring || voiceProcessing ? 'not-allowed' : 'pointer',
-          opacity: isInferring || voiceProcessing ? 0.5 : 0.7,
+          cursor: isInferring || voiceProcessing || isProcessingImage ? 'not-allowed' : 'pointer',
+          opacity: isInferring || voiceProcessing || isProcessingImage ? 0.5 : 0.7,
           transition: 'opacity 0.2s ease',
           zIndex: 10,
         }}
         onMouseEnter={(e) => {
-          if (!isInferring && !voiceProcessing) e.currentTarget.style.opacity = '1'
+          if (!isInferring && !voiceProcessing && !isProcessingImage) e.currentTarget.style.opacity = '1'
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.opacity = isInferring || voiceProcessing ? '0.5' : '0.7'
+          e.currentTarget.style.opacity = isInferring || voiceProcessing || isProcessingImage ? '0.5' : '0.7'
         }}
       >
         ×
@@ -249,11 +287,22 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
           {/* Divider */}
           <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.2)' }} />
 
+          {/* Image attachment button */}
+          <ImageAttachmentButton
+            attachment={imageAttachment}
+            onAttach={setImageAttachment}
+            onRemove={() => setImageAttachment(null)}
+            disabled={isInferring || isProcessingImage}
+          />
+
+          {/* Divider */}
+          <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.2)' }} />
+
           {/* Type selector - inline with mode tabs */}
           <div ref={typeDropdownRef} style={{ position: 'relative' }}>
             <button
               onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-              disabled={isInferring}
+              disabled={isInferring || isProcessingImage}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -502,59 +551,78 @@ export function CaptureInput({ onCapture, onClose }: CaptureInputProps) {
           Button disabled during:
           - isInferring: AI is processing the entry
           - voiceProcessing: Whisper is transcribing audio
+          - isProcessingImage: Vision API is analyzing image
           - isListening && mode === 'voice': User is actively recording (must stop first)
-          - No content: Nothing to submit
+          - No content and no image: Nothing to submit
         */}
-        <button
-          onClick={handleSubmit}
-          disabled={isInferring || voiceProcessing || (mode === 'voice' && isListening) || (!text.trim() && !transcript.trim())}
-          style={{
-            marginTop: '2rem',
-            padding: '1rem 3rem',
-            background: '#DC143C',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: isInferring || voiceProcessing || (mode === 'voice' && isListening) || (!text.trim() && !transcript.trim()) ? 'not-allowed' : 'pointer',
-            fontSize: '1rem',
-            fontWeight: 600,
-            letterSpacing: '0.05rem',
-            textTransform: 'uppercase',
-            transition: 'all 0.2s ease',
-            opacity: isInferring || voiceProcessing || (mode === 'voice' && isListening) || (!text.trim() && !transcript.trim()) ? 0.5 : 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-          onMouseEnter={(e) => {
-            if (!isInferring && !voiceProcessing && !(mode === 'voice' && isListening) && (text.trim() || transcript.trim())) {
-              e.currentTarget.style.background = '#B01030'
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#DC143C'
-          }}
-        >
-          {isInferring ? (
-            <>
-              <span className="spinner" style={{ 
-                width: '16px', 
-                height: '16px', 
-                border: '2px solid rgba(255,255,255,0.3)', 
-                borderTopColor: '#fff',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-              }} />
-              Processing...
-            </>
-          ) : voiceProcessing ? (
-            'Transcribing...'
-          ) : mode === 'voice' && isListening ? (
-            'Stop recording first'
-          ) : (
-            'Continue →'
-          )}
-        </button>
+        {(() => {
+          const hasContent = text.trim() || transcript.trim() || imageAttachment
+          const isDisabled = isInferring || voiceProcessing || isProcessingImage || (mode === 'voice' && isListening) || !hasContent
+          return (
+            <button
+              onClick={handleSubmit}
+              disabled={isDisabled}
+              style={{
+                marginTop: '2rem',
+                padding: '1rem 3rem',
+                background: '#DC143C',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                fontSize: '1rem',
+                fontWeight: 600,
+                letterSpacing: '0.05rem',
+                textTransform: 'uppercase',
+                transition: 'all 0.2s ease',
+                opacity: isDisabled ? 0.5 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+              onMouseEnter={(e) => {
+                if (!isDisabled) {
+                  e.currentTarget.style.background = '#B01030'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#DC143C'
+              }}
+            >
+              {isProcessingImage ? (
+                <>
+                  <span className="spinner" style={{ 
+                    width: '16px', 
+                    height: '16px', 
+                    border: '2px solid rgba(255,255,255,0.3)', 
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                  }} />
+                  {processingStep || 'Processing image...'}
+                </>
+              ) : isInferring ? (
+                <>
+                  <span className="spinner" style={{ 
+                    width: '16px', 
+                    height: '16px', 
+                    border: '2px solid rgba(255,255,255,0.3)', 
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                  }} />
+                  Processing...
+                </>
+              ) : voiceProcessing ? (
+                'Transcribing...'
+              ) : mode === 'voice' && isListening ? (
+                'Stop recording first'
+              ) : (
+                'Continue →'
+              )}
+            </button>
+          )
+        })()}
       </div>
 
       {/* CSS animations */}

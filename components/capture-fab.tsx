@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { CaptureInput } from './capture-input'
 import { CaptureConfirmation } from './capture-confirmation'
-import { Entry, EntryType } from '@/types'
+import { Entry, EntryType, ImageExtraction } from '@/types'
 
 interface InferredData {
   headline: string
@@ -13,15 +13,19 @@ interface InferredData {
   content: string
   entry_type: EntryType
   due_date: string | null
+  // Multimodal fields
+  image_url?: string
+  image_extracted_data?: ImageExtraction
 }
 
 interface CaptureFABProps {
   onEntryCreated: () => void
+  userId?: string
 }
 
 type CaptureState = 'closed' | 'capturing' | 'confirming'
 
-export function CaptureFAB({ onEntryCreated }: CaptureFABProps) {
+export function CaptureFAB({ onEntryCreated, userId }: CaptureFABProps) {
   const [state, setState] = useState<CaptureState>('closed')
   const [inferredData, setInferredData] = useState<InferredData | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -57,6 +61,9 @@ export function CaptureFAB({ onEntryCreated }: CaptureFABProps) {
         mood: data.mood,
         entry_type: data.entry_type,
         due_date: data.due_date,
+        // Multimodal fields - image_url from Vision API processing
+        image_url: data.image_url,
+        image_extracted_data: data.image_extracted_data,
       })
 
       if (result.error) {
@@ -158,6 +165,7 @@ export function CaptureFAB({ onEntryCreated }: CaptureFABProps) {
       <CaptureInput
         onCapture={handleCapture}
         onClose={handleClose}
+        userId={userId}
       />
     )
   }
