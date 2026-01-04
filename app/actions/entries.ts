@@ -15,6 +15,14 @@ export async function createEntry(input: CreateEntryInput) {
     return { error: 'Unauthorized' }
   }
 
+  // Debug logging for multimodal capture
+  console.log('createEntry called with:', {
+    hasImageUrl: !!input.image_url,
+    imageUrlLength: input.image_url?.length,
+    hasExtractedData: !!input.image_extracted_data,
+    extractedDataType: input.image_extracted_data?.imageType,
+  })
+
   const { data, error } = await supabase
     .from('entries')
     .insert([
@@ -29,8 +37,16 @@ export async function createEntry(input: CreateEntryInput) {
     .single()
 
   if (error) {
+    console.error('createEntry error:', error.message, error.details, error.hint)
     return { error: error.message }
   }
+
+  // Verify the image data was saved
+  console.log('Entry created:', {
+    id: data.id,
+    savedImageUrl: data.image_url,
+    savedExtractedData: !!data.image_extracted_data,
+  })
 
   revalidatePath('/')
   return { data }
