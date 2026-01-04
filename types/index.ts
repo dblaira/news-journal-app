@@ -113,5 +113,9 @@ export interface ReactFlowEdge {
   label?: string
   type?: string
   animated?: boolean
+  data?: {
+    relationshipType?: MindMapRelationshipType
+    label?: string
+  }
 }
 

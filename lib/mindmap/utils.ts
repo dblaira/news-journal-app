@@ -72,7 +72,11 @@ export function toReactFlowFormat(mindMap: MindMap): {
     source: edge.source,
     target: edge.target,
     label: edge.label,
-    type: 'smoothstep', // or 'straight', 'step', 'bezier'
+    type: 'organic', // use custom OrganicEdge component
+    data: {
+      relationshipType: edge.relationshipType || 'related',
+      label: edge.label,
+    },
     animated: edge.relationshipType === 'causes', // animate causal relationships
   }))
 
