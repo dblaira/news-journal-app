@@ -1,9 +1,6 @@
 // app/api/process-multimodal/route.ts
 
-import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
-
-const anthropic = new Anthropic()
 
 const VISION_SYSTEM_PROMPT = `You analyze images in the context of personal journaling. The user has attached an image and may have added a note explaining why it matters to them.
 
@@ -84,6 +81,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 })
     }
 
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      return NextResponse.json({ error: 'API key not configured' }, { status: 500 })
+    }
+
     // Build a prompt that emphasizes the user's context
     let userPrompt: string
     
@@ -97,33 +99,52 @@ Analyze the image in the context of their note. Extract what THEY would find mea
       userPrompt = `The user shared this image without a note. Extract the most likely relevant details - what would someone want to remember about this image later?`
     }
 
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      system: VISION_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mimeType || 'image/jpeg',
-                data: imageBase64,
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        system: VISION_SYSTEM_PROMPT,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mimeType || 'image/jpeg',
+                  data: imageBase64,
+                },
               },
-            },
-            {
-              type: 'text',
-              text: userPrompt,
-            },
-          ],
-        },
-      ],
+              {
+                type: 'text',
+                text: userPrompt,
+              },
+            ],
+          },
+        ],
+      }),
     })
 
-    const content = message.content[0]
-    if (content.type === 'text') {
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('Anthropic API error:', errorData)
+      return NextResponse.json(
+        { error: errorData.error?.message || 'Vision API failed' },
+        { status: response.status }
+      )
+    }
+
+    const data = await response.json()
+    const content = data.content?.[0]
+    
+    if (content?.type === 'text') {
       // Extract JSON from response
       const jsonMatch = content.text.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
@@ -139,7 +160,7 @@ Analyze the image in the context of their note. Extract what THEY would find mea
   } catch (error) {
     console.error('Vision API error:', error)
     return NextResponse.json(
-      { error: 'Image processing failed' },
+      { error: error instanceof Error ? error.message : 'Image processing failed' },
       { status: 500 }
     )
   }

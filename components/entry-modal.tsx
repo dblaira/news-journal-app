@@ -473,7 +473,7 @@ export function EntryModal({
                   )}
 
                   {/* New structure: extractedText.titles */}
-                  {entry.image_extracted_data.extractedText?.titles?.length > 0 && (
+                  {entry.image_extracted_data.extractedText?.titles && entry.image_extracted_data.extractedText.titles.length > 0 && (
                     <div style={{ fontSize: '0.85rem', color: '#374151', marginBottom: '0.5rem' }}>
                       <strong>Titles:</strong> {entry.image_extracted_data.extractedText.titles.join(', ')}
                     </div>

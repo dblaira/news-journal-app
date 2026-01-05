@@ -542,7 +542,7 @@ export function CaptureConfirmation({
                 )}
 
                 {/* New structure: extractedText.titles */}
-                {data.image_extracted_data.extractedText?.titles?.length > 0 && (
+                {data.image_extracted_data.extractedText?.titles && data.image_extracted_data.extractedText.titles.length > 0 && (
                   <div style={{ fontSize: '0.85rem', color: '#374151', marginBottom: '0.5rem' }}>
                     <strong>Titles:</strong> {data.image_extracted_data.extractedText.titles.join(', ')}
                   </div>

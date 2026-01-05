@@ -21,13 +21,35 @@ export interface ExtractedText {
 }
 
 export interface PurchaseData {
-  detected: boolean
+  detected?: boolean    // New structure has this flag
   productName: string | null
   price: number | null
   currency: string
   seller: string | null
-  orderDate: string | null
-  category: string | null
+  orderDate?: string | null
+  orderId?: string | null  // Legacy field
+  category?: string | null
+}
+
+export interface ReceiptData {
+  merchant: string
+  total: number
+  currency: string
+  date: string
+  items?: { name: string; price: number }[]
+}
+
+export interface MediaData {
+  title: string
+  author?: string
+  type: 'book' | 'movie' | 'article' | 'podcast' | 'other'
+}
+
+export interface TravelData {
+  type: 'flight' | 'hotel' | 'reservation' | 'other'
+  confirmationNumber?: string
+  date?: string
+  destination?: string
 }
 
 export interface UserConnectionAnalysis {
@@ -37,48 +59,28 @@ export interface UserConnectionAnalysis {
 }
 
 export interface ImageExtraction {
-  imageType: 'screenshot' | 'photo' | 'receipt' | 'document' | 'message' | 'social' | 'media' | 'playlist' | 'unknown'
+  imageType: 'screenshot' | 'photo' | 'receipt' | 'document' | 'message' | 'social' | 'media' | 'playlist' | 'order' | 'unknown'
   
-  primaryContent: PrimaryContent
-  extractedText: ExtractedText
-  purchase: PurchaseData
-  userConnectionAnalysis: UserConnectionAnalysis
+  // New context-aware fields
+  primaryContent?: PrimaryContent
+  extractedText?: ExtractedText
+  userConnectionAnalysis?: UserConnectionAnalysis
+  
+  // Purchase with detected flag (new structure)
+  purchase?: PurchaseData
+  
+  // Legacy fields for backwards compatibility with existing entries
+  receipt?: ReceiptData
+  media?: MediaData
+  travel?: TravelData
+  
+  // Legacy summary field
+  summary?: string
+  extractedTextLegacy?: string  // Old extractedText was a string
   
   suggestedTags: string[]
   suggestedEntryType: 'story' | 'action' | 'note'
   combinedNarrative: string
-}
-
-// Legacy types for backwards compatibility with existing entries
-export interface LegacyPurchaseData {
-  productName: string
-  price: number
-  currency: string
-  seller: string
-  orderDate?: string
-  orderId?: string
-  category: string
-}
-
-export interface LegacyReceiptData {
-  merchant: string
-  total: number
-  currency: string
-  date: string
-  items?: { name: string; price: number }[]
-}
-
-export interface LegacyMediaData {
-  title: string
-  author?: string
-  type: 'book' | 'movie' | 'article' | 'podcast' | 'other'
-}
-
-export interface LegacyTravelData {
-  type: 'flight' | 'hotel' | 'reservation' | 'other'
-  confirmationNumber?: string
-  date?: string
-  destination?: string
 }
 
 export interface MultimodalCaptureInput {
