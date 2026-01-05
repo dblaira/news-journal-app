@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Entry, EntryType, ImageExtraction } from '@/types'
+import { Entry, EntryType, ImageExtraction, EntryMetadata } from '@/types'
 
 interface InferredData {
   headline: string
@@ -14,6 +14,8 @@ interface InferredData {
   // Multimodal fields from image capture
   image_url?: string
   image_extracted_data?: ImageExtraction
+  // Metadata fields
+  metadata?: EntryMetadata
 }
 
 interface CaptureConfirmationProps {
@@ -91,6 +93,8 @@ export function CaptureConfirmation({
       // Pass through the multimodal image data (already uploaded)
       image_url: data.image_url,
       image_extracted_data: data.image_extracted_data,
+      // Pass through the metadata (auto-captured context)
+      metadata: data.metadata,
     })
   }
 

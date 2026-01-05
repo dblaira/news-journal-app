@@ -15,12 +15,15 @@ export async function createEntry(input: CreateEntryInput) {
     return { error: 'Unauthorized' }
   }
 
-  // Debug logging for multimodal capture
+  // Debug logging for multimodal capture and metadata
   console.log('createEntry called with:', {
     hasImageUrl: !!input.image_url,
     imageUrlLength: input.image_url?.length,
     hasExtractedData: !!input.image_extracted_data,
     extractedDataType: input.image_extracted_data?.imageType,
+    hasMetadata: !!input.metadata,
+    metadataLocation: input.metadata?.location?.display_name,
+    metadataDevice: input.metadata?.device,
   })
 
   const { data, error } = await supabase

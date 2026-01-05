@@ -4,6 +4,9 @@ export type EntryType = 'story' | 'action' | 'note'
 // Re-export multimodal types for convenience
 export type { ImageExtraction, ImageAttachment } from './multimodal'
 
+// Re-export metadata types for convenience
+export type { EntryMetadata, EntryEnrichment, AutoCapturedMetadata } from './metadata'
+
 export interface Entry {
   id: string
   headline: string
@@ -33,6 +36,8 @@ export interface Entry {
   // Multimodal capture fields
   image_url?: string
   image_extracted_data?: import('./multimodal').ImageExtraction
+  // Metadata capture fields
+  metadata?: import('./metadata').EntryMetadata
 }
 
 export interface Version {
@@ -70,6 +75,8 @@ export interface CreateEntryInput {
   // Multimodal capture fields
   image_url?: string
   image_extracted_data?: import('./multimodal').ImageExtraction
+  // Metadata capture fields
+  metadata?: import('./metadata').EntryMetadata
 }
 
 // Mind Map types

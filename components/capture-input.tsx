@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useVoiceInput } from '@/lib/hooks/use-voice-input'
-import { Entry, EntryType, ImageExtraction } from '@/types'
+import { Entry, EntryType, ImageExtraction, EntryMetadata } from '@/types'
 import { ImageAttachment } from '@/types/multimodal'
 import ImageAttachmentButton from './capture/ImageAttachmentButton'
 import { useMultimodalCapture } from '@/hooks/useMultimodalCapture'
+import { captureMetadata } from '@/lib/captureMetadata'
 
 interface InferredData {
   headline: string
@@ -18,6 +19,8 @@ interface InferredData {
   // Multimodal fields
   image_url?: string
   image_extracted_data?: ImageExtraction
+  // Metadata fields
+  metadata?: EntryMetadata
 }
 
 interface CaptureInputProps {
@@ -115,6 +118,18 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
       let imageUrl: string | undefined
       let imageExtractedData: ImageExtraction | undefined
 
+      // Capture metadata (time, device, location) silently in background
+      // Don't block on location - it's optional and may take time
+      let metadata: EntryMetadata | undefined
+      if (userId) {
+        try {
+          metadata = await captureMetadata(userId, true)
+        } catch (metadataError) {
+          console.log('Metadata capture failed (non-blocking):', metadataError)
+          // Continue without metadata - not a failure
+        }
+      }
+
       // Process image if attached
       if (imageAttachment && userId) {
         const imageResult = await processImage(imageAttachment, content, userId)
@@ -155,6 +170,7 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
         entry_type: effectiveType,
         image_url: imageUrl,
         image_extracted_data: imageExtractedData,
+        metadata,
       })
     } catch (err: any) {
       console.error('Error inferring entry:', err)
