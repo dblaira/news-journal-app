@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Entry, Version, MindMap, ReactFlowNode, ReactFlowEdge } from '@/types'
+import { Entry, Version, MindMap, ReactFlowNode, ReactFlowEdge, EntryMetadata } from '@/types'
 import { formatEntryDateLong, stripHtml } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
 import { incrementViewCount, removeEntryPhoto, togglePin, updateEntryContent } from '@/app/actions/entries'
 import { TiptapEditor } from './editor/TiptapEditor'
 import { generateMindMap, toReactFlowFormat } from '@/lib/mindmap/utils'
+import MetadataEnrichment from './entry/MetadataEnrichment'
 
 // Dynamic import for MindMapCanvas to avoid SSR issues with ReactFlow
 const MindMapCanvas = dynamic(() => import('./mindmap/MindMapCanvas'), { ssr: false })
@@ -658,6 +659,19 @@ export function EntryModal({
           <div>{formattedDate}</div>
           {entry.mood && (
             <div style={{ marginTop: '0.5rem' }}>Mood: {entry.mood}</div>
+          )}
+          
+          {/* Metadata Context Panel */}
+          {entry.metadata && (
+            <MetadataEnrichment
+              entryId={entry.id}
+              metadata={entry.metadata as EntryMetadata}
+              onUpdate={(updatedMetadata) => {
+                // Update local state if needed
+                console.log('Metadata updated:', updatedMetadata)
+              }}
+              userId={entry.user_id}
+            />
           )}
         </div>
 
