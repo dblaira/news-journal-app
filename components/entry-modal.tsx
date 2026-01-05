@@ -54,6 +54,9 @@ export function EntryModal({
   const [showMindMap, setShowMindMap] = useState(false)
   const [mindMapData, setMindMapData] = useState<{ nodes: ReactFlowNode[]; edges: ReactFlowEdge[]; title: string } | null>(null)
   const [isGeneratingMindMap, setIsGeneratingMindMap] = useState(false)
+  
+  // Metadata state (for enrichment updates)
+  const [currentMetadata, setCurrentMetadata] = useState(entry.metadata as EntryMetadata | undefined)
 
   // Track view when modal opens
   useEffect(() => {
@@ -662,13 +665,13 @@ export function EntryModal({
           )}
           
           {/* Metadata Context Panel */}
-          {entry.metadata && (
+          {currentMetadata && (
             <MetadataEnrichment
               entryId={entry.id}
-              metadata={entry.metadata as EntryMetadata}
+              metadata={currentMetadata}
               onUpdate={(updatedMetadata) => {
-                // Update local state if needed
-                console.log('Metadata updated:', updatedMetadata)
+                // Update local state to reflect saved changes
+                setCurrentMetadata(updatedMetadata)
               }}
               userId={entry.user_id}
               entryContent={entry.content}

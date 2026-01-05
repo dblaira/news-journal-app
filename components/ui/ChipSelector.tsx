@@ -49,9 +49,12 @@ export default function ChipSelector({
     }
   }
   
+  // Merge options with selected values to ensure custom selections always show
+  const allOptions = [...new Set([...selected, ...options])]
+  
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-      {options.map((option) => (
+      {allOptions.map((option) => (
         <button
           key={option}
           type="button"

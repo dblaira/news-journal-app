@@ -5,11 +5,17 @@ import { NextResponse } from 'next/server'
 const ENRICHMENT_SYSTEM_PROMPT = `You analyze journal entries to infer context about when and how they were written.
 
 Given the entry content and optional context (time of day, location), infer:
-1. Activity - What was the person likely doing? (e.g., "after workout", "during commute", "at work", "morning coffee", "winding down")
-2. Energy - Their energy level: "low", "medium", or "high"
-3. Mood - 1-3 mood words that fit (e.g., "focused", "reflective", "anxious", "calm", "energized", "playful")
-4. Environment - Where they likely were (e.g., "home office", "coffee shop", "car", "bed", "outside")
-5. Trigger - What likely prompted this thought (e.g., "conversation", "article I read", "random thought", "work situation")
+1. Activity - What was the person likely doing? Use simple, lowercase phrases like: "after workout", "during commute", "at work", "morning coffee", "during a run", "winding down"
+2. Energy - Their energy level. ONLY use one of these exact words: "low", "medium", or "high"
+3. Mood - 1-3 simple mood words, all lowercase: "focused", "reflective", "anxious", "calm", "energized", "playful", "excited", "determined"
+4. Environment - Where they likely were, simple phrases: "home", "office", "coffee shop", "car", "outside", "gym"
+5. Trigger - What prompted this thought, simple phrases: "conversation", "article", "random thought", "work project", "personal milestone"
+
+CRITICAL RULES:
+- Use proper English spelling (no typos, no creative capitalization)
+- Keep all values simple and lowercase
+- No abbreviations or made-up words
+- If unsure, use null
 
 Output valid JSON only:
 {
@@ -18,9 +24,7 @@ Output valid JSON only:
   "mood": ["array", "of", "moods"] or null,
   "environment": "string or null",
   "trigger": "string or null"
-}
-
-Be specific but concise. If you can't confidently infer something, use null.`
+}`
 
 export async function POST(request: Request) {
   try {
