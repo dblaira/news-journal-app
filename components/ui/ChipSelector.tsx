@@ -101,8 +101,8 @@ export default function ChipSelector({
             style={{
               padding: '6px 12px',
               borderRadius: '16px',
-              border: '1px solid var(--text-muted, #6B7280)',
-              background: 'var(--bg-panel, #1F2937)',
+              border: '1px solid #6B7280',
+              background: '#374151',
               color: '#FFFFFF',
               fontSize: '0.85rem',
               width: '120px',

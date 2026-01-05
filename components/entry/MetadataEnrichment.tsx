@@ -12,6 +12,7 @@ interface MetadataEnrichmentProps {
   metadata: EntryMetadata
   onUpdate: (metadata: EntryMetadata) => void
   userId: string
+  entryContent?: string  // For AI inference
 }
 
 // Helper to format time
@@ -29,16 +30,27 @@ export default function MetadataEnrichment({
   metadata,
   onUpdate,
   userId,
+  entryContent,
 }: MetadataEnrichmentProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [enrichment, setEnrichment] = useState<EntryEnrichment>(metadata.enrichment || {})
   const [userPreferences, setUserPreferences] = useState<UserPreference[]>([])
   const [isSaving, setIsSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'error' | null>(null)
+  const [isInferring, setIsInferring] = useState(false)
+  const [hasInferred, setHasInferred] = useState(false)
   
   // Load user's custom presets
   useEffect(() => {
     loadUserPreferences()
   }, [userId])
+  
+  // Auto-infer enrichment when panel is first expanded (if no existing enrichment)
+  useEffect(() => {
+    if (isExpanded && !hasInferred && entryContent && !metadata.enrichment) {
+      inferEnrichment()
+    }
+  }, [isExpanded, hasInferred, entryContent, metadata.enrichment])
   
   const loadUserPreferences = async () => {
     try {
@@ -49,6 +61,42 @@ export default function MetadataEnrichment({
       }
     } catch (error) {
       console.error('Failed to load preferences:', error)
+    }
+  }
+  
+  // AI inference for enrichment fields
+  const inferEnrichment = async () => {
+    if (!entryContent || isInferring) return
+    
+    setIsInferring(true)
+    try {
+      const response = await fetch('/api/infer-enrichment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          content: entryContent,
+          timeOfDay: metadata.time_of_day,
+          dayOfWeek: metadata.day_of_week,
+          location: metadata.location?.display_name,
+        }),
+      })
+      
+      if (response.ok) {
+        const inferred = await response.json()
+        setEnrichment(prev => ({
+          ...prev,
+          activity: inferred.activity || prev.activity,
+          energy: inferred.energy || prev.energy,
+          mood: inferred.mood || prev.mood,
+          environment: inferred.environment || prev.environment,
+          trigger: inferred.trigger || prev.trigger,
+        }))
+      }
+    } catch (error) {
+      console.error('Failed to infer enrichment:', error)
+    } finally {
+      setIsInferring(false)
+      setHasInferred(true)
     }
   }
   
@@ -86,11 +134,16 @@ export default function MetadataEnrichment({
     try {
       const updatedMetadata = { ...metadata, enrichment }
       
-      await fetch(`/api/entries/${entryId}/metadata`, {
+      const response = await fetch(`/api/entries/${entryId}/metadata`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ metadata: updatedMetadata }),
       })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to save')
+      }
       
       // Track preference usage
       if (enrichment.activity) {
@@ -106,8 +159,12 @@ export default function MetadataEnrichment({
       }
       
       onUpdate(updatedMetadata)
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus(null), 2000)
     } catch (error) {
       console.error('Failed to save enrichment:', error)
+      setSaveStatus('error')
+      setTimeout(() => setSaveStatus(null), 3000)
     } finally {
       setIsSaving(false)
     }
@@ -379,6 +436,29 @@ export default function MetadataEnrichment({
             />
           </div>
           
+          {/* AI Infer button */}
+          {entryContent && (
+            <button
+              type="button"
+              onClick={inferEnrichment}
+              disabled={isInferring}
+              style={{
+                width: '100%',
+                padding: '10px',
+                marginBottom: '8px',
+                background: isInferring ? '#6B7280' : '#3B82F6',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#FFFFFF',
+                fontWeight: 600,
+                cursor: isInferring ? 'wait' : 'pointer',
+                opacity: isInferring ? 0.7 : 1,
+              }}
+            >
+              {isInferring ? '✨ Analyzing...' : '✨ Auto-fill from Entry'}
+            </button>
+          )}
+          
           {/* Save button */}
           <button
             type="button"
@@ -387,16 +467,27 @@ export default function MetadataEnrichment({
             style={{
               width: '100%',
               padding: '10px',
-              background: 'var(--accent-crimson, #DC143C)',
+              background: saveStatus === 'saved' 
+                ? '#22C55E' 
+                : saveStatus === 'error' 
+                  ? '#EF4444' 
+                  : '#DC143C',
               border: 'none',
               borderRadius: '6px',
               color: '#FFFFFF',
               fontWeight: 600,
               cursor: isSaving ? 'wait' : 'pointer',
               opacity: isSaving ? 0.7 : 1,
+              transition: 'background 0.2s',
             }}
           >
-            {isSaving ? 'Saving...' : 'Save Context'}
+            {isSaving 
+              ? 'Saving...' 
+              : saveStatus === 'saved' 
+                ? '✓ Saved!' 
+                : saveStatus === 'error' 
+                  ? '✗ Failed - Try Again' 
+                  : 'Save Context'}
           </button>
         </div>
       )}

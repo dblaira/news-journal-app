@@ -671,6 +671,7 @@ export function EntryModal({
                 console.log('Metadata updated:', updatedMetadata)
               }}
               userId={entry.user_id}
+              entryContent={entry.content}
             />
           )}
         </div>
