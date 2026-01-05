@@ -523,34 +523,78 @@ export function CaptureConfirmation({
                   border: '1px solid #bae6fd',
                 }}
               >
-                <div style={{ fontSize: '0.7rem', color: '#0369a1', fontWeight: 600, marginBottom: '0.25rem', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.7rem', color: '#0369a1', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase' }}>
                   🤖 AI Detected: {data.image_extracted_data.imageType}
                 </div>
-                {data.image_extracted_data.purchase && (
-                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                    <strong>{data.image_extracted_data.purchase.productName}</strong>
-                    <span style={{ color: '#6B7280' }}> • ${data.image_extracted_data.purchase.price} • {data.image_extracted_data.purchase.seller}</span>
-                  </div>
-                )}
-                {data.image_extracted_data.receipt && (
-                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                    <strong>{data.image_extracted_data.receipt.merchant}</strong>
-                    <span style={{ color: '#6B7280' }}> • ${data.image_extracted_data.receipt.total}</span>
-                  </div>
-                )}
-                {data.image_extracted_data.media && (
-                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                    <strong>{data.image_extracted_data.media.title}</strong>
-                    {data.image_extracted_data.media.author && (
-                      <span style={{ color: '#6B7280' }}> by {data.image_extracted_data.media.author}</span>
+                
+                {/* New context-aware structure: userConnectionAnalysis */}
+                {data.image_extracted_data.userConnectionAnalysis && (
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <div style={{ fontSize: '0.85rem', color: '#374151', fontWeight: 500 }}>
+                      {data.image_extracted_data.userConnectionAnalysis.whatTheyNoticedAbout}
+                    </div>
+                    {data.image_extracted_data.userConnectionAnalysis.keyElements?.length > 0 && (
+                      <div style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: '0.25rem' }}>
+                        Key elements: {data.image_extracted_data.userConnectionAnalysis.keyElements.join(' • ')}
+                      </div>
                     )}
                   </div>
                 )}
-                {data.image_extracted_data.imageType === 'photo' && data.image_extracted_data.summary && (
-                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                    {data.image_extracted_data.summary}
+
+                {/* New structure: extractedText.titles */}
+                {data.image_extracted_data.extractedText?.titles?.length > 0 && (
+                  <div style={{ fontSize: '0.85rem', color: '#374151', marginBottom: '0.5rem' }}>
+                    <strong>Titles:</strong> {data.image_extracted_data.extractedText.titles.join(', ')}
                   </div>
                 )}
+
+                {/* Purchase data (new structure with detected flag) */}
+                {data.image_extracted_data.purchase?.detected && data.image_extracted_data.purchase.productName && (
+                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                    <strong>{data.image_extracted_data.purchase.productName}</strong>
+                    {data.image_extracted_data.purchase.price && (
+                      <span style={{ color: '#6B7280' }}> • ${data.image_extracted_data.purchase.price}</span>
+                    )}
+                    {data.image_extracted_data.purchase.seller && (
+                      <span style={{ color: '#6B7280' }}> • {data.image_extracted_data.purchase.seller}</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Legacy purchase structure (for backwards compat) */}
+                {!data.image_extracted_data.purchase?.detected && (data.image_extracted_data as any).purchase?.productName && (
+                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                    <strong>{(data.image_extracted_data as any).purchase.productName}</strong>
+                    <span style={{ color: '#6B7280' }}> • ${(data.image_extracted_data as any).purchase.price} • {(data.image_extracted_data as any).purchase.seller}</span>
+                  </div>
+                )}
+
+                {/* Legacy receipt */}
+                {(data.image_extracted_data as any).receipt?.merchant && (
+                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                    <strong>{(data.image_extracted_data as any).receipt.merchant}</strong>
+                    <span style={{ color: '#6B7280' }}> • ${(data.image_extracted_data as any).receipt.total}</span>
+                  </div>
+                )}
+
+                {/* Legacy media */}
+                {(data.image_extracted_data as any).media?.title && (
+                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                    <strong>{(data.image_extracted_data as any).media.title}</strong>
+                    {(data.image_extracted_data as any).media.author && (
+                      <span style={{ color: '#6B7280' }}> by {(data.image_extracted_data as any).media.author}</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Legacy summary for photos */}
+                {data.image_extracted_data.imageType === 'photo' && (data.image_extracted_data as any).summary && (
+                  <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                    {(data.image_extracted_data as any).summary}
+                  </div>
+                )}
+
+                {/* Tags */}
                 {data.image_extracted_data.suggestedTags?.length > 0 && (
                   <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
                     {data.image_extracted_data.suggestedTags.map((tag, i) => (

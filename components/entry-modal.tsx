@@ -454,37 +454,81 @@ export function EntryModal({
                     border: '1px solid #bae6fd',
                   }}
                 >
-                  <div style={{ fontSize: '0.7rem', color: '#0369a1', fontWeight: 600, marginBottom: '0.25rem', textTransform: 'uppercase' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#0369a1', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase' }}>
                     🤖 AI Detected: {entry.image_extracted_data.imageType}
                   </div>
-                  {entry.image_extracted_data.purchase && (
+                  
+                  {/* New context-aware structure: userConnectionAnalysis */}
+                  {entry.image_extracted_data.userConnectionAnalysis && (
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <div style={{ fontSize: '0.85rem', color: '#374151', fontWeight: 500 }}>
+                        {entry.image_extracted_data.userConnectionAnalysis.whatTheyNoticedAbout}
+                      </div>
+                      {entry.image_extracted_data.userConnectionAnalysis.keyElements?.length > 0 && (
+                        <div style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: '0.25rem' }}>
+                          Key elements: {entry.image_extracted_data.userConnectionAnalysis.keyElements.join(' • ')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* New structure: extractedText.titles */}
+                  {entry.image_extracted_data.extractedText?.titles?.length > 0 && (
+                    <div style={{ fontSize: '0.85rem', color: '#374151', marginBottom: '0.5rem' }}>
+                      <strong>Titles:</strong> {entry.image_extracted_data.extractedText.titles.join(', ')}
+                    </div>
+                  )}
+
+                  {/* Purchase data (both old and new structure) */}
+                  {entry.image_extracted_data.purchase?.detected && entry.image_extracted_data.purchase.productName && (
                     <div style={{ fontSize: '0.85rem', color: '#374151' }}>
                       <strong>{entry.image_extracted_data.purchase.productName}</strong>
-                      <span style={{ color: '#6B7280' }}> • ${entry.image_extracted_data.purchase.price} • {entry.image_extracted_data.purchase.seller}</span>
-                    </div>
-                  )}
-                  {entry.image_extracted_data.receipt && (
-                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                      <strong>{entry.image_extracted_data.receipt.merchant}</strong>
-                      <span style={{ color: '#6B7280' }}> • ${entry.image_extracted_data.receipt.total}</span>
-                    </div>
-                  )}
-                  {entry.image_extracted_data.media && (
-                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                      <strong>{entry.image_extracted_data.media.title}</strong>
-                      {entry.image_extracted_data.media.author && (
-                        <span style={{ color: '#6B7280' }}> by {entry.image_extracted_data.media.author}</span>
+                      {entry.image_extracted_data.purchase.price && (
+                        <span style={{ color: '#6B7280' }}> • ${entry.image_extracted_data.purchase.price}</span>
+                      )}
+                      {entry.image_extracted_data.purchase.seller && (
+                        <span style={{ color: '#6B7280' }}> • {entry.image_extracted_data.purchase.seller}</span>
                       )}
                     </div>
                   )}
-                  {entry.image_extracted_data.travel && (
+
+                  {/* Legacy purchase structure (for old entries) */}
+                  {!entry.image_extracted_data.purchase?.detected && (entry.image_extracted_data as any).purchase?.productName && (
                     <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                      <strong>{entry.image_extracted_data.travel.type}</strong>
-                      {entry.image_extracted_data.travel.destination && (
-                        <span style={{ color: '#6B7280' }}> → {entry.image_extracted_data.travel.destination}</span>
+                      <strong>{(entry.image_extracted_data as any).purchase.productName}</strong>
+                      <span style={{ color: '#6B7280' }}> • ${(entry.image_extracted_data as any).purchase.price} • {(entry.image_extracted_data as any).purchase.seller}</span>
+                    </div>
+                  )}
+
+                  {/* Legacy receipt (for old entries) */}
+                  {(entry.image_extracted_data as any).receipt?.merchant && (
+                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                      <strong>{(entry.image_extracted_data as any).receipt.merchant}</strong>
+                      <span style={{ color: '#6B7280' }}> • ${(entry.image_extracted_data as any).receipt.total}</span>
+                    </div>
+                  )}
+
+                  {/* Legacy media (for old entries) */}
+                  {(entry.image_extracted_data as any).media?.title && (
+                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                      <strong>{(entry.image_extracted_data as any).media.title}</strong>
+                      {(entry.image_extracted_data as any).media.author && (
+                        <span style={{ color: '#6B7280' }}> by {(entry.image_extracted_data as any).media.author}</span>
                       )}
                     </div>
                   )}
+
+                  {/* Legacy travel (for old entries) */}
+                  {(entry.image_extracted_data as any).travel?.type && (
+                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                      <strong>{(entry.image_extracted_data as any).travel.type}</strong>
+                      {(entry.image_extracted_data as any).travel.destination && (
+                        <span style={{ color: '#6B7280' }}> → {(entry.image_extracted_data as any).travel.destination}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Tags */}
                   {entry.image_extracted_data.suggestedTags && entry.image_extracted_data.suggestedTags.length > 0 && (
                     <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
                       {entry.image_extracted_data.suggestedTags.map((tag: string, i: number) => (
