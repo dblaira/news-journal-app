@@ -43,10 +43,10 @@ export default function EditableField({
           style={{
             flex: 1,
             padding: '6px 10px',
-            background: 'var(--bg-panel, #1F2937)',
-            border: '1px solid var(--text-muted, #6B7280)',
+            background: '#F9FAFB',
+            border: '1px solid #D1D5DB',
             borderRadius: '4px',
-            color: '#FFFFFF',
+            color: '#1F2937',
             fontSize: '0.9rem',
             ...style,
           }}
@@ -77,9 +77,10 @@ export default function EditableField({
       }}
       style={{
         padding: '6px 10px',
-        background: 'var(--bg-panel, #1F2937)',
+        background: '#F3F4F6',
+        border: '1px solid #E5E7EB',
         borderRadius: '4px',
-        color: '#FFFFFF',
+        color: '#1F2937',
         fontSize: '0.9rem',
         cursor: 'pointer',
         display: 'flex',
@@ -89,8 +90,7 @@ export default function EditableField({
       }}
     >
       <span>{value || placeholder}</span>
-      <span style={{ color: 'var(--text-muted, #6B7280)', fontSize: '0.75rem' }}>✎</span>
+      <span style={{ color: '#9CA3AF', fontSize: '0.75rem' }}>✎</span>
     </div>
   )
 }
-

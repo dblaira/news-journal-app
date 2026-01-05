@@ -292,7 +292,7 @@ export default function MetadataEnrichment({
           alignItems: 'center',
         }}
       >
-        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted, #9CA3AF)' }}>
+        <div style={{ fontSize: '0.8rem', color: '#6B7280' }}>
           {/* Auto-captured summary */}
           {metadata.day_of_week && (
             <span>{metadata.day_of_week.slice(0, 3)}</span>
@@ -318,7 +318,7 @@ export default function MetadataEnrichment({
           {enrichment.activity && <span> • {enrichment.activity}</span>}
           {enrichment.energy && <span> • {enrichment.energy} energy</span>}
         </div>
-        <span style={{ color: 'var(--text-muted, #6B7280)', fontSize: '0.8rem' }}>
+        <span style={{ color: '#6B7280', fontSize: '0.8rem' }}>
           {isExpanded ? '▼' : '▶'} Context
         </span>
       </div>
@@ -329,7 +329,7 @@ export default function MetadataEnrichment({
           {/* Location (editable) */}
           {metadata.location && (
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6B7280)', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
                 LOCATION
               </label>
               <EditableField
@@ -350,7 +350,7 @@ export default function MetadataEnrichment({
           
           {/* Activity */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6B7280)', display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
               ACTIVITY
             </label>
             <ChipSelector
@@ -365,7 +365,7 @@ export default function MetadataEnrichment({
           
           {/* Energy */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6B7280)', display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
               ENERGY
             </label>
             <ChipSelector
@@ -380,7 +380,7 @@ export default function MetadataEnrichment({
           
           {/* Mood (multi-select) */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6B7280)', display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
               MOOD
             </label>
             <ChipSelector
@@ -394,7 +394,7 @@ export default function MetadataEnrichment({
           
           {/* Environment (free text) */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6B7280)', display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
               ENVIRONMENT
             </label>
             <input
@@ -405,10 +405,10 @@ export default function MetadataEnrichment({
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                background: 'var(--bg-panel, #1F2937)',
-                border: '1px solid var(--border-subtle, #374151)',
+                background: '#F9FAFB',
+                border: '1px solid #D1D5DB',
                 borderRadius: '6px',
-                color: '#FFFFFF',
+                color: '#1F2937',
                 fontSize: '0.9rem',
               }}
             />
@@ -416,7 +416,7 @@ export default function MetadataEnrichment({
           
           {/* Trigger (free text) */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted, #6B7280)', display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
               WHAT TRIGGERED THIS?
             </label>
             <input
@@ -427,10 +427,10 @@ export default function MetadataEnrichment({
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                background: 'var(--bg-panel, #1F2937)',
-                border: '1px solid var(--border-subtle, #374151)',
+                background: '#F9FAFB',
+                border: '1px solid #D1D5DB',
                 borderRadius: '6px',
-                color: '#FFFFFF',
+                color: '#1F2937',
                 fontSize: '0.9rem',
               }}
             />

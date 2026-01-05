@@ -59,9 +59,9 @@ export default function ChipSelector({
           style={{
             padding: '6px 12px',
             borderRadius: '16px',
-            border: 'none',
-            background: selected.includes(option) ? 'var(--accent-crimson, #DC143C)' : 'var(--bg-panel-alt, #374151)',
-            color: '#FFFFFF',
+            border: selected.includes(option) ? 'none' : '1px solid #9CA3AF',
+            background: selected.includes(option) ? '#DC143C' : '#E5E7EB',
+            color: selected.includes(option) ? '#FFFFFF' : '#374151',
             fontSize: '0.85rem',
             cursor: 'pointer',
             transition: 'all 0.15s',
