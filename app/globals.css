@@ -208,16 +208,23 @@
 
 /* Task list styles for rendered content (Actions) */
 .rendered-content ul[data-type="taskList"] {
-  list-style: none;
-  padding-left: 0;
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin: 0 0 1em 0;
 }
 
 .rendered-content ul[data-type="taskList"] li {
-  display: flex;
+  display: flex !important;
   align-items: flex-start;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
   padding: 0.25rem 0;
+  list-style: none !important;
+}
+
+.rendered-content ul[data-type="taskList"] li::marker {
+  content: none;
+  display: none;
 }
 
 .rendered-content ul[data-type="taskList"] li::before {
@@ -329,7 +336,22 @@
   color: var(--text-hero);
 }
 
-/* Task list in hero preview - lighter checkbox borders for dark background */
+/* Task list in hero preview - full styles for dark background */
+.hero-preview ul[data-type="taskList"] {
+  list-style: none !important;
+  padding-left: 0 !important;
+}
+
+.hero-preview ul[data-type="taskList"] li {
+  display: flex !important;
+  list-style: none !important;
+}
+
+.hero-preview ul[data-type="taskList"] li::marker {
+  content: none;
+  display: none;
+}
+
 .hero-preview ul[data-type="taskList"] li::before {
   border-color: rgba(255, 255, 255, 0.7);
 }
@@ -337,6 +359,22 @@
 .hero-preview ul[data-type="taskList"] li[data-checked="true"]::before {
   background-color: #DC143C;
   border-color: #DC143C;
+}
+
+/* Task list in card preview */
+.card-preview ul[data-type="taskList"] {
+  list-style: none !important;
+  padding-left: 0 !important;
+}
+
+.card-preview ul[data-type="taskList"] li {
+  display: flex !important;
+  list-style: none !important;
+}
+
+.card-preview ul[data-type="taskList"] li::marker {
+  content: none;
+  display: none;
 }
 
 .card-preview {
