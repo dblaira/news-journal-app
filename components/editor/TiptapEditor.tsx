@@ -48,11 +48,29 @@ function convertToTaskList(content: string): string {
   // Split by lines OR sentences/items if single line
   let lines = plainText.split(/\n+/).filter(line => line.trim())
   
-  // If single line, try to split by commas for multiple items
-  if (lines.length === 1 && plainText.includes(',')) {
-    const items = plainText.split(',').map(s => s.trim()).filter(s => s)
-    if (items.length > 1) {
-      lines = items
+  // If single line, try to split by commas, periods, or semicolons
+  if (lines.length === 1) {
+    // Try comma first (most common list separator)
+    if (plainText.includes(',')) {
+      const items = plainText.split(',').map(s => s.trim()).filter(s => s)
+      if (items.length > 1) {
+        lines = items
+      }
+    }
+    // Try period (sentence-style tasks like "Buy groceries. Call mom.")
+    else if ((plainText.match(/\./g) || []).length > 1) {
+      // Only split if there are multiple periods (not just one at the end)
+      const items = plainText.split('.').map(s => s.trim()).filter(s => s)
+      if (items.length > 1) {
+        lines = items
+      }
+    }
+    // Try semicolon
+    else if (plainText.includes(';')) {
+      const items = plainText.split(';').map(s => s.trim()).filter(s => s)
+      if (items.length > 1) {
+        lines = items
+      }
     }
   }
   
