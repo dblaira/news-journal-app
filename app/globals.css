@@ -206,9 +206,42 @@
   display: list-item;
 }
 
-/* Task list styles for rendered content (Actions) */
+/* Override for task list items - MUST come after the above rule */
+.rendered-content ul[data-type="taskList"] > li,
+.rendered-content ul[data-type="taskList"] > li[data-type="taskItem"] {
+  display: flex !important;
+  list-style: none !important;
+  list-style-type: none !important;
+}
+
+/* Task list styles for rendered content (Actions) - GLOBAL NUCLEAR */
+/* These rules target ANY task list anywhere on the page */
+[data-type="taskList"] {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+}
+
+[data-type="taskList"] li,
+[data-type="taskList"] [data-type="taskItem"] {
+  display: flex !important;
+  list-style: none !important;
+  list-style-type: none !important;
+}
+
+[data-type="taskList"] li::marker,
+[data-type="taskItem"]::marker {
+  content: "" !important;
+  display: none !important;
+  font-size: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Rendered content specific overrides */
 .rendered-content ul[data-type="taskList"] {
   list-style: none !important;
+  list-style-type: none !important;
   padding-left: 0 !important;
   margin: 0 0 1em 0;
 }
@@ -220,11 +253,12 @@
   margin-bottom: 0.5rem;
   padding: 0.25rem 0;
   list-style: none !important;
+  list-style-type: none !important;
 }
 
 .rendered-content ul[data-type="taskList"] li::marker {
-  content: none;
-  display: none;
+  content: "" !important;
+  display: none !important;
 }
 
 .rendered-content ul[data-type="taskList"] li::before {
