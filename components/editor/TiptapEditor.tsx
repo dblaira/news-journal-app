@@ -21,25 +21,49 @@ interface TiptapEditorProps {
 
 // Convert plain text lines to task list HTML for Actions
 function convertToTaskList(content: string): string {
+  console.log('[convertToTaskList] Input:', content)
+  
   // If content is already HTML with task list, return as-is
   if (content.includes('<ul data-type="taskList"') || content.includes('data-type="taskItem"')) {
+    console.log('[convertToTaskList] Already task list, returning as-is')
     return content
   }
   
   // If content is plain text or simple paragraphs, convert to task list
   // Strip HTML tags to get plain text
   const plainText = content.replace(/<[^>]*>/g, '').trim()
-  if (!plainText) return content
+  console.log('[convertToTaskList] Plain text:', plainText)
   
-  // Split by lines and convert each to a task item
-  const lines = plainText.split(/\n+/).filter(line => line.trim())
-  if (lines.length === 0) return content
+  if (!plainText) {
+    console.log('[convertToTaskList] Empty content, returning original')
+    return content
+  }
+  
+  // Split by lines OR sentences/items if single line
+  let lines = plainText.split(/\n+/).filter(line => line.trim())
+  
+  // If single line, try to split by commas or periods for multiple items
+  if (lines.length === 1 && (plainText.includes(',') || plainText.includes('.'))) {
+    const items = plainText.split(/[,.]/).map(s => s.trim()).filter(s => s)
+    if (items.length > 1) {
+      lines = items
+    }
+  }
+  
+  console.log('[convertToTaskList] Lines:', lines)
+  
+  if (lines.length === 0) {
+    console.log('[convertToTaskList] No lines, returning original')
+    return content
+  }
   
   const taskItems = lines.map(line => 
     `<li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>${line.trim()}</p></div></li>`
   ).join('')
   
-  return `<ul data-type="taskList">${taskItems}</ul>`
+  const result = `<ul data-type="taskList">${taskItems}</ul>`
+  console.log('[convertToTaskList] Output:', result)
+  return result
 }
 
 export function TiptapEditor({
@@ -137,13 +161,15 @@ export function TiptapEditor({
   const isLight = variant === 'light'
   
   // DEBUG: Log what we're receiving
-  console.log('[TiptapEditor] entryType:', entryType, 'content:', content?.substring(0, 100), 'initialContent:', initialContent?.substring(0, 100))
+  console.log('[TiptapEditor] entryType:', entryType)
+  console.log('[TiptapEditor] content prop:', content)
+  console.log('[TiptapEditor] initialContent (after conversion):', initialContent)
   
   return (
     <div className={`tiptap-editor border rounded overflow-hidden ${isLight ? 'border-neutral-300' : 'border-neutral-700'}`}>
       {/* DEBUG: Show entry type - TEMPORARY */}
       <div style={{ background: '#ffeb3b', padding: '4px 8px', fontSize: '10px', color: '#000' }}>
-        DEBUG: entryType={entryType || 'undefined'} | isAction={String(entryType === 'action')}
+        DEBUG: entryType={entryType || 'undefined'} | isAction={String(entryType === 'action')} | hasTaskList={String(initialContent?.includes('taskList'))}
       </div>
       {editable && <Toolbar editor={editor} variant={variant} entryType={entryType} />}
       <EditorContent
