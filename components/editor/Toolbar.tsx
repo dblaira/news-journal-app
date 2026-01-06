@@ -5,12 +5,14 @@ import { Editor } from '@tiptap/react'
 interface ToolbarProps {
   editor: Editor | null
   variant?: 'light' | 'dark'
+  entryType?: 'story' | 'action' | 'note'
 }
 
-export function Toolbar({ editor, variant = 'dark' }: ToolbarProps) {
+export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
   if (!editor) return null
 
   const isLight = variant === 'light'
+  const isAction = entryType === 'action'
 
   const buttonClass = (isActive: boolean) =>
     `px-2 py-1 text-sm rounded transition-colors ${
@@ -31,6 +33,22 @@ export function Toolbar({ editor, variant = 'dark' }: ToolbarProps) {
         ? 'bg-neutral-50 border-neutral-300' 
         : 'bg-neutral-900 border-neutral-700'
     }`}>
+      {/* For Actions: Show task list first and prominently */}
+      {isAction && (
+        <>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleTaskList().run()}
+            className={buttonClass(editor.isActive('taskList'))}
+            title="Checkbox List"
+            style={{ fontWeight: 'bold' }}
+          >
+            ☑ Tasks
+          </button>
+          <div className={dividerClass} />
+        </>
+      )}
+      
       {/* Text Formatting */}
       <button
         type="button"
@@ -59,25 +77,28 @@ export function Toolbar({ editor, variant = 'dark' }: ToolbarProps) {
 
       <div className={dividerClass} />
 
-      {/* Headings */}
-      <button
-        type="button"
-        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        className={buttonClass(editor.isActive('heading', { level: 1 }))}
-        title="Heading 1"
-      >
-        H1
-      </button>
-      <button
-        type="button"
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        className={buttonClass(editor.isActive('heading', { level: 2 }))}
-        title="Heading 2"
-      >
-        H2
-      </button>
-
-      <div className={dividerClass} />
+      {/* Headings - hide for Actions */}
+      {!isAction && (
+        <>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            className={buttonClass(editor.isActive('heading', { level: 1 }))}
+            title="Heading 1"
+          >
+            H1
+          </button>
+          <button
+            type="button"
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            className={buttonClass(editor.isActive('heading', { level: 2 }))}
+            title="Heading 2"
+          >
+            H2
+          </button>
+          <div className={dividerClass} />
+        </>
+      )}
 
       {/* Lists */}
       <button
@@ -96,14 +117,17 @@ export function Toolbar({ editor, variant = 'dark' }: ToolbarProps) {
       >
         1.
       </button>
-      <button
-        type="button"
-        onClick={() => editor.chain().focus().toggleTaskList().run()}
-        className={buttonClass(editor.isActive('taskList'))}
-        title="Checkbox List"
-      >
-        ☑
-      </button>
+      {/* Task list button - already shown prominently for Actions above */}
+      {!isAction && (
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleTaskList().run()}
+          className={buttonClass(editor.isActive('taskList'))}
+          title="Checkbox List"
+        >
+          ☑
+        </button>
+      )}
     </div>
   )
 }

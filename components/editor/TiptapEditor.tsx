@@ -16,6 +16,30 @@ interface TiptapEditorProps {
   autoSaveDelay?: number
   variant?: 'light' | 'dark'
   placeholder?: string
+  entryType?: 'story' | 'action' | 'note'
+}
+
+// Convert plain text lines to task list HTML for Actions
+function convertToTaskList(content: string): string {
+  // If content is already HTML with task list, return as-is
+  if (content.includes('<ul data-type="taskList"') || content.includes('data-type="taskItem"')) {
+    return content
+  }
+  
+  // If content is plain text or simple paragraphs, convert to task list
+  // Strip HTML tags to get plain text
+  const plainText = content.replace(/<[^>]*>/g, '').trim()
+  if (!plainText) return content
+  
+  // Split by lines and convert each to a task item
+  const lines = plainText.split(/\n+/).filter(line => line.trim())
+  if (lines.length === 0) return content
+  
+  const taskItems = lines.map(line => 
+    `<li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>${line.trim()}</p></div></li>`
+  ).join('')
+  
+  return `<ul data-type="taskList">${taskItems}</ul>`
 }
 
 export function TiptapEditor({
@@ -26,9 +50,16 @@ export function TiptapEditor({
   autoSaveDelay = 2000,
   variant = 'dark',
   placeholder,
+  entryType,
 }: TiptapEditorProps) {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastSavedContentRef = useRef(content)
+  const hasInitializedRef = useRef(false)
+  
+  // For Actions, convert content to task list format
+  const initialContent = entryType === 'action' && !hasInitializedRef.current
+    ? convertToTaskList(content)
+    : content
 
   const editor = useEditor({
     extensions: [
@@ -42,11 +73,14 @@ export function TiptapEditor({
         nested: true,
       }),
       Placeholder.configure({
-        placeholder: placeholder || 'Write something...',
+        placeholder: placeholder || (entryType === 'action' ? 'Add your tasks...' : 'Write something...'),
       }),
     ],
-    content,
+    content: initialContent,
     editable,
+    onCreate: () => {
+      hasInitializedRef.current = true
+    },
     onUpdate: ({ editor }) => {
       const html = editor.getHTML()
       onChange?.(html)
@@ -99,7 +133,7 @@ export function TiptapEditor({
   
   return (
     <div className={`tiptap-editor border rounded overflow-hidden ${isLight ? 'border-neutral-300' : 'border-neutral-700'}`}>
-      {editable && <Toolbar editor={editor} variant={variant} />}
+      {editable && <Toolbar editor={editor} variant={variant} entryType={entryType} />}
       <EditorContent
         editor={editor}
         className={`tiptap-content p-4 min-h-[200px] prose prose-sm max-w-none focus:outline-none ${

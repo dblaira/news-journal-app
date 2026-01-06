@@ -465,7 +465,8 @@ export function CaptureConfirmation({
               content={content}
               onChange={(html) => setContent(html)}
               variant="light"
-              placeholder="Write your entry..."
+              placeholder={entryType === 'action' ? 'Add your tasks...' : 'Write your entry...'}
+              entryType={entryType}
             />
           </div>
         </div>
