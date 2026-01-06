@@ -43,6 +43,7 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
   const [isInferring, setIsInferring] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<EntryType>('story')
+  const [userExplicitlySelectedType, setUserExplicitlySelectedType] = useState(false)
   const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   const [imageAttachment, setImageAttachment] = useState<ImageAttachment | null>(null)
   
@@ -145,15 +146,22 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
         }
       }
 
-      // If we have image-extracted data with a suggested type, use it (unless user explicitly chose)
-      const effectiveType = imageExtractedData?.suggestedEntryType || selectedType
+      // Determine if we should pass an explicit type to override AI inference:
+      // 1. User explicitly clicked the type selector dropdown
+      // 2. Image processing suggested a type (like a receipt suggesting 'note')
+      // If neither, let the AI infer the type from content
+      const explicitTypeOverride = userExplicitlySelectedType 
+        ? selectedType 
+        : imageExtractedData?.suggestedEntryType || null
 
       const response = await fetch('/api/infer-entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           content: finalContent || imageExtractedData?.combinedNarrative || 'Image capture', 
-          selectedType: effectiveType 
+          // Only pass selectedType if user explicitly chose or image suggests one
+          // This allows AI to infer type when user hasn't made an explicit choice
+          selectedType: explicitTypeOverride
         }),
       })
 
@@ -164,10 +172,18 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
 
       const inferred = await response.json()
       
+      // Use AI-inferred type unless user explicitly overrode it
+      const finalEntryType = explicitTypeOverride || inferred.entry_type || 'story'
+      
+      // Update the displayed type to match what was inferred (for UX feedback)
+      if (!userExplicitlySelectedType && inferred.entry_type) {
+        setSelectedType(inferred.entry_type)
+      }
+      
       onCapture({
         ...inferred,
         content: finalContent || imageExtractedData?.combinedNarrative || inferred.content,
-        entry_type: effectiveType,
+        entry_type: finalEntryType,
         image_url: imageUrl,
         image_extracted_data: imageExtractedData,
         metadata,
@@ -372,6 +388,7 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
                     key={type.id}
                     onClick={() => {
                       setSelectedType(type.id)
+                      setUserExplicitlySelectedType(true)
                       setShowTypeDropdown(false)
                     }}
                     style={{

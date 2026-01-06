@@ -42,14 +42,16 @@ export async function POST(request: NextRequest) {
 
     const inferred = await inferEntryMetadata(content.trim(), apiKey)
 
-    // If user selected a type, use it instead of AI inference
+    // Only override AI inference if user EXPLICITLY selected a type
+    // selectedType will be null if user didn't touch the dropdown
     if (selectedType && ['story', 'action', 'note'].includes(selectedType)) {
       inferred.entry_type = selectedType as EntryType
-      // If user didn't select action, clear due_date
+      // If user explicitly chose non-action type, clear due_date
       if (selectedType !== 'action') {
         inferred.due_date = null
       }
     }
+    // Otherwise, trust the AI inference (which now has improved action detection)
 
     return NextResponse.json(inferred)
   } catch (error) {
@@ -66,36 +68,96 @@ async function inferEntryMetadata(content: string, apiKey: string): Promise<Infe
   const today = new Date()
   const todayStr = today.toISOString().split('T')[0]
   
-  const prompt = `You are analyzing a personal journal entry to extract metadata. Based on the following journal entry text, infer:
+  // Calculate common relative dates
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrowStr = tomorrow.toISOString().split('T')[0]
+  
+  const nextWeek = new Date(today)
+  nextWeek.setDate(nextWeek.getDate() + 7)
+  const nextWeekStr = nextWeek.toISOString().split('T')[0]
+  
+  const prompt = `You are a journal entry classifier that excels at detecting ACTIONABLE INTENT. Your primary job is to identify when someone is capturing something they need to DO, even if they phrase it conversationally.
 
-1. headline: A punchy, newsworthy headline that captures the essence (5-10 words, like a newspaper headline)
-2. subheading: Brief context or teaser that adds detail (10-20 words)
-3. category: The single best fitting category from EXACTLY one of these options: Business, Finance, Health, Spiritual, Fun, Social, Romance
-4. mood: The emotional tone in 1-2 words (e.g., "reflective", "energized", "grateful", "determined")
-5. entry_type: Classify as ONE of these:
-   - "story": Reflections, experiences, observations, things that happened, feelings, insights, diary entries, narratives about the past
-   - "action": USE THIS FOR ANY OF THESE PATTERNS:
-     * Lists of things to do (even without "I need to")
-     * Imperative verbs: "Buy X", "Call Y", "Find Z", "Get W", "Send V", "Fix U"
-     * Words like "task", "tasks", "todo", "to-do", "reminder", "reminders"
-     * "Remember to...", "Don't forget...", "Need to...", "Should...", "Must..."
-     * Multiple short action-oriented sentences separated by periods or commas
-     * Any content that reads like a checklist or task list
-   - "note": Facts, references, information to remember, quotes, links, things to look up later, research notes, bookmarks
-   
-   IMPORTANT: If the text contains multiple actionable items (like "Buy groceries. Call mom. Fix car."), classify as "action" NOT "story".
-6. due_date: If entry_type is "action" and a deadline is mentioned or implied, return the date as ISO format (YYYY-MM-DD). Today's date is ${todayStr}. Convert relative dates:
-   - "tomorrow" = the day after ${todayStr}
-   - "next week" = 7 days from ${todayStr}
-   - "by Friday" = the upcoming Friday
-   - If no deadline is mentioned, return null
+CRITICAL: Many users write actions in a narrative style. "I should really call mom" IS an action, not a story. When in doubt, lean toward "action".
 
-Journal Entry:
+## Classification Rules
+
+### entry_type - Choose ONE:
+
+**"action"** - USE THIS IF ANY OF THESE ARE TRUE:
+- FUTURE INTENT: "I need to", "I should", "I have to", "I want to", "I'm going to", "gonna", "gotta", "planning to", "thinking about doing"
+- IMPERATIVE/COMMAND: "Buy X", "Call Y", "Email Z", "Schedule W", "Fix", "Get", "Send", "Check", "Look into", "Research"
+- TASK LANGUAGE: "task", "todo", "to-do", "reminder", "checklist", "errand", "appointment"
+- OBLIGATION: "Remember to", "Don't forget", "Need to", "Must", "Have to", "Should"
+- DEADLINE MENTIONS: "by Friday", "tomorrow", "next week", "before the meeting", "ASAP", "soon", "this week"
+- QUESTIONS ABOUT DOING: "Should I...?", "When should I...?", "How do I...?"
+- EMBEDDED ACTIONS: Even if most content is narrative, if there's ONE actionable item, classify as "action"
+- FUTURE TENSE ACTIVITIES: "Going to the gym tomorrow" = action, "Went to the gym today" = story
+- LISTS OF ANY KIND: Multiple items separated by commas, periods, or line breaks that could be a checklist
+
+**"story"** - USE ONLY FOR:
+- Pure PAST TENSE reflections about what happened
+- Feelings and observations about completed events
+- Diary entries with NO forward-looking action items
+- NO mention of things that need to be done
+
+**"note"** - USE FOR:
+- Information storage: facts, quotes, links, references
+- Research notes and bookmarks
+- Things to remember that aren't tasks (phone numbers, ideas, definitions)
+- "Note to self" that's informational, not actionable
+
+## Examples of ACTIONS (often misclassified as stories):
+
+INPUT: "I should really call my mom this weekend"
+OUTPUT: "action" (future intent + obligation language)
+
+INPUT: "Thinking I might sign up for that pottery class"
+OUTPUT: "action" (future intent, even tentative)
+
+INPUT: "Had a great meeting today. Need to follow up with Sarah about the proposal."
+OUTPUT: "action" (embedded action at the end)
+
+INPUT: "Feeling tired but I know I should hit the gym tomorrow"
+OUTPUT: "action" (future commitment)
+
+INPUT: "Buy milk, eggs, bread"
+OUTPUT: "action" (imperative list)
+
+INPUT: "Doctor's appointment at 3pm Tuesday"
+OUTPUT: "action" (scheduled event requiring attendance)
+
+INPUT: "Look into flights for December trip"
+OUTPUT: "action" (research task)
+
+## Examples of STORIES (truly no action):
+
+INPUT: "Had the best coffee with Jane today. We talked for hours."
+OUTPUT: "story" (past tense, no future action)
+
+INPUT: "Feeling grateful for my family after the holiday gathering"
+OUTPUT: "story" (reflection, no action)
+
+## Other Fields:
+
+1. **headline**: Punchy, newsworthy headline (5-10 words). For actions, make it task-oriented: "Time to Schedule That Doctor Visit"
+2. **subheading**: Brief context (10-20 words)
+3. **category**: Business | Finance | Health | Spiritual | Fun | Social | Romance
+4. **mood**: Emotional tone in 1-2 words
+5. **due_date**: For actions with deadlines. Today is ${todayStr}.
+   - "today" = ${todayStr}
+   - "tomorrow" = ${tomorrowStr}
+   - "next week" = ${nextWeekStr}
+   - "this weekend" = upcoming Saturday
+   - No deadline mentioned = null
+
+## Input:
 """
 ${content}
 """
 
-Return ONLY valid JSON with no additional text, markdown, or explanation:
+Return ONLY valid JSON:
 {"headline": "...", "subheading": "...", "category": "...", "mood": "...", "entry_type": "...", "due_date": "..." or null}`
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {

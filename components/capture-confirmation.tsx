@@ -336,11 +336,28 @@ export function CaptureConfirmation({
               textTransform: 'uppercase',
               letterSpacing: '0.08rem',
               color: '#999',
-              display: 'block',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
               marginBottom: '0.5rem',
             }}
           >
             Entry Type
+            {/* Show hint when AI detected an action */}
+            {data.entry_type === 'action' && (
+              <span
+                style={{
+                  fontSize: '0.6rem',
+                  background: '#dcfce7',
+                  color: '#166534',
+                  padding: '0.15rem 0.4rem',
+                  borderRadius: '3px',
+                  fontWeight: 600,
+                }}
+              >
+                ✓ AI detected actionable intent
+              </span>
+            )}
           </label>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             {entryTypes.map((type) => (
