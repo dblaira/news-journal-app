@@ -462,6 +462,7 @@ export function CaptureConfirmation({
             }}
           >
             <TiptapEditor
+              key={`editor-${entryType}`}
               content={content}
               onChange={(html) => setContent(html)}
               variant="light"
