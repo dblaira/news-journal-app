@@ -192,11 +192,13 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
             <div className="form-group">
               <label htmlFor="content">Your Story</label>
               <TiptapEditor
+                key={`editor-${formData.entry_type}`}
                 content={formData.content}
                 onChange={(html) => setFormData({ ...formData, content: html })}
                 variant="light"
-                placeholder="Write your journal entry here..."
+                placeholder={formData.entry_type === 'action' ? 'Add your tasks...' : 'Write your journal entry here...'}
                 editable={!isSubmitting}
+                entryType={formData.entry_type}
               />
             </div>
 
