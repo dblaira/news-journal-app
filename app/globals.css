@@ -337,44 +337,84 @@
 }
 
 /* Task list in hero preview - full styles for dark background */
-.hero-preview ul[data-type="taskList"] {
+.hero-preview ul[data-type="taskList"],
+.hero-card ul[data-type="taskList"],
+.hero-card__content ul[data-type="taskList"] {
   list-style: none !important;
+  list-style-type: none !important;
   padding-left: 0 !important;
+  margin: 0 !important;
 }
 
-.hero-preview ul[data-type="taskList"] li {
+.hero-preview ul[data-type="taskList"] li,
+.hero-card ul[data-type="taskList"] li,
+.hero-card__content ul[data-type="taskList"] li {
   display: flex !important;
+  align-items: flex-start;
+  gap: 0.5rem;
   list-style: none !important;
+  list-style-type: none !important;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
 }
 
-.hero-preview ul[data-type="taskList"] li::marker {
-  content: none;
-  display: none;
+.hero-preview ul[data-type="taskList"] li::marker,
+.hero-card ul[data-type="taskList"] li::marker,
+.hero-card__content ul[data-type="taskList"] li::marker {
+  content: none !important;
+  display: none !important;
+  font-size: 0 !important;
+  color: transparent !important;
 }
 
-.hero-preview ul[data-type="taskList"] li::before {
-  border-color: rgba(255, 255, 255, 0.7);
+.hero-preview ul[data-type="taskList"] li::before,
+.hero-card ul[data-type="taskList"] li::before,
+.hero-card__content ul[data-type="taskList"] li::before {
+  content: '';
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.15rem;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 3px;
+  background: transparent;
 }
 
-.hero-preview ul[data-type="taskList"] li[data-checked="true"]::before {
-  background-color: #DC143C;
+.hero-preview ul[data-type="taskList"] li[data-checked="true"]::before,
+.hero-card ul[data-type="taskList"] li[data-checked="true"]::before,
+.hero-card__content ul[data-type="taskList"] li[data-checked="true"]::before {
+  background: #DC143C;
   border-color: #DC143C;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+  background-size: 80%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.hero-preview ul[data-type="taskList"] li p,
+.hero-card ul[data-type="taskList"] li p,
+.hero-card__content ul[data-type="taskList"] li p {
+  margin: 0;
+  flex: 1;
 }
 
 /* Task list in card preview */
 .card-preview ul[data-type="taskList"] {
   list-style: none !important;
+  list-style-type: none !important;
   padding-left: 0 !important;
 }
 
 .card-preview ul[data-type="taskList"] li {
   display: flex !important;
   list-style: none !important;
+  list-style-type: none !important;
 }
 
 .card-preview ul[data-type="taskList"] li::marker {
-  content: none;
-  display: none;
+  content: none !important;
+  display: none !important;
+  font-size: 0 !important;
 }
 
 .card-preview {
