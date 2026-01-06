@@ -77,67 +77,72 @@ async function inferEntryMetadata(content: string, apiKey: string): Promise<Infe
   nextWeek.setDate(nextWeek.getDate() + 7)
   const nextWeekStr = nextWeek.toISOString().split('T')[0]
   
-  const prompt = `You are a journal entry classifier that excels at detecting ACTIONABLE INTENT. Your primary job is to identify when someone is capturing something they need to DO, even if they phrase it conversationally.
+  const prompt = `You are a journal entry classifier. Your #1 job is detecting ACTIONABLE INTENT.
 
-CRITICAL: Many users write actions in a narrative style. "I should really call mom" IS an action, not a story. When in doubt, lean toward "action".
+## CRITICAL RULES - READ CAREFULLY:
 
-## Classification Rules
+1. **DEFAULT TO "action"** - If there's ANY doubt, choose "action". Users use this app to capture tasks.
+2. **Imperative verbs = action** - Any sentence starting with a verb (Research, Take, Buy, Call, Fix, Get, Send, Check, Schedule, Find, Make, Do, Review, Update, Follow, Remember) is ALWAYS an action.
+3. **Multiple sentences with periods = likely action list** - "Do X. Do Y. Do Z." is a task list, not a story.
+4. **"Remember to" = action** - This is ALWAYS an action, never a story.
 
-### entry_type - Choose ONE:
+## entry_type Classification:
 
-**"action"** - USE THIS IF ANY OF THESE ARE TRUE:
-- FUTURE INTENT: "I need to", "I should", "I have to", "I want to", "I'm going to", "gonna", "gotta", "planning to", "thinking about doing"
-- IMPERATIVE/COMMAND: "Buy X", "Call Y", "Email Z", "Schedule W", "Fix", "Get", "Send", "Check", "Look into", "Research"
-- TASK LANGUAGE: "task", "todo", "to-do", "reminder", "checklist", "errand", "appointment"
-- OBLIGATION: "Remember to", "Don't forget", "Need to", "Must", "Have to", "Should"
-- DEADLINE MENTIONS: "by Friday", "tomorrow", "next week", "before the meeting", "ASAP", "soon", "this week"
-- QUESTIONS ABOUT DOING: "Should I...?", "When should I...?", "How do I...?"
-- EMBEDDED ACTIONS: Even if most content is narrative, if there's ONE actionable item, classify as "action"
-- FUTURE TENSE ACTIVITIES: "Going to the gym tomorrow" = action, "Went to the gym today" = story
-- LISTS OF ANY KIND: Multiple items separated by commas, periods, or line breaks that could be a checklist
+**"action"** - USE THIS IF ANY OF THESE PATTERNS APPEAR:
+- Starts with imperative verb: Research, Take, Buy, Call, Fix, Get, Send, Check, Schedule, Find, Make, Do, Review, Update, Follow up, Look into, Set up, Sign up, Write, Read, Watch, Listen, Try, Test, Finish, Complete, Submit, Pay, Book, Order, Pick up, Drop off, Clean, Organize, Plan, Prepare, Practice, Exercise, Work out, Meditate, Stretch
+- Contains: "Remember to", "Don't forget", "Need to", "Have to", "Should", "Must", "Want to", "Going to", "Will", "Gonna", "Gotta"
+- Future activities: gym, workout, appointment, meeting, call, email, errand
+- Task words: task, tasks, todo, to-do, reminder, checklist
+- Multiple short imperative sentences separated by periods
+- Anything that could reasonably be a to-do item
 
-**"story"** - USE ONLY FOR:
-- Pure PAST TENSE reflections about what happened
-- Feelings and observations about completed events
-- Diary entries with NO forward-looking action items
-- NO mention of things that need to be done
+**"story"** - USE ONLY WHEN ALL OF THESE ARE TRUE:
+- 100% past tense reflection
+- ZERO imperative verbs
+- ZERO future obligations
+- ZERO "remember to" or "need to" phrases
+- Pure diary-style "what happened" content
 
 **"note"** - USE FOR:
-- Information storage: facts, quotes, links, references
-- Research notes and bookmarks
-- Things to remember that aren't tasks (phone numbers, ideas, definitions)
-- "Note to self" that's informational, not actionable
+- Pure information storage (facts, quotes, links, references)
+- NOT tasks, NOT things to do
 
-## Examples of ACTIONS (often misclassified as stories):
+## Examples - MEMORIZE THESE:
 
-INPUT: "I should really call my mom this weekend"
-OUTPUT: "action" (future intent + obligation language)
+INPUT: "Research Grok Tasks. Take supplements."
+OUTPUT: "action" (imperative verbs: Research, Take)
 
-INPUT: "Thinking I might sign up for that pottery class"
-OUTPUT: "action" (future intent, even tentative)
+INPUT: "Take a moment to breathe at noon today. Remember to hold your breath at 1pm."
+OUTPUT: "action" (imperative verb: Take, plus "Remember to")
 
-INPUT: "Had a great meeting today. Need to follow up with Sarah about the proposal."
-OUTPUT: "action" (embedded action at the end)
-
-INPUT: "Feeling tired but I know I should hit the gym tomorrow"
-OUTPUT: "action" (future commitment)
-
-INPUT: "Buy milk, eggs, bread"
+INPUT: "Buy groceries. Call mom. Fix the car."
 OUTPUT: "action" (imperative list)
 
-INPUT: "Doctor's appointment at 3pm Tuesday"
-OUTPUT: "action" (scheduled event requiring attendance)
+INPUT: "I should really call my mom this weekend"
+OUTPUT: "action" (obligation: should)
 
-INPUT: "Look into flights for December trip"
-OUTPUT: "action" (research task)
+INPUT: "Thinking I might sign up for that pottery class"
+OUTPUT: "action" (future intent)
+
+INPUT: "Had a great meeting today. Need to follow up with Sarah."
+OUTPUT: "action" (embedded "Need to")
+
+INPUT: "Gym tomorrow"
+OUTPUT: "action" (future activity)
+
+INPUT: "Doctor's appointment Tuesday"
+OUTPUT: "action" (scheduled event)
+
+INPUT: "Look into flights for December"
+OUTPUT: "action" (imperative: Look into)
 
 ## Examples of STORIES (truly no action):
 
 INPUT: "Had the best coffee with Jane today. We talked for hours."
-OUTPUT: "story" (past tense, no future action)
+OUTPUT: "story" (100% past tense, no tasks)
 
 INPUT: "Feeling grateful for my family after the holiday gathering"
-OUTPUT: "story" (reflection, no action)
+OUTPUT: "story" (pure reflection, no tasks)
 
 ## Other Fields:
 
