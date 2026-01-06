@@ -136,8 +136,15 @@ export function TiptapEditor({
 
   const isLight = variant === 'light'
   
+  // DEBUG: Log what we're receiving
+  console.log('[TiptapEditor] entryType:', entryType, 'content:', content?.substring(0, 100), 'initialContent:', initialContent?.substring(0, 100))
+  
   return (
     <div className={`tiptap-editor border rounded overflow-hidden ${isLight ? 'border-neutral-300' : 'border-neutral-700'}`}>
+      {/* DEBUG: Show entry type - TEMPORARY */}
+      <div style={{ background: '#ffeb3b', padding: '4px 8px', fontSize: '10px', color: '#000' }}>
+        DEBUG: entryType={entryType || 'undefined'} | isAction={String(entryType === 'action')}
+      </div>
       {editable && <Toolbar editor={editor} variant={variant} entryType={entryType} />}
       <EditorContent
         editor={editor}
