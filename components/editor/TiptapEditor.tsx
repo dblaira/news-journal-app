@@ -42,9 +42,9 @@ function convertToTaskList(content: string): string {
   // Split by lines OR sentences/items if single line
   let lines = plainText.split(/\n+/).filter(line => line.trim())
   
-  // If single line, try to split by commas or periods for multiple items
-  if (lines.length === 1 && (plainText.includes(',') || plainText.includes('.'))) {
-    const items = plainText.split(/[,.]/).map(s => s.trim()).filter(s => s)
+  // If single line, try to split by commas for multiple items
+  if (lines.length === 1 && plainText.includes(',')) {
+    const items = plainText.split(',').map(s => s.trim()).filter(s => s)
     if (items.length > 1) {
       lines = items
     }
@@ -57,11 +57,12 @@ function convertToTaskList(content: string): string {
     return content
   }
   
+  // Use simpler HTML structure that Tiptap TaskList expects
   const taskItems = lines.map(line => 
-    `<li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>${line.trim()}</p></div></li>`
-  ).join('')
+    `<li data-type="taskItem" data-checked="false"><p>${line.trim()}</p></li>`
+  ).join('\n')
   
-  const result = `<ul data-type="taskList">${taskItems}</ul>`
+  const result = `<ul data-type="taskList">\n${taskItems}\n</ul>`
   console.log('[convertToTaskList] Output:', result)
   return result
 }
