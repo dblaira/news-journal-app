@@ -21,11 +21,8 @@ interface TiptapEditorProps {
 
 // Convert plain text lines to task list HTML for Actions
 function convertToTaskList(content: string): string {
-  console.log('[convertToTaskList] Input:', content)
-  
   // If content is already HTML with task list, return as-is
   if (content.includes('<ul data-type="taskList"') || content.includes('data-type="taskItem"')) {
-    console.log('[convertToTaskList] Already task list, returning as-is')
     return content
   }
   
@@ -38,10 +35,8 @@ function convertToTaskList(content: string): string {
     .replace(/<p>/gi, '')
     .replace(/<div>/gi, '')
   const plainText = withNewlines.replace(/<[^>]*>/g, '').trim()
-  console.log('[convertToTaskList] Plain text:', plainText)
   
   if (!plainText) {
-    console.log('[convertToTaskList] Empty content, returning original')
     return content
   }
   
@@ -74,10 +69,7 @@ function convertToTaskList(content: string): string {
     }
   }
   
-  console.log('[convertToTaskList] Lines:', lines)
-  
   if (lines.length === 0) {
-    console.log('[convertToTaskList] No lines, returning original')
     return content
   }
   
@@ -86,9 +78,7 @@ function convertToTaskList(content: string): string {
     `<li data-type="taskItem" data-checked="false"><p>${line.trim()}</p></li>`
   ).join('\n')
   
-  const result = `<ul data-type="taskList">\n${taskItems}\n</ul>`
-  console.log('[convertToTaskList] Output:', result)
-  return result
+  return `<ul data-type="taskList">\n${taskItems}\n</ul>`
 }
 
 export function TiptapEditor({
@@ -185,17 +175,8 @@ export function TiptapEditor({
 
   const isLight = variant === 'light'
   
-  // DEBUG: Log what we're receiving
-  console.log('[TiptapEditor] entryType:', entryType)
-  console.log('[TiptapEditor] content prop:', content)
-  console.log('[TiptapEditor] initialContent (after conversion):', initialContent)
-  
   return (
     <div className={`tiptap-editor border rounded overflow-hidden ${isLight ? 'border-neutral-300' : 'border-neutral-700'}`}>
-      {/* DEBUG: Show entry type - TEMPORARY */}
-      <div style={{ background: '#ffeb3b', padding: '4px 8px', fontSize: '10px', color: '#000' }}>
-        DEBUG: entryType={entryType || 'undefined'} | isAction={String(entryType === 'action')} | hasTaskList={String(initialContent?.includes('taskList'))}
-      </div>
       {editable && <Toolbar editor={editor} variant={variant} entryType={entryType} />}
       <EditorContent
         editor={editor}

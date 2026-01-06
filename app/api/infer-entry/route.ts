@@ -73,9 +73,17 @@ async function inferEntryMetadata(content: string, apiKey: string): Promise<Infe
 3. category: The single best fitting category from EXACTLY one of these options: Business, Finance, Health, Spiritual, Fun, Social, Romance
 4. mood: The emotional tone in 1-2 words (e.g., "reflective", "energized", "grateful", "determined")
 5. entry_type: Classify as ONE of these:
-   - "story": Reflections, experiences, observations, things that happened, feelings, insights, diary entries
-   - "action": Commitments, tasks, things to do, reminders, follow-ups, intentions with implied accountability (e.g., "I need to...", "I should...", "Don't forget to...", "Remember to...")
-   - "note": Facts, references, information to remember, quotes, links, things to look up later, lists of items
+   - "story": Reflections, experiences, observations, things that happened, feelings, insights, diary entries, narratives about the past
+   - "action": USE THIS FOR ANY OF THESE PATTERNS:
+     * Lists of things to do (even without "I need to")
+     * Imperative verbs: "Buy X", "Call Y", "Find Z", "Get W", "Send V", "Fix U"
+     * Words like "task", "tasks", "todo", "to-do", "reminder", "reminders"
+     * "Remember to...", "Don't forget...", "Need to...", "Should...", "Must..."
+     * Multiple short action-oriented sentences separated by periods or commas
+     * Any content that reads like a checklist or task list
+   - "note": Facts, references, information to remember, quotes, links, things to look up later, research notes, bookmarks
+   
+   IMPORTANT: If the text contains multiple actionable items (like "Buy groceries. Call mom. Fix car."), classify as "action" NOT "story".
 6. due_date: If entry_type is "action" and a deadline is mentioned or implied, return the date as ISO format (YYYY-MM-DD). Today's date is ${todayStr}. Convert relative dates:
    - "tomorrow" = the day after ${todayStr}
    - "next week" = 7 days from ${todayStr}
