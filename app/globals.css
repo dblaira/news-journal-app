@@ -406,8 +406,8 @@ li[data-type="taskItem"]::marker {
 .hero-card ul[data-type="taskList"] li,
 .hero-card__content ul[data-type="taskList"] li {
   display: flex !important;
-  align-items: flex-start;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.6rem;
   list-style: none !important;
   list-style-type: none !important;
   margin-bottom: 0.5rem;
@@ -428,9 +428,8 @@ li[data-type="taskItem"]::marker {
 .hero-card__content ul[data-type="taskList"] li::before {
   content: '';
   flex-shrink: 0;
-  width: 1.1rem;
-  height: 1.1rem;
-  margin-top: 0.15rem;
+  width: 1rem;
+  height: 1rem;
   border: 2px solid rgba(255, 255, 255, 0.7);
   border-radius: 3px;
   background: transparent;
