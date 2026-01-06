@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Entry, EntryType, ImageExtraction, EntryMetadata } from '@/types'
+import { TiptapEditor } from './editor/TiptapEditor'
 
 interface InferredData {
   headline: string
@@ -438,7 +439,7 @@ export function CaptureConfirmation({
           </div>
         )}
 
-        {/* Content - Editable */}
+        {/* Content - Rich Text Editor */}
         <div style={{ marginBottom: '1.5rem' }}>
           <label
             style={{
@@ -452,24 +453,21 @@ export function CaptureConfirmation({
           >
             Your Entry
           </label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onFocus={() => setEditingField('content')}
-            onBlur={() => setEditingField(null)}
-            rows={6}
+          <div
             style={{
-              ...fieldStyle,
-              fontSize: '1rem',
-              lineHeight: 1.7,
-              resize: 'vertical',
-              minHeight: '120px',
               border: '1px solid #eee',
               borderRadius: '4px',
-              padding: '1rem',
-              borderColor: editingField === 'content' ? '#DC143C' : '#eee',
+              overflow: 'hidden',
+              background: '#fff',
             }}
-          />
+          >
+            <TiptapEditor
+              content={content}
+              onChange={(html) => setContent(html)}
+              variant="light"
+              placeholder="Write your entry..."
+            />
+          </div>
         </div>
 
         {/* Pre-attached Image from Capture Phase */}
