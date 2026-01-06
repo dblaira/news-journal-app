@@ -230,12 +230,16 @@
 }
 
 [data-type="taskList"] li::marker,
-[data-type="taskItem"]::marker {
+[data-type="taskItem"]::marker,
+li[data-type="taskItem"]::marker {
   content: "" !important;
+  content: none !important;
   display: none !important;
   font-size: 0 !important;
   width: 0 !important;
   height: 0 !important;
+  color: transparent !important;
+  background: transparent !important;
 }
 
 /* Rendered content specific overrides */
