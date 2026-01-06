@@ -53,13 +53,14 @@ export function TiptapEditor({
   entryType,
 }: TiptapEditorProps) {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastSavedContentRef = useRef(content)
-  const hasInitializedRef = useRef(false)
+  const isFirstRenderRef = useRef(true)
   
-  // For Actions, convert content to task list format
-  const initialContent = entryType === 'action' && !hasInitializedRef.current
+  // For Actions, convert content to task list format on initial render
+  const initialContent = entryType === 'action' 
     ? convertToTaskList(content)
     : content
+  
+  const lastSavedContentRef = useRef(initialContent)
 
   const editor = useEditor({
     extensions: [
@@ -78,9 +79,6 @@ export function TiptapEditor({
     ],
     content: initialContent,
     editable,
-    onCreate: () => {
-      hasInitializedRef.current = true
-    },
     onUpdate: ({ editor }) => {
       const html = editor.getHTML()
       onChange?.(html)
@@ -99,12 +97,19 @@ export function TiptapEditor({
   })
 
   // Update content when prop changes (e.g., switching entries)
+  // Skip on first render to preserve our task list conversion
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content)
-      lastSavedContentRef.current = content
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false
+      return
     }
-  }, [content, editor])
+    if (editor && content !== editor.getHTML()) {
+      // For actions, convert to task list; otherwise use as-is
+      const newContent = entryType === 'action' ? convertToTaskList(content) : content
+      editor.commands.setContent(newContent)
+      lastSavedContentRef.current = newContent
+    }
+  }, [content, editor, entryType])
 
   // Cleanup timeout on unmount
   useEffect(() => {
