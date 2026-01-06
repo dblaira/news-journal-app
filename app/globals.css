@@ -207,11 +207,17 @@
 }
 
 /* Override for task list items - MUST come after the above rule */
+/* Using high specificity to ensure these win */
 .rendered-content ul[data-type="taskList"] > li,
-.rendered-content ul[data-type="taskList"] > li[data-type="taskItem"] {
+.rendered-content ul[data-type="taskList"] > li[data-type="taskItem"],
+.rendered-content li[data-type="taskItem"],
+div.rendered-content li[data-type="taskItem"],
+.hero-card .rendered-content li[data-type="taskItem"],
+.hero-preview li[data-type="taskItem"] {
   display: flex !important;
   list-style: none !important;
   list-style-type: none !important;
+  list-style-image: none !important;
 }
 
 /* Task list styles for rendered content (Actions) - GLOBAL NUCLEAR */
