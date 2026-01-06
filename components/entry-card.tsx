@@ -88,7 +88,7 @@ export function EntryCard({
         />
         
         {/* Show extracted purchase/receipt data if available */}
-        {entry.image_extracted_data?.purchase && (
+        {entry.image_extracted_data?.purchase?.detected && entry.image_extracted_data.purchase.productName && (
           <div
             style={{
               marginTop: '0.75rem',
@@ -102,9 +102,13 @@ export function EntryCard({
             <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
               💰 {entry.image_extracted_data.purchase.productName}
             </div>
-            <div style={{ color: 'var(--text-muted)', marginTop: '2px' }}>
-              ${entry.image_extracted_data.purchase.price} • {entry.image_extracted_data.purchase.seller}
-            </div>
+            {(entry.image_extracted_data.purchase.price || entry.image_extracted_data.purchase.seller) && (
+              <div style={{ color: 'var(--text-muted)', marginTop: '2px' }}>
+                {entry.image_extracted_data.purchase.price && `$${entry.image_extracted_data.purchase.price}`}
+                {entry.image_extracted_data.purchase.price && entry.image_extracted_data.purchase.seller && ' • '}
+                {entry.image_extracted_data.purchase.seller}
+              </div>
+            )}
           </div>
         )}
         
