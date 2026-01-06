@@ -248,6 +248,18 @@ li[data-type="taskItem"]::marker {
   background: transparent !important;
 }
 
+/* Hide Tiptap's native checkbox - we use our own CSS ::before checkbox */
+[data-type="taskList"] input[type="checkbox"],
+[data-type="taskItem"] input[type="checkbox"],
+[data-type="taskList"] label > input[type="checkbox"] {
+  display: none !important;
+}
+
+/* Also hide the label wrapper if it only contains the checkbox */
+[data-type="taskItem"] > label:has(input[type="checkbox"]) {
+  display: none !important;
+}
+
 /* Rendered content specific overrides */
 .rendered-content ul[data-type="taskList"] {
   list-style: none !important;
