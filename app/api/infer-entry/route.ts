@@ -42,6 +42,15 @@ export async function POST(request: NextRequest) {
 
     const inferred = await inferEntryMetadata(content.trim(), apiKey)
 
+    // SAFETY NET: If AI returned "story" but content has obvious action patterns, override
+    if (inferred.entry_type === 'story') {
+      const actionOverride = detectObviousActionPatterns(content.trim())
+      if (actionOverride) {
+        console.log('[infer-entry] AI said story, but heuristic detected action patterns')
+        inferred.entry_type = 'action'
+      }
+    }
+
     // Only override AI inference if user EXPLICITLY selected a type
     // selectedType will be null if user didn't touch the dropdown
     if (selectedType && ['story', 'action', 'note'].includes(selectedType)) {
@@ -254,5 +263,61 @@ Return ONLY valid JSON:
       due_date: null,
     }
   }
+}
+
+// Heuristic safety net to catch obvious action patterns the AI might miss
+function detectObviousActionPatterns(content: string): boolean {
+  const lowerContent = content.toLowerCase()
+  
+  // Common imperative verbs that start sentences (action indicators)
+  const imperativeVerbs = [
+    'take', 'research', 'call', 'buy', 'get', 'send', 'email', 'text', 'message',
+    'schedule', 'book', 'order', 'pick up', 'drop off', 'fix', 'repair', 'clean',
+    'organize', 'find', 'look into', 'check', 'review', 'update', 'finish',
+    'complete', 'submit', 'pay', 'sign up', 'register', 'cancel', 'return',
+    'make', 'do', 'go to', 'visit', 'meet', 'attend', 'follow up', 'reach out',
+    'contact', 'remind', 'remember to', 'don\'t forget', 'need to', 'have to',
+    'should', 'must', 'workout', 'exercise', 'meditate', 'practice', 'study',
+    'read', 'watch', 'listen', 'try', 'test', 'write', 'plan', 'prepare'
+  ]
+  
+  // Check if content starts with an imperative verb
+  for (const verb of imperativeVerbs) {
+    if (lowerContent.startsWith(verb)) {
+      return true
+    }
+  }
+  
+  // Check for multiple sentences that start with imperative verbs
+  // Split by period, exclamation, or newline
+  const sentences = content.split(/[.!?\n]+/).filter(s => s.trim())
+  let imperativeCount = 0
+  
+  for (const sentence of sentences) {
+    const trimmed = sentence.trim().toLowerCase()
+    for (const verb of imperativeVerbs) {
+      if (trimmed.startsWith(verb)) {
+        imperativeCount++
+        break
+      }
+    }
+  }
+  
+  // If 2+ sentences start with imperative verbs, it's definitely an action list
+  if (imperativeCount >= 2) {
+    return true
+  }
+  
+  // Check for "remember to" or "don't forget" anywhere in the content
+  if (lowerContent.includes('remember to') || lowerContent.includes("don't forget") || lowerContent.includes('dont forget')) {
+    return true
+  }
+  
+  // Check for task-like words
+  if (lowerContent.includes('todo') || lowerContent.includes('to-do') || lowerContent.includes('task')) {
+    return true
+  }
+  
+  return false
 }
 
