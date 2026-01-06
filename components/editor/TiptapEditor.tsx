@@ -30,8 +30,14 @@ function convertToTaskList(content: string): string {
   }
   
   // If content is plain text or simple paragraphs, convert to task list
-  // Strip HTML tags to get plain text
-  const plainText = content.replace(/<[^>]*>/g, '').trim()
+  // Replace paragraph/div/br tags with newlines BEFORE stripping HTML
+  const withNewlines = content
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<p>/gi, '')
+    .replace(/<div>/gi, '')
+  const plainText = withNewlines.replace(/<[^>]*>/g, '').trim()
   console.log('[convertToTaskList] Plain text:', plainText)
   
   if (!plainText) {
