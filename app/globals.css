@@ -277,7 +277,7 @@ li[data-type="taskItem"]::marker {
 
 .rendered-content ul[data-type="taskList"] li {
   display: flex !important;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
   padding: 0.25rem 0;
@@ -295,7 +295,6 @@ li[data-type="taskItem"]::marker {
   flex-shrink: 0;
   width: 1.1rem;
   height: 1.1rem;
-  margin-top: 0.15rem;
   border: 2px solid #DC143C;
   border-radius: 3px;
   background: transparent;
@@ -469,6 +468,8 @@ li[data-type="taskItem"]::marker {
 
 .card-preview ul[data-type="taskList"] li {
   display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
   list-style: none !important;
   list-style-type: none !important;
 }
