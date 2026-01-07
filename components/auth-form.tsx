@@ -105,11 +105,12 @@ export function AuthForm() {
         className="hidden md:flex md:w-1/2 items-center justify-center p-8 lg:p-12 overflow-hidden"
         style={{ backgroundColor: '#000000' }}
       >
-        <div className="w-full max-w-lg overflow-hidden rounded-[2rem]">
+        <div className="w-full max-w-lg overflow-hidden rounded-[1.5rem]">
           <img
             src="/login-hero.png"
             alt="Arrows pointing upward - Personal Press"
-            className="w-full h-full object-cover scale-110"
+            className="w-full h-full object-cover"
+            style={{ transform: 'scale(1.15)' }}
           />
         </div>
       </div>
