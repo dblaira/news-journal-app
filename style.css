@@ -356,6 +356,29 @@ body {
     border-radius: 0;
 }
 
+/* Responsive category navigation - Mobile dropdown, Desktop tabs */
+/* Desktop default: Hide mobile dropdown, show tabs */
+.category-nav-mobile {
+    display: none !important;
+    position: relative;
+}
+
+.category-nav-desktop.section-nav {
+    display: flex !important;
+}
+
+/* Mobile: Show dropdown, hide tabs */
+@media (max-width: 640px) {
+    .category-nav-mobile {
+        display: block !important;
+    }
+    
+    .category-nav-desktop.section-nav,
+    nav.category-nav-desktop {
+        display: none !important;
+    }
+}
+
 .category-label {
     color: var(--color-red);
     font-weight: 700;

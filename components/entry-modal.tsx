@@ -62,6 +62,18 @@ export function EntryModal({
   // Metadata state (for enrichment updates)
   const [currentMetadata, setCurrentMetadata] = useState(entry.metadata as EntryMetadata | undefined)
 
+  // Mobile detection for responsive button layout
+  const [isMobile, setIsMobile] = useState(false)
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   // Track view when modal opens
   useEffect(() => {
     incrementViewCount(entry.id)
@@ -311,35 +323,73 @@ export function EntryModal({
           borderRadius: 0,
         }}
       >
+        {/* Close button - separate on mobile for cleaner UX */}
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          style={{
+            position: 'absolute',
+            top: isMobile ? '0.75rem' : '1.5rem',
+            right: isMobile ? '0.75rem' : '1.5rem',
+            background: 'transparent',
+            color: '#666666',
+            border: 'none',
+            padding: isMobile ? '0.5rem' : '0.5rem 1rem',
+            cursor: 'pointer',
+            fontSize: isMobile ? '1.5rem' : '0.85rem',
+            borderRadius: isMobile ? '50%' : 0,
+            fontWeight: 600,
+            letterSpacing: '0.05rem',
+            textTransform: 'uppercase',
+            transition: 'all 0.2s ease',
+            zIndex: 20,
+            lineHeight: 1,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#DC143C'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#666666'
+          }}
+        >
+          {isMobile ? '✕' : 'Close'}
+        </button>
+
+        {/* Action buttons */}
         <div style={{
           position: 'absolute',
-          top: '1.5rem',
-          right: '1.5rem',
+          top: isMobile ? '0.75rem' : '1.5rem',
+          left: isMobile ? '0.75rem' : 'auto',
+          right: isMobile ? 'auto' : '6rem',
           display: 'flex',
-          gap: '0.5rem',
+          gap: isMobile ? '0.25rem' : '0.5rem',
           zIndex: 10,
         }}>
           {isEditing ? (
             <>
+              {/* Save button */}
               <button
                 onClick={async () => {
                   await handleSaveAll()
                   setIsEditing(false)
                 }}
                 disabled={isSaving}
+                aria-label="Save"
+                title="Save"
                 style={{
                   background: '#2563EB',
                   color: '#FFFFFF',
                   border: '1px solid #2563EB',
-                  padding: '0.5rem 1rem',
+                  padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
                   cursor: isSaving ? 'not-allowed' : 'pointer',
-                  fontSize: '0.85rem',
+                  fontSize: isMobile ? '1rem' : '0.85rem',
                   borderRadius: 0,
                   fontWeight: 600,
                   letterSpacing: '0.05rem',
                   textTransform: 'uppercase',
                   transition: 'all 0.2s ease',
                   opacity: isSaving ? 0.7 : 1,
+                  minWidth: isMobile ? '36px' : 'auto',
                 }}
                 onMouseEnter={(e) => {
                   if (!isSaving) {
@@ -350,22 +400,26 @@ export function EntryModal({
                   e.currentTarget.style.background = '#2563EB'
                 }}
               >
-                {isSaving ? 'Saving...' : 'Save'}
+                {isMobile ? '✓' : (isSaving ? 'Saving...' : 'Save')}
               </button>
+              {/* Cancel button */}
               <button
                 onClick={handleCancelEdit}
+                aria-label="Cancel"
+                title="Cancel"
                 style={{
                   background: 'transparent',
                   color: '#666666',
                   border: '1px solid #666666',
-                  padding: '0.5rem 1rem',
+                  padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
                   cursor: 'pointer',
-                  fontSize: '0.85rem',
+                  fontSize: isMobile ? '1rem' : '0.85rem',
                   borderRadius: 0,
                   fontWeight: 600,
                   letterSpacing: '0.05rem',
                   textTransform: 'uppercase',
                   transition: 'all 0.2s ease',
+                  minWidth: isMobile ? '36px' : 'auto',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = '#666666'
@@ -376,24 +430,28 @@ export function EntryModal({
                   e.currentTarget.style.color = '#666666'
                 }}
               >
-                Cancel
+                {isMobile ? '✗' : 'Cancel'}
               </button>
             </>
           ) : (
+            /* Edit button */
             <button
               onClick={() => setIsEditing(true)}
+              aria-label="Edit"
+              title="Edit"
               style={{
                 background: 'transparent',
                 color: '#2563EB',
                 border: '1px solid #2563EB',
-                padding: '0.5rem 1rem',
+                padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
                 cursor: 'pointer',
-                fontSize: '0.85rem',
+                fontSize: isMobile ? '1rem' : '0.85rem',
                 borderRadius: 0,
                 fontWeight: 600,
                 letterSpacing: '0.05rem',
                 textTransform: 'uppercase',
                 transition: 'all 0.2s ease',
+                minWidth: isMobile ? '36px' : 'auto',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = '#2563EB'
@@ -404,51 +462,35 @@ export function EntryModal({
                 e.currentTarget.style.color = '#2563EB'
               }}
             >
-              Edit
+              {isMobile ? '✎' : 'Edit'}
             </button>
           )}
-          <button
-            onClick={() => onDeleteEntry(entry.id)}
-            style={{
-              background: 'transparent',
-              color: '#DC143C',
-              border: '1px solid #DC143C',
-              padding: '0.5rem 1rem',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              borderRadius: 0,
-              fontWeight: 600,
-              letterSpacing: '0.05rem',
-              textTransform: 'uppercase',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#DC143C'
-              e.currentTarget.style.color = '#FFFFFF'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.color = '#DC143C'
-            }}
-          >
-            Delete
-          </button>
+          
+          {/* Separator on mobile */}
+          {isMobile && (
+            <div style={{ width: '1px', background: 'rgba(0,0,0,0.15)', margin: '0 0.25rem' }} />
+          )}
+          
+          {/* Pin button */}
           <button
             onClick={handleTogglePin}
             disabled={isTogglingPin}
+            aria-label={isPinned ? 'Unpin' : 'Pin'}
+            title={isPinned ? 'Unpin' : 'Pin'}
             style={{
               background: isPinned ? '#228B22' : 'transparent',
               color: isPinned ? '#FFFFFF' : '#228B22',
               border: '1px solid #228B22',
-              padding: '0.5rem 1rem',
+              padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
               cursor: isTogglingPin ? 'not-allowed' : 'pointer',
-              fontSize: '0.85rem',
+              fontSize: isMobile ? '1rem' : '0.85rem',
               borderRadius: 0,
               fontWeight: 600,
               letterSpacing: '0.05rem',
               textTransform: 'uppercase',
               transition: 'all 0.2s ease',
               opacity: isTogglingPin ? 0.6 : 1,
+              minWidth: isMobile ? '36px' : 'auto',
             }}
             onMouseEnter={(e) => {
               if (!isTogglingPin) {
@@ -463,35 +505,38 @@ export function EntryModal({
               }
             }}
           >
-            {isTogglingPin ? '...' : isPinned ? 'Unpin' : 'Pin'}
+            {isMobile ? (isTogglingPin ? '…' : (isPinned ? '◉' : '○')) : (isTogglingPin ? '...' : isPinned ? 'Unpin' : 'Pin')}
           </button>
+          
+          {/* Delete button */}
           <button
-            onClick={onClose}
+            onClick={() => onDeleteEntry(entry.id)}
+            aria-label="Delete"
+            title="Delete"
             style={{
               background: 'transparent',
-              color: '#000000',
-              border: '1px solid rgba(0,0,0,0.2)',
-              padding: '0.5rem 1rem',
+              color: '#DC143C',
+              border: '1px solid #DC143C',
+              padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
               cursor: 'pointer',
-              fontSize: '0.85rem',
+              fontSize: isMobile ? '1rem' : '0.85rem',
               borderRadius: 0,
               fontWeight: 600,
               letterSpacing: '0.05rem',
               textTransform: 'uppercase',
               transition: 'all 0.2s ease',
+              minWidth: isMobile ? '36px' : 'auto',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = '#DC143C'
               e.currentTarget.style.color = '#FFFFFF'
-              e.currentTarget.style.borderColor = '#DC143C'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.color = '#000000'
-              e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'
+              e.currentTarget.style.color = '#DC143C'
             }}
           >
-            Close
+            {isMobile ? '🗑' : 'Delete'}
           </button>
         </div>
 
