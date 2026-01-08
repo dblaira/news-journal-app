@@ -98,7 +98,7 @@ export function Header({
             aria-label="Open menu"
             style={{
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'baseline',
               gap: '0.35rem',
               background: 'transparent',
               border: 'none',
@@ -111,8 +111,8 @@ export function Header({
               cursor: 'pointer',
             }}
           >
-            Menu
-            <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>☰</span>
+            <span style={{ position: 'relative', top: '0.05rem' }}>Menu</span>
+            <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>☰</span>
           </button>
         </header>
 
