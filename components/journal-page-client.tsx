@@ -50,12 +50,18 @@ export function JournalPageClient({
   const [isGeneratingVersions, setIsGeneratingVersions] = useState<string | null>(null)
   const [weeklyTheme, setWeeklyTheme] = useState<WeeklyTheme | null>(initialWeeklyTheme || null)
   const [isGeneratingTheme, setIsGeneratingTheme] = useState(false)
+  const [currentEntryType, setCurrentEntryType] = useState<string | null>(null)
 
   // Filter entries
   let filtered = [...entries]
   if (currentFilter !== 'all') {
     filtered = filtered.filter(
       (entry) => entry.category.toLowerCase() === currentFilter.toLowerCase()
+    )
+  }
+  if (currentEntryType) {
+    filtered = filtered.filter(
+      (entry) => entry.entry_type === currentEntryType
     )
   }
   if (searchQuery) {
@@ -303,7 +309,14 @@ export function JournalPageClient({
 
   return (
     <div className="page-shell">
-      <Header issueTagline={issueTagline} onNewEntry={handleCreateEntry} />
+      <Header 
+        issueTagline={issueTagline} 
+        onNewEntry={handleCreateEntry}
+        currentFilter={currentFilter}
+        onFilterChange={setCurrentFilter}
+        currentEntryType={currentEntryType}
+        onEntryTypeChange={setCurrentEntryType}
+      />
       <button
         onClick={handleLogout}
         style={{
