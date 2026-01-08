@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { Entry, Version, MindMap, ReactFlowNode, ReactFlowEdge, EntryMetadata } from '@/types'
 import { formatEntryDateLong, stripHtml } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
-import { incrementViewCount, removeEntryPhoto, togglePin, updateEntryContent } from '@/app/actions/entries'
+import { incrementViewCount, removeEntryPhoto, togglePin, updateEntryContent, updateEntryDetails } from '@/app/actions/entries'
 import { TiptapEditor } from './editor/TiptapEditor'
 import { generateMindMap, toReactFlowFormat } from '@/lib/mindmap/utils'
 import MetadataEnrichment from './entry/MetadataEnrichment'
@@ -21,6 +21,7 @@ interface EntryModalProps {
   onPhotoUpdated?: (entryId: string, photoUrl: string | null) => void
   onPinToggled?: (entryId: string, isPinned: boolean) => void
   onContentUpdated?: (entryId: string, content: string) => void
+  onEntryUpdated?: (entryId: string, updates: Partial<Entry>) => void
 }
 
 export function EntryModal({
@@ -31,6 +32,7 @@ export function EntryModal({
   onPhotoUpdated,
   onPinToggled,
   onContentUpdated,
+  onEntryUpdated,
 }: EntryModalProps) {
   const formattedDate = formatEntryDateLong(entry.created_at)
   const hasVersions = Array.isArray(entry.versions) && entry.versions.length > 0
@@ -47,6 +49,8 @@ export function EntryModal({
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(entry.content)
+  const [editedHeadline, setEditedHeadline] = useState(entry.headline)
+  const [editedSubheading, setEditedSubheading] = useState(entry.subheading || '')
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
@@ -84,8 +88,10 @@ export function EntryModal({
   // Update edited content when entry changes
   useEffect(() => {
     setEditedContent(entry.content)
+    setEditedHeadline(entry.headline)
+    setEditedSubheading(entry.subheading || '')
     setIsEditing(false)
-  }, [entry.id, entry.content])
+  }, [entry.id, entry.content, entry.headline, entry.subheading])
 
   // Handle save content
   const handleSaveContent = async (content: string) => {
@@ -107,9 +113,58 @@ export function EntryModal({
     }
   }
 
+  // Handle save all changes (headline, subheading, content)
+  const handleSaveAll = async () => {
+    setIsSaving(true)
+    try {
+      // Check if headline or subheading changed
+      const headlineChanged = editedHeadline !== entry.headline
+      const subheadingChanged = editedSubheading !== (entry.subheading || '')
+      const contentChanged = editedContent !== entry.content
+
+      // Save headline/subheading if changed
+      if (headlineChanged || subheadingChanged) {
+        const detailsResult = await updateEntryDetails(entry.id, {
+          headline: editedHeadline,
+          subheading: editedSubheading || undefined,
+        })
+        if (detailsResult.error) {
+          console.error('Failed to save details:', detailsResult.error)
+          alert('Failed to save headline/subheading. Please try again.')
+          return
+        }
+        // Notify parent of updates
+        onEntryUpdated?.(entry.id, {
+          headline: editedHeadline,
+          subheading: editedSubheading || undefined,
+        })
+      }
+
+      // Save content if changed
+      if (contentChanged) {
+        const contentResult = await updateEntryContent(entry.id, editedContent)
+        if (contentResult.error) {
+          console.error('Failed to save content:', contentResult.error)
+          alert('Failed to save content. Please try again.')
+          return
+        }
+        onContentUpdated?.(entry.id, editedContent)
+      }
+
+      setLastSaved(new Date())
+    } catch (error) {
+      console.error('Failed to save:', error)
+      alert('Failed to save changes. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   // Handle cancel editing
   const handleCancelEdit = () => {
     setEditedContent(entry.content)
+    setEditedHeadline(entry.headline)
+    setEditedSubheading(entry.subheading || '')
     setIsEditing(false)
   }
 
@@ -136,7 +191,7 @@ export function EntryModal({
 
   // Handle manual save and exit edit mode
   const handleSaveAndClose = async () => {
-    await handleSaveContent(editedContent)
+    await handleSaveAll()
     setIsEditing(false)
   }
 
@@ -264,32 +319,94 @@ export function EntryModal({
           gap: '0.5rem',
           zIndex: 10,
         }}>
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            style={{
-              background: isEditing ? '#2563EB' : 'transparent',
-              color: isEditing ? '#FFFFFF' : '#2563EB',
-              border: '1px solid #2563EB',
-              padding: '0.5rem 1rem',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              borderRadius: 0,
-              fontWeight: 600,
-              letterSpacing: '0.05rem',
-              textTransform: 'uppercase',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#2563EB'
-              e.currentTarget.style.color = '#FFFFFF'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = isEditing ? '#2563EB' : 'transparent'
-              e.currentTarget.style.color = isEditing ? '#FFFFFF' : '#2563EB'
-            }}
-          >
-            {isEditing ? 'Editing' : 'Edit'}
-          </button>
+          {isEditing ? (
+            <>
+              <button
+                onClick={async () => {
+                  await handleSaveAll()
+                  setIsEditing(false)
+                }}
+                disabled={isSaving}
+                style={{
+                  background: '#2563EB',
+                  color: '#FFFFFF',
+                  border: '1px solid #2563EB',
+                  padding: '0.5rem 1rem',
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  fontSize: '0.85rem',
+                  borderRadius: 0,
+                  fontWeight: 600,
+                  letterSpacing: '0.05rem',
+                  textTransform: 'uppercase',
+                  transition: 'all 0.2s ease',
+                  opacity: isSaving ? 0.7 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSaving) {
+                    e.currentTarget.style.background = '#1D4ED8'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#2563EB'
+                }}
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                style={{
+                  background: 'transparent',
+                  color: '#666666',
+                  border: '1px solid #666666',
+                  padding: '0.5rem 1rem',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  borderRadius: 0,
+                  fontWeight: 600,
+                  letterSpacing: '0.05rem',
+                  textTransform: 'uppercase',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#666666'
+                  e.currentTarget.style.color = '#FFFFFF'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = '#666666'
+                }}
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setIsEditing(true)}
+              style={{
+                background: 'transparent',
+                color: '#2563EB',
+                border: '1px solid #2563EB',
+                padding: '0.5rem 1rem',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                borderRadius: 0,
+                fontWeight: 600,
+                letterSpacing: '0.05rem',
+                textTransform: 'uppercase',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#2563EB'
+                e.currentTarget.style.color = '#FFFFFF'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = '#2563EB'
+              }}
+            >
+              Edit
+            </button>
+          )}
           <button
             onClick={() => onDeleteEntry(entry.id)}
             style={{
@@ -392,31 +509,76 @@ export function EntryModal({
           </span>
         </div>
 
-        <h2
-          style={{
-            fontSize: '2.8rem',
-            fontFamily: "'Playfair Display', serif",
-            fontWeight: 400,
-            lineHeight: 1.15,
-            marginBottom: '0.5rem',
-            letterSpacing: '-0.02em',
-            color: '#000000',
-          }}
-        >
-          {entry.headline}
-        </h2>
-
-        {entry.subheading && (
-          <p
+        {isEditing ? (
+          <input
+            type="text"
+            value={editedHeadline}
+            onChange={(e) => setEditedHeadline(e.target.value)}
+            placeholder="Enter headline..."
             style={{
+              width: '100%',
+              fontSize: '2.8rem',
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 400,
+              lineHeight: 1.15,
+              marginBottom: '0.5rem',
+              letterSpacing: '-0.02em',
+              color: '#000000',
+              background: '#F3F4F6',
+              border: '2px solid #2563EB',
+              borderRadius: '4px',
+              padding: '0.5rem',
+              outline: 'none',
+            }}
+          />
+        ) : (
+          <h2
+            style={{
+              fontSize: '2.8rem',
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 400,
+              lineHeight: 1.15,
+              marginBottom: '0.5rem',
+              letterSpacing: '-0.02em',
+              color: '#000000',
+            }}
+          >
+            {entry.headline}
+          </h2>
+        )}
+
+        {isEditing ? (
+          <input
+            type="text"
+            value={editedSubheading}
+            onChange={(e) => setEditedSubheading(e.target.value)}
+            placeholder="Add a subheading (optional)..."
+            style={{
+              width: '100%',
               fontSize: '1.2rem',
               color: '#666',
               fontStyle: 'italic',
               marginBottom: '1.5rem',
+              background: '#F3F4F6',
+              border: '2px solid #2563EB',
+              borderRadius: '4px',
+              padding: '0.5rem',
+              outline: 'none',
             }}
-          >
-            {entry.subheading}
-          </p>
+          />
+        ) : (
+          entry.subheading && (
+            <p
+              style={{
+                fontSize: '1.2rem',
+                color: '#666',
+                fontStyle: 'italic',
+                marginBottom: '1.5rem',
+              }}
+            >
+              {entry.subheading}
+            </p>
+          )
         )}
 
         {/* Hidden file input for photo upload */}

@@ -138,6 +138,51 @@ export async function updateEntryContent(entryId: string, content: string) {
   return { data, success: true }
 }
 
+export async function updateEntryDetails(
+  entryId: string,
+  updates: {
+    headline?: string
+    subheading?: string
+    category?: Entry['category']
+    mood?: string
+    entry_type?: Entry['entry_type']
+  }
+) {
+  const supabase = await createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Filter out undefined values
+  const cleanUpdates: Record<string, any> = {}
+  if (updates.headline !== undefined) cleanUpdates.headline = updates.headline
+  if (updates.subheading !== undefined) cleanUpdates.subheading = updates.subheading
+  if (updates.category !== undefined) cleanUpdates.category = updates.category
+  if (updates.mood !== undefined) cleanUpdates.mood = updates.mood
+  if (updates.entry_type !== undefined) cleanUpdates.entry_type = updates.entry_type
+  cleanUpdates.updated_at = new Date().toISOString()
+
+  const { data, error } = await supabase
+    .from('entries')
+    .update(cleanUpdates)
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .select()
+    .single()
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/')
+  return { data, success: true }
+}
+
 export async function generateWeeklyTheme(entryIds: string[]) {
   const supabase = await createClient()
   

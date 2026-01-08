@@ -118,6 +118,7 @@ export function TiptapEditor({
     ],
     content: initialContent,
     editable,
+    immediatelyRender: false, // Prevent SSR hydration mismatch
     onUpdate: ({ editor }) => {
       const html = editor.getHTML()
       onChange?.(html)

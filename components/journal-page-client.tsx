@@ -269,6 +269,38 @@ export function JournalPageClient({
     router.refresh()
   }
 
+  const handleContentUpdated = (entryId: string, content: string) => {
+    // Update entry in local state
+    const updatedEntries = entries.map((e) =>
+      e.id === entryId ? { ...e, content } : e
+    )
+    setEntries(updatedEntries)
+    
+    // Update selected entry if it's the one being modified
+    if (selectedEntry?.id === entryId) {
+      setSelectedEntry({ ...selectedEntry, content })
+    }
+    
+    // Refresh to update all views
+    router.refresh()
+  }
+
+  const handleEntryUpdated = (entryId: string, updates: Partial<Entry>) => {
+    // Update entry in local state
+    const updatedEntries = entries.map((e) =>
+      e.id === entryId ? { ...e, ...updates } : e
+    )
+    setEntries(updatedEntries)
+    
+    // Update selected entry if it's the one being modified
+    if (selectedEntry?.id === entryId) {
+      setSelectedEntry({ ...selectedEntry, ...updates })
+    }
+    
+    // Refresh to update all views
+    router.refresh()
+  }
+
   return (
     <div className="page-shell">
       <Header issueTagline={issueTagline} onNewEntry={handleCreateEntry} />
@@ -399,6 +431,8 @@ export function JournalPageClient({
           onDeleteEntry={handleDeleteEntry}
           onPhotoUpdated={handlePhotoUpdated}
           onPinToggled={handlePinToggled}
+          onContentUpdated={handleContentUpdated}
+          onEntryUpdated={handleEntryUpdated}
         />
       )}
     </div>
