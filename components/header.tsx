@@ -92,52 +92,28 @@ export function Header({
             </span>
           </div>
 
-          {/* Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {/* New Entry button */}
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                onNewEntry()
-              }}
-              type="button"
-              style={{
-                background: 'var(--color-red)',
-                color: '#FFFFFF',
-                border: 'none',
-                padding: '0.5rem 0.75rem',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              + New
-            </button>
-
-            {/* Menu button */}
-            <button
-              onClick={() => setIsMenuOpen(true)}
-              aria-label="Open menu"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-hero)',
-                padding: '0.5rem',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                letterSpacing: '0.05rem',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-              }}
-            >
-              Menu
-              <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>☰</span>
-            </button>
-          </div>
+          {/* Menu button only */}
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            aria-label="Open menu"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-hero)',
+              padding: '0.5rem',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              letterSpacing: '0.05rem',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+            }}
+          >
+            Menu
+            <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>☰</span>
+          </button>
         </header>
 
         {/* Mobile Menu Overlay */}
@@ -149,6 +125,7 @@ export function Header({
           currentEntryType={currentEntryType}
           onEntryTypeChange={handleEntryTypeChange}
           onLogout={onLogout}
+          onCompose={onNewEntry}
         />
       </>
     )

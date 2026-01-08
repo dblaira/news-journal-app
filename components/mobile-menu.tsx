@@ -10,6 +10,7 @@ interface MobileMenuProps {
   currentEntryType: string | null
   onEntryTypeChange: (type: string | null) => void
   onLogout?: () => void
+  onCompose?: () => void
 }
 
 const categories = [
@@ -37,6 +38,7 @@ export function MobileMenu({
   currentEntryType,
   onEntryTypeChange,
   onLogout,
+  onCompose,
 }: MobileMenuProps) {
   // Prevent body scroll when menu is open
   useEffect(() => {
@@ -84,13 +86,13 @@ export function MobileMenu({
         animation: 'fadeIn 0.2s ease-out',
       }}
     >
-      {/* Close button */}
+      {/* Close button - positioned with safe area */}
       <button
         onClick={onClose}
         aria-label="Close menu"
         style={{
           position: 'absolute',
-          top: '1rem',
+          top: 'calc(1rem + env(safe-area-inset-top, 0px))',
           right: '1rem',
           background: 'transparent',
           border: 'none',
@@ -103,18 +105,22 @@ export function MobileMenu({
           alignItems: 'center',
           gap: '0.5rem',
           padding: '0.5rem',
+          zIndex: 10,
         }}
       >
         CLOSE
         <span style={{ fontSize: '1.25rem' }}>✕</span>
       </button>
 
-      {/* Menu content */}
+      {/* Menu content - scrollable with padding for fixed bottom */}
       <nav
         style={{
-          padding: '4rem 1.5rem 2rem',
+          padding: '4rem 1.5rem 0',
+          paddingTop: 'calc(4rem + env(safe-area-inset-top, 0px))',
+          paddingBottom: '12rem', // Space for fixed bottom section
           height: '100%',
           overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {/* Categories section */}
@@ -202,10 +208,38 @@ export function MobileMenu({
           ))}
         </ul>
 
-        {/* Bottom section */}
+        {/* Compose button - for detailed, thoughtful entries */}
+        {onCompose && (
+          <div style={{ marginTop: '2rem' }}>
+            <button
+              onClick={() => {
+                onCompose()
+                onClose()
+              }}
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '1rem 1.5rem',
+                background: '#DC143C',
+                border: 'none',
+                borderRadius: '4px',
+                color: '#FFFFFF',
+                fontSize: '1rem',
+                fontWeight: 600,
+                letterSpacing: '0.1rem',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              + Compose
+            </button>
+          </div>
+        )}
+
+        {/* Bottom section - fixed at bottom */}
         <div
           style={{
-            position: 'absolute',
+            position: 'fixed',
             bottom: 0,
             left: 0,
             right: 0,
@@ -215,28 +249,6 @@ export function MobileMenu({
             background: '#000000',
           }}
         >
-          <button
-            onClick={onClose}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: 'transparent',
-              border: 'none',
-              color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              letterSpacing: '0.1rem',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              padding: 0,
-              marginBottom: '1rem',
-            }}
-          >
-            <span style={{ fontSize: '1.1rem' }}>🔍</span>
-            Search
-          </button>
-          
           {/* Logout button */}
           {onLogout && (
             <button
@@ -248,16 +260,15 @@ export function MobileMenu({
                 display: 'block',
                 width: '100%',
                 padding: '0.875rem 1.5rem',
-                background: '#DC143C',
-                border: 'none',
+                background: 'transparent',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
                 borderRadius: '4px',
-                color: '#FFFFFF',
+                color: 'rgba(255, 255, 255, 0.7)',
                 fontSize: '0.85rem',
                 fontWeight: 600,
                 letterSpacing: '0.1rem',
                 textTransform: 'uppercase',
                 cursor: 'pointer',
-                marginTop: '0.5rem',
               }}
             >
               Logout
