@@ -11,6 +11,7 @@ interface HeaderProps {
   onFilterChange?: (category: string) => void
   currentEntryType?: string | null
   onEntryTypeChange?: (type: string | null) => void
+  onLogout?: () => void
 }
 
 export function Header({ 
@@ -20,6 +21,7 @@ export function Header({
   onFilterChange,
   currentEntryType = null,
   onEntryTypeChange,
+  onLogout,
 }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobile, setIsMobile] = useState(false)
@@ -52,6 +54,18 @@ export function Header({
   if (isMobile) {
     return (
       <>
+        {/* Extend black background to status bar */}
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 'env(safe-area-inset-top, 0px)',
+            background: '#000000',
+            zIndex: 100,
+          }}
+        />
         <header 
           className="site-header mobile-header"
           style={{
@@ -59,7 +73,8 @@ export function Header({
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '0.75rem 1rem',
-            background: 'var(--bg-hero)',
+            paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))',
+            background: '#000000',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           }}
         >
@@ -133,6 +148,7 @@ export function Header({
           onFilterChange={handleFilterChange}
           currentEntryType={currentEntryType}
           onEntryTypeChange={handleEntryTypeChange}
+          onLogout={onLogout}
         />
       </>
     )

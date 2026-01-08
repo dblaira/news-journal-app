@@ -9,6 +9,7 @@ interface MobileMenuProps {
   onFilterChange: (category: string) => void
   currentEntryType: string | null
   onEntryTypeChange: (type: string | null) => void
+  onLogout?: () => void
 }
 
 const categories = [
@@ -35,6 +36,7 @@ export function MobileMenu({
   onFilterChange,
   currentEntryType,
   onEntryTypeChange,
+  onLogout,
 }: MobileMenuProps) {
   // Prevent body scroll when menu is open
   useEffect(() => {
@@ -208,8 +210,9 @@ export function MobileMenu({
             left: 0,
             right: 0,
             padding: '1.5rem',
+            paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))',
             borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-            background: 'rgba(0, 0, 0, 0.5)',
+            background: '#000000',
           }}
         >
           <button
@@ -227,11 +230,39 @@ export function MobileMenu({
               textTransform: 'uppercase',
               cursor: 'pointer',
               padding: 0,
+              marginBottom: '1rem',
             }}
           >
             <span style={{ fontSize: '1.1rem' }}>🔍</span>
             Search
           </button>
+          
+          {/* Logout button */}
+          {onLogout && (
+            <button
+              onClick={() => {
+                onLogout()
+                onClose()
+              }}
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '0.875rem 1.5rem',
+                background: '#DC143C',
+                border: 'none',
+                borderRadius: '4px',
+                color: '#FFFFFF',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                letterSpacing: '0.1rem',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                marginTop: '0.5rem',
+              }}
+            >
+              Logout
+            </button>
+          )}
         </div>
       </nav>
 

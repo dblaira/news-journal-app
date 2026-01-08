@@ -507,6 +507,12 @@ li[data-type="taskItem"]::marker {
 
 /* Responsive navigation - hide desktop nav on mobile, mobile uses hamburger menu */
 @media (max-width: 640px) {
+  /* Black background extends to status bar on mobile */
+  html, body {
+    background: #000000 !important;
+    background-color: #000000 !important;
+  }
+  
   .desktop-only-nav,
   .section-nav.desktop-only-nav {
     display: none !important;
@@ -515,5 +521,17 @@ li[data-type="taskItem"]::marker {
   /* Hide desktop header on mobile - mobile-header renders separately */
   .site-header:not(.mobile-header) {
     display: none !important;
+  }
+  
+  /* Hide desktop logout button on mobile - logout is in mobile menu */
+  .desktop-logout-btn {
+    display: none !important;
+  }
+}
+
+/* Desktop - show logout button */
+@media (min-width: 641px) {
+  .desktop-logout-btn {
+    display: block;
   }
 }

@@ -316,9 +316,12 @@ export function JournalPageClient({
         onFilterChange={setCurrentFilter}
         currentEntryType={currentEntryType}
         onEntryTypeChange={setCurrentEntryType}
+        onLogout={handleLogout}
       />
+      {/* Desktop-only logout button - hidden on mobile (logout is in mobile menu) */}
       <button
         onClick={handleLogout}
+        className="desktop-logout-btn"
         style={{
           position: 'fixed',
           top: '20px',
