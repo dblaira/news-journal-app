@@ -527,6 +527,27 @@ li[data-type="taskItem"]::marker {
   .desktop-logout-btn {
     display: none !important;
   }
+  
+  /* Mobile header must stay horizontal with logo on left */
+  .mobile-header {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  
+  .mobile-header .brand-block {
+    text-align: left !important;
+    align-items: flex-start !important;
+  }
+}
+
+/* Ensure mobile header stays horizontal at all breakpoints */
+@media (max-width: 1024px) {
+  .mobile-header {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
 }
 
 /* Desktop - show logout button */
