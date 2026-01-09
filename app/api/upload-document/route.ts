@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createStorageClient } from '@/lib/supabase/storage'
 import { addEntryImage } from '@/app/actions/entries'
 import * as XLSX from 'xlsx'
+import mammoth from 'mammoth'
 
 export const runtime = 'nodejs'
 // Increase timeout for PDF processing and OCR
@@ -228,6 +229,28 @@ async function extractPdfText(buffer: Buffer, fileName: string): Promise<string>
   return ''
 }
 
+// DOCX text extraction using mammoth
+async function extractDocxText(buffer: Buffer): Promise<string> {
+  try {
+    console.log('📝 Extracting text from DOCX...')
+    const result = await mammoth.extractRawText({ buffer })
+    
+    if (result.value && result.value.trim().length > 0) {
+      console.log(`📝 DOCX extraction SUCCESS: ${result.value.length} chars`)
+      if (result.messages && result.messages.length > 0) {
+        console.log('📝 DOCX warnings:', result.messages.map(m => m.message).join(', '))
+      }
+      return result.value
+    }
+    
+    console.log('📝 DOCX extraction returned empty text')
+    return ''
+  } catch (error) {
+    console.error('📝 DOCX extraction error:', error instanceof Error ? error.message : error)
+    return ''
+  }
+}
+
 // Excel/CSV text extraction using xlsx (SheetJS)
 async function extractExcelText(buffer: Buffer): Promise<string> {
   try {
@@ -371,7 +394,17 @@ export async function POST(request: NextRequest) {
           extractedText = `Excel spreadsheet: ${file.name} (${(buffer.length / 1024).toFixed(1)}KB) - No data extracted`
         }
       } else if (detectedType === 'docx') {
-        extractedText = `Word document: ${file.name} (${(buffer.length / 1024).toFixed(1)}KB)`
+        // Extract actual Word document content using mammoth
+        console.log(`📝 Processing DOCX: ${file.name}, size: ${(buffer.length / 1024).toFixed(1)}KB`)
+        const docxText = await extractDocxText(buffer)
+        if (docxText && docxText.trim().length > 0) {
+          // Limit to first ~4000 chars for AI processing
+          extractedText = docxText.substring(0, 4000)
+          console.log(`📝 DOCX extraction SUCCESS: ${docxText.length} total chars, sending ${extractedText.length} chars from ${file.name}`)
+        } else {
+          console.log(`📝 DOCX extraction FAILED: No text extracted from ${file.name}`)
+          extractedText = `Word document: ${file.name} (${(buffer.length / 1024).toFixed(1)}KB) - Could not extract text.`
+        }
       }
 
       uploadedUrls.push({

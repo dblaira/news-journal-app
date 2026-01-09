@@ -174,6 +174,40 @@ export function EntryModal({
     }
   }
 
+  // Handle image export (social card or full entry)
+  const handleImageExport = async (mode: 'card' | 'full') => {
+    setIsExporting(true)
+    setShowExportMenu(false)
+    try {
+      const response = await fetch(`/api/export-image?entryId=${entry.id}&mode=${mode}&format=png`)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Image export failed')
+      }
+
+      // Download the image
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const timestamp = new Date().toISOString().split('T')[0]
+      const filename = mode === 'card' 
+        ? `${entry.headline || 'entry'}-social-card-${timestamp}.png`
+        : `${entry.headline || 'entry'}-full-${timestamp}.png`
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Image export error:', error)
+      alert(error instanceof Error ? error.message : 'Image export failed')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   // Handle save content
   const handleSaveContent = async (content: string) => {
     setIsSaving(true)
@@ -628,10 +662,11 @@ export function EntryModal({
                   borderRadius: '4px',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                   zIndex: 100,
-                  minWidth: '140px',
+                  minWidth: '180px',
                   overflow: 'hidden',
                 }}
               >
+                {/* Document export options */}
                 {[
                   { format: 'pdf' as const, label: 'PDF', icon: '📄' },
                   { format: 'docx' as const, label: 'Word', icon: '📝' },
@@ -646,7 +681,7 @@ export function EntryModal({
                       padding: '0.6rem 1rem',
                       background: 'transparent',
                       border: 'none',
-                      borderBottom: format !== 'csv' ? '1px solid #F3F4F6' : 'none',
+                      borderBottom: '1px solid #F3F4F6',
                       textAlign: 'left',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
@@ -666,6 +701,73 @@ export function EntryModal({
                     <span>{label}</span>
                   </button>
                 ))}
+                
+                {/* Separator */}
+                <div style={{ 
+                  padding: '0.4rem 1rem', 
+                  fontSize: '0.7rem', 
+                  fontWeight: 600, 
+                  color: '#9CA3AF',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  background: '#F9FAFB',
+                  borderBottom: '1px solid #F3F4F6',
+                }}>
+                  Images
+                </div>
+                
+                {/* Image export options */}
+                <button
+                  onClick={() => handleImageExport('card')}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 1rem',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: '1px solid #F3F4F6',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    transition: 'background 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#F3F4F6'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                  }}
+                >
+                  <span>🖼️</span>
+                  <span>Social Card</span>
+                </button>
+                <button
+                  onClick={() => handleImageExport('full')}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 1rem',
+                    background: 'transparent',
+                    border: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    transition: 'background 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#F3F4F6'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                  }}
+                >
+                  <span>📸</span>
+                  <span>Full Entry</span>
+                </button>
               </div>
             )}
           </div>
