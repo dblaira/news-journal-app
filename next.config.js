@@ -1,14 +1,29 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // External packages that should be bundled on the server
-  serverExternalPackages: ['pdf-parse', 'unpdf', 'pdfjs-dist'],
-  // Webpack configuration for PDF libraries
+  // External packages that should NOT be bundled (native modules, PDF libraries)
+  serverExternalPackages: [
+    'pdf-parse', 
+    'unpdf', 
+    'pdfjs-dist',
+    'pdf-to-png-converter',
+    '@napi-rs/canvas',
+    'canvas',
+  ],
+  // Webpack configuration for native modules
   webpack: (config, { isServer }) => {
-    if (isServer) {
-      // Don't bundle canvas (optional dependency of pdfjs-dist)
-      config.externals.push('canvas')
-    }
+    // Exclude native modules from webpack processing
+    config.externals.push({
+      'canvas': 'commonjs canvas',
+      '@napi-rs/canvas': 'commonjs @napi-rs/canvas',
+    })
+    
+    // Ignore .node binary files
+    config.module.rules.push({
+      test: /\.node$/,
+      use: 'ignore-loader',
+    })
+    
     return config
   },
   async headers() {

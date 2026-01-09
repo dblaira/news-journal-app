@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Entry, EntryType, ImageExtraction, EntryMetadata, EntryImage } from '@/types'
+import { EntryEnrichment } from '@/types/metadata'
 import { TiptapEditor } from './editor/TiptapEditor'
 
 interface InferredData {
@@ -20,6 +21,11 @@ interface InferredData {
   // Metadata fields
   metadata?: EntryMetadata
 }
+
+// Preset options for enrichment fields
+const ACTIVITY_PRESETS = ['morning planning', 'after workout', 'during commute', 'before bed', 'at work', 'morning routine', 'shopping', 'reviewing purchases']
+const ENERGY_PRESETS = ['high', 'medium', 'low']
+const MOOD_PRESETS = ['organized', 'calm', 'focused', 'anxious', 'energized', 'reflective', 'playful', 'stressed', 'impulsive', 'mindful']
 
 interface CaptureConfirmationProps {
   data: InferredData
@@ -68,7 +74,16 @@ export function CaptureConfirmation({
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [editingField, setEditingField] = useState<string | null>(null)
   
+  // Enrichment fields for context metadata
+  const [showContext, setShowContext] = useState(false)
+  const [enrichment, setEnrichment] = useState<EntryEnrichment>(data.metadata?.enrichment || {})
+  
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Update enrichment field helper
+  const updateEnrichment = (field: keyof EntryEnrichment, value: string | string[] | undefined) => {
+    setEnrichment(prev => ({ ...prev, [field]: value }))
+  }
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -91,6 +106,18 @@ export function CaptureConfirmation({
   }
 
   const handlePublish = () => {
+    // Build metadata with enrichment
+    const hasEnrichment = enrichment.activity || enrichment.energy || enrichment.mood?.length || enrichment.environment || enrichment.trigger
+    const finalMetadata: EntryMetadata | undefined = data.metadata || hasEnrichment ? {
+      ...(data.metadata || {
+        captured_at: new Date().toISOString(),
+        day_of_week: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
+        time_of_day: getTimeOfDay(),
+        device: getDeviceType(),
+      }),
+      enrichment: hasEnrichment ? enrichment : undefined,
+    } : undefined
+    
     onPublish({
       headline,
       subheading,
@@ -105,9 +132,28 @@ export function CaptureConfirmation({
       image_extracted_data: data.image_extracted_data,
       // Pass through the multi-file gallery (includes PDFs and documents)
       images: data.images,
-      // Pass through the metadata (auto-captured context)
-      metadata: data.metadata,
+      // Pass through the metadata with enrichment
+      metadata: finalMetadata,
     })
+  }
+  
+  // Helper to get time of day
+  function getTimeOfDay(): string {
+    const hour = new Date().getHours()
+    if (hour < 6) return 'night'
+    if (hour < 12) return 'morning'
+    if (hour < 17) return 'afternoon'
+    if (hour < 21) return 'evening'
+    return 'night'
+  }
+  
+  // Helper to get device type
+  function getDeviceType(): 'mobile' | 'tablet' | 'desktop' {
+    if (typeof window === 'undefined') return 'desktop'
+    const width = window.innerWidth
+    if (width < 768) return 'mobile'
+    if (width < 1024) return 'tablet'
+    return 'desktop'
   }
 
   const fieldStyle = {
@@ -466,6 +512,220 @@ export function CaptureConfirmation({
             )}
           </div>
         )}
+
+        {/* Context Enrichment Section */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div 
+            onClick={() => setShowContext(!showContext)}
+            style={{ 
+              cursor: 'pointer',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '0.75rem',
+              background: '#F9FAFB',
+              borderRadius: '6px',
+              border: '1px solid #E5E7EB',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '1rem' }}>📍</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#374151' }}>
+                Add Context
+              </span>
+              {/* Show summary of enrichment if any */}
+              {(enrichment.activity || enrichment.energy || enrichment.trigger) && (
+                <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>
+                  {enrichment.activity && `• ${enrichment.activity}`}
+                  {enrichment.energy && ` • ${enrichment.energy} energy`}
+                </span>
+              )}
+            </div>
+            <span style={{ color: '#6B7280', fontSize: '0.8rem' }}>
+              {showContext ? '▼' : '▶'}
+            </span>
+          </div>
+          
+          {showContext && (
+            <div style={{ 
+              marginTop: '1rem', 
+              padding: '1rem',
+              background: '#FAFAFA',
+              borderRadius: '6px',
+              border: '1px solid #E5E7EB',
+            }}>
+              {/* Activity */}
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ 
+                  fontSize: '0.7rem', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.05rem',
+                  color: '#6B7280', 
+                  display: 'block', 
+                  marginBottom: '0.5rem' 
+                }}>
+                  Activity
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {ACTIVITY_PRESETS.map(activity => (
+                    <button
+                      key={activity}
+                      type="button"
+                      onClick={() => updateEnrichment('activity', enrichment.activity === activity ? undefined : activity)}
+                      style={{
+                        padding: '0.4rem 0.8rem',
+                        borderRadius: '20px',
+                        border: enrichment.activity === activity ? '2px solid #DC143C' : '1px solid #D1D5DB',
+                        background: enrichment.activity === activity ? '#FDF2F4' : '#FFFFFF',
+                        color: enrichment.activity === activity ? '#DC143C' : '#4B5563',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {activity}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Energy */}
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ 
+                  fontSize: '0.7rem', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.05rem',
+                  color: '#6B7280', 
+                  display: 'block', 
+                  marginBottom: '0.5rem' 
+                }}>
+                  Energy
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {ENERGY_PRESETS.map(energy => (
+                    <button
+                      key={energy}
+                      type="button"
+                      onClick={() => updateEnrichment('energy', enrichment.energy === energy ? undefined : energy)}
+                      style={{
+                        padding: '0.4rem 0.8rem',
+                        borderRadius: '20px',
+                        border: enrichment.energy === energy ? '2px solid #DC143C' : '1px solid #D1D5DB',
+                        background: enrichment.energy === energy ? '#FDF2F4' : '#FFFFFF',
+                        color: enrichment.energy === energy ? '#DC143C' : '#4B5563',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {energy}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Mood (multi-select) */}
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ 
+                  fontSize: '0.7rem', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.05rem',
+                  color: '#6B7280', 
+                  display: 'block', 
+                  marginBottom: '0.5rem' 
+                }}>
+                  Mood
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {MOOD_PRESETS.map(moodOption => {
+                    const isSelected = enrichment.mood?.includes(moodOption)
+                    return (
+                      <button
+                        key={moodOption}
+                        type="button"
+                        onClick={() => {
+                          const currentMoods = enrichment.mood || []
+                          const newMoods = isSelected 
+                            ? currentMoods.filter(m => m !== moodOption)
+                            : [...currentMoods, moodOption]
+                          updateEnrichment('mood', newMoods.length > 0 ? newMoods : undefined)
+                        }}
+                        style={{
+                          padding: '0.4rem 0.8rem',
+                          borderRadius: '20px',
+                          border: isSelected ? '2px solid #DC143C' : '1px solid #D1D5DB',
+                          background: isSelected ? '#FDF2F4' : '#FFFFFF',
+                          color: isSelected ? '#DC143C' : '#4B5563',
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {moodOption}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              
+              {/* Environment (free text) */}
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ 
+                  fontSize: '0.7rem', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.05rem',
+                  color: '#6B7280', 
+                  display: 'block', 
+                  marginBottom: '0.5rem' 
+                }}>
+                  Environment
+                </label>
+                <input
+                  type="text"
+                  value={enrichment.environment || ''}
+                  onChange={(e) => updateEnrichment('environment', e.target.value || undefined)}
+                  placeholder="Where are you? What's the setting?"
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.8rem',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '6px',
+                    fontSize: '0.9rem',
+                    background: '#FFFFFF',
+                  }}
+                />
+              </div>
+              
+              {/* Trigger / What prompted this (free text) */}
+              <div>
+                <label style={{ 
+                  fontSize: '0.7rem', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.05rem',
+                  color: '#6B7280', 
+                  display: 'block', 
+                  marginBottom: '0.5rem' 
+                }}>
+                  What Triggered This?
+                </label>
+                <input
+                  type="text"
+                  value={enrichment.trigger || ''}
+                  onChange={(e) => updateEnrichment('trigger', e.target.value || undefined)}
+                  placeholder="What prompted this entry? (e.g., impulse buy, planned purchase...)"
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.8rem',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '6px',
+                    fontSize: '0.9rem',
+                    background: '#FFFFFF',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* AI Detected Section - Show extracted document content */}
         {data.images && data.images.some(img => img.extracted_data?.imageType === 'document' && img.extracted_data?.combinedNarrative) && (

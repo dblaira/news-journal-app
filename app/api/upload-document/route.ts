@@ -59,6 +59,7 @@ async function convertPdfToImage(buffer: Buffer): Promise<string | null> {
       disableFontFace: true, // Avoid font loading issues in serverless
       useSystemFonts: true,
       pagesToProcess: [1], // Only process first page (most receipts are single page)
+      verbosityLevel: 0, // Suppress pdfjs warnings
     })
     
     if (pngPages && pngPages.length > 0 && pngPages[0].content) {
@@ -71,6 +72,25 @@ async function convertPdfToImage(buffer: Buffer): Promise<string | null> {
     return null
   } catch (error) {
     console.error('🖼️ PDF to image conversion failed:', error instanceof Error ? error.message : error)
+    
+    // Fallback: try using sharp if available (for systems with libvips PDF support)
+    try {
+      console.log('🖼️ Trying sharp fallback for PDF conversion...')
+      const sharp = (await import('sharp')).default
+      const imageBuffer = await sharp(buffer, { 
+        density: 150,
+        pages: 1,
+      })
+        .png()
+        .toBuffer()
+      
+      const base64 = imageBuffer.toString('base64')
+      console.log(`🖼️ Sharp converted PDF to PNG: ${base64.length} base64 chars`)
+      return base64
+    } catch (sharpError) {
+      console.error('🖼️ Sharp fallback also failed:', sharpError instanceof Error ? sharpError.message : sharpError)
+    }
+    
     return null
   }
 }
@@ -156,19 +176,19 @@ async function performOCR(buffer: Buffer, fileName: string): Promise<string> {
 async function extractPdfText(buffer: Buffer, fileName: string): Promise<string> {
   console.log(`📄 Starting PDF extraction, buffer size: ${buffer.length} bytes`)
   
-  // Method 1: Try pdf-parse (most reliable for text-based PDFs)
+  // Method 1: Try pdf-parse (CommonJS module - use require pattern)
   try {
-    const pdfParseModule = await import('pdf-parse')
-    const pdfParse = pdfParseModule.default || pdfParseModule
+    // pdf-parse is a CommonJS module, need special handling
+    const pdfParse = require('pdf-parse')
     
     console.log('📄 pdf-parse module loaded, attempting extraction...')
     const data = await pdfParse(buffer, { max: 10 })
     
-    if (data.text && data.text.trim().length > 50) {
+    if (data && data.text && typeof data.text === 'string' && data.text.trim().length > 50) {
       console.log(`📄 pdf-parse SUCCESS: ${data.numpages} pages, ${data.text.length} chars`)
       return data.text
     }
-    console.log(`📄 pdf-parse returned minimal text (${data.text?.length || 0} chars) - likely image-based PDF`)
+    console.log(`📄 pdf-parse returned minimal text (${data?.text?.length || 0} chars) - likely image-based PDF`)
   } catch (pdfParseError) {
     const errorMsg = pdfParseError instanceof Error ? pdfParseError.message : String(pdfParseError)
     console.error('📄 pdf-parse FAILED:', errorMsg)
@@ -180,11 +200,16 @@ async function extractPdfText(buffer: Buffer, fileName: string): Promise<string>
     const { extractText } = await import('unpdf')
     const result = await extractText(new Uint8Array(buffer))
     
-    if (result.text && result.text.trim().length > 50) {
-      console.log(`📄 unpdf SUCCESS: ${result.totalPages} pages, ${result.text.length} chars`)
-      return result.text
+    // unpdf returns { text: string, totalPages: number } but text might be in different format
+    const text = typeof result === 'string' ? result : (result?.text || '')
+    const textStr = typeof text === 'string' ? text : String(text || '')
+    
+    if (textStr && textStr.trim().length > 50) {
+      const pages = typeof result === 'object' ? result?.totalPages : 'unknown'
+      console.log(`📄 unpdf SUCCESS: ${pages} pages, ${textStr.length} chars`)
+      return textStr
     }
-    console.log(`📄 unpdf returned minimal text (${result.text?.length || 0} chars)`)
+    console.log(`📄 unpdf returned minimal text (${textStr?.length || 0} chars)`)
   } catch (unpdfError) {
     const errorMsg = unpdfError instanceof Error ? unpdfError.message : String(unpdfError)
     console.error('📄 unpdf FAILED:', errorMsg)
