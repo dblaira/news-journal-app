@@ -5,8 +5,8 @@ import { addEntryImage } from '@/app/actions/entries'
 import * as XLSX from 'xlsx'
 
 export const runtime = 'nodejs'
-// Increase timeout for PDF processing
-export const maxDuration = 60
+// Increase timeout for PDF processing and OCR
+export const maxDuration = 120
 
 // Determine file type from MIME type
 function getFileTypeFromMime(mimeType: string): string {
@@ -17,54 +17,189 @@ function getFileTypeFromMime(mimeType: string): string {
   return 'other'
 }
 
-// PDF text extraction - using multiple fallback methods
-async function extractPdfText(buffer: Buffer): Promise<string> {
+// OCR prompt optimized for receipts and invoices
+const OCR_SYSTEM_PROMPT = `You are an OCR assistant that extracts text from document images, especially receipts, invoices, and order confirmations.
+
+Extract ALL visible text from the image, organized in a readable format. Pay special attention to:
+
+1. **Header/Merchant Info**: Store name, website, logo text
+2. **Order Details**: Order number, order date, delivery date
+3. **Items**: Product names, quantities, prices (individual and total)
+4. **Payment Info**: Payment method, card type (last 4 digits only)
+5. **Shipping**: Address, tracking numbers
+6. **Totals**: Subtotal, tax, shipping cost, grand total
+
+Format the extracted text clearly with labels. For receipts/invoices, structure it like:
+
+MERCHANT: [name]
+ORDER #: [number]
+DATE: [date]
+
+ITEMS:
+- [item name] - [qty] x [price] = [total]
+...
+
+SUBTOTAL: [amount]
+TAX: [amount]
+SHIPPING: [amount]
+TOTAL: [amount]
+
+If it's not a receipt, just extract all visible text in a logical reading order.`
+
+// Convert PDF to base64 PNG image using pdf-to-png-converter (serverless-friendly)
+async function convertPdfToImage(buffer: Buffer): Promise<string | null> {
+  console.log('🖼️ Converting PDF to image for OCR...')
+  
+  try {
+    // Use pdf-to-png-converter - works in serverless without external dependencies
+    const { pdfToPng } = await import('pdf-to-png-converter')
+    
+    const pngPages = await pdfToPng(buffer, {
+      viewportScale: 2.0, // Higher scale for better OCR quality
+      disableFontFace: true, // Avoid font loading issues in serverless
+      useSystemFonts: true,
+      pagesToProcess: [1], // Only process first page (most receipts are single page)
+    })
+    
+    if (pngPages && pngPages.length > 0 && pngPages[0].content) {
+      const base64 = pngPages[0].content.toString('base64')
+      console.log(`🖼️ PDF converted to PNG: ${base64.length} base64 chars, dimensions: ${pngPages[0].width}x${pngPages[0].height}`)
+      return base64
+    }
+    
+    console.log('🖼️ pdf-to-png-converter returned no pages')
+    return null
+  } catch (error) {
+    console.error('🖼️ PDF to image conversion failed:', error instanceof Error ? error.message : error)
+    return null
+  }
+}
+
+// Use Claude Vision API for OCR on image-based PDFs
+async function performOCR(buffer: Buffer, fileName: string): Promise<string> {
+  console.log('🔍 Starting Vision API OCR...')
+  
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    console.error('🔍 OCR failed: No API key configured')
+    return ''
+  }
+  
+  try {
+    // Convert PDF to PNG image
+    const imageBase64 = await convertPdfToImage(buffer)
+    
+    if (!imageBase64) {
+      console.error('🔍 OCR failed: Could not convert PDF to image')
+      return ''
+    }
+    
+    console.log(`🔍 Sending image to Claude Vision for OCR (${imageBase64.length} base64 chars)`)
+    
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: OCR_SYSTEM_PROMPT,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: 'image/png',
+                  data: imageBase64,
+                },
+              },
+              {
+                type: 'text',
+                text: `Extract all text from this document image. This is likely a receipt, invoice, or order confirmation. File: ${fileName}`,
+              },
+            ],
+          },
+        ],
+      }),
+    })
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('🔍 Vision API error:', response.status, errorText)
+      return ''
+    }
+    
+    const data = await response.json()
+    const content = data.content?.[0]
+    
+    if (content?.type === 'text' && content.text) {
+      console.log(`🔍 OCR SUCCESS: Extracted ${content.text.length} chars`)
+      console.log(`🔍 First 300 chars: ${content.text.substring(0, 300)}`)
+      return content.text
+    }
+    
+    console.log('🔍 OCR returned no text')
+    return ''
+  } catch (error) {
+    console.error('🔍 OCR error:', error instanceof Error ? error.message : error)
+    return ''
+  }
+}
+
+// PDF text extraction - using multiple fallback methods including OCR
+async function extractPdfText(buffer: Buffer, fileName: string): Promise<string> {
   console.log(`📄 Starting PDF extraction, buffer size: ${buffer.length} bytes`)
   
-  // Method 1: Try pdf-parse (most reliable in serverless)
+  // Method 1: Try pdf-parse (most reliable for text-based PDFs)
   try {
-    // Dynamic import with CommonJS fallback handling
     const pdfParseModule = await import('pdf-parse')
     const pdfParse = pdfParseModule.default || pdfParseModule
     
     console.log('📄 pdf-parse module loaded, attempting extraction...')
-    const data = await pdfParse(buffer, {
-      // Limit pages for faster processing
-      max: 10,
-    })
+    const data = await pdfParse(buffer, { max: 10 })
     
-    if (data.text && data.text.trim().length > 0) {
+    if (data.text && data.text.trim().length > 50) {
       console.log(`📄 pdf-parse SUCCESS: ${data.numpages} pages, ${data.text.length} chars`)
-      console.log(`📄 First 200 chars: ${data.text.substring(0, 200)}`)
       return data.text
     }
-    console.log('📄 pdf-parse returned empty text (PDF may be image-based)')
+    console.log(`📄 pdf-parse returned minimal text (${data.text?.length || 0} chars) - likely image-based PDF`)
   } catch (pdfParseError) {
     const errorMsg = pdfParseError instanceof Error ? pdfParseError.message : String(pdfParseError)
     console.error('📄 pdf-parse FAILED:', errorMsg)
-    // Log full stack trace for debugging
-    if (pdfParseError instanceof Error && pdfParseError.stack) {
-      console.error('📄 Stack:', pdfParseError.stack.split('\n').slice(0, 5).join('\n'))
-    }
   }
 
-  // Method 2: Fallback to unpdf if pdf-parse fails
+  // Method 2: Try unpdf as fallback
   try {
     console.log('📄 Trying unpdf fallback...')
     const { extractText } = await import('unpdf')
     const result = await extractText(new Uint8Array(buffer))
     
-    if (result.text && result.text.trim().length > 0) {
+    if (result.text && result.text.trim().length > 50) {
       console.log(`📄 unpdf SUCCESS: ${result.totalPages} pages, ${result.text.length} chars`)
       return result.text
     }
-    console.log('📄 unpdf returned empty text')
+    console.log(`📄 unpdf returned minimal text (${result.text?.length || 0} chars)`)
   } catch (unpdfError) {
     const errorMsg = unpdfError instanceof Error ? unpdfError.message : String(unpdfError)
     console.error('📄 unpdf FAILED:', errorMsg)
   }
 
-  console.log('📄 All PDF extraction methods failed - PDF may be scanned/image-based')
+  // Method 3: OCR via Vision API for image-based PDFs
+  console.log('📄 Text extraction failed - attempting OCR via Vision API...')
+  const ocrText = await performOCR(buffer, fileName)
+  
+  if (ocrText && ocrText.trim().length > 0) {
+    console.log(`📄 OCR SUCCESS: ${ocrText.length} chars extracted`)
+    return ocrText
+  }
+
+  console.log('📄 All extraction methods failed')
   return ''
 }
 
@@ -189,16 +324,16 @@ export async function POST(request: NextRequest) {
           extractedText = lines.join('\n')
         }
       } else if (detectedType === 'pdf') {
-        // Actually extract PDF text content
+        // Extract PDF text content (includes OCR fallback for image-based PDFs)
         console.log(`📄 Processing PDF: ${file.name}, size: ${(buffer.length / 1024).toFixed(1)}KB`)
-        const pdfText = await extractPdfText(buffer)
+        const pdfText = await extractPdfText(buffer, file.name)
         if (pdfText && pdfText.trim().length > 0) {
-          // Limit to first ~3000 chars for AI processing (allow more context)
-          extractedText = pdfText.substring(0, 3000)
+          // Limit to first ~4000 chars for AI processing (allow more context for receipts)
+          extractedText = pdfText.substring(0, 4000)
           console.log(`📄 PDF extraction SUCCESS: ${pdfText.length} total chars, sending ${extractedText.length} chars from ${file.name}`)
         } else {
           console.log(`📄 PDF extraction FAILED: No text extracted from ${file.name}`)
-          extractedText = `PDF document uploaded: ${file.name} (${(buffer.length / 1024).toFixed(1)}KB) - Could not extract text. This may be a scanned image PDF.`
+          extractedText = `PDF document uploaded: ${file.name} (${(buffer.length / 1024).toFixed(1)}KB) - Could not extract text.`
         }
       } else if (detectedType === 'xlsx') {
         // Extract actual Excel content
