@@ -4,7 +4,8 @@ import { createStorageClient } from '@/lib/supabase/storage'
 export async function processEntryPhoto(
   file: File,
   userId: string,
-  entryId: string
+  entryId: string,
+  imageIndex?: number
 ): Promise<string> {
   // Validate file type
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -33,7 +34,10 @@ export async function processEntryPhoto(
 
   // Upload to Supabase Storage using storage client (prefers service role key)
   const supabase = createStorageClient()
-  const fileName = `${entryId}.webp`
+  // Include imageIndex in filename for multi-image support
+  const timestamp = Date.now()
+  const indexSuffix = imageIndex !== undefined ? `-${imageIndex}` : ''
+  const fileName = `${entryId}${indexSuffix}-${timestamp}.webp`
   const filePath = `${userId}/${fileName}`
 
   const { data, error } = await supabase.storage

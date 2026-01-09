@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Entry, Version, MindMap, ReactFlowNode, ReactFlowEdge, EntryMetadata } from '@/types'
+import { Entry, Version, MindMap, ReactFlowNode, ReactFlowEdge, EntryMetadata, EntryImage } from '@/types'
 import { formatEntryDateLong, stripHtml } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
 import { incrementViewCount, removeEntryPhoto, togglePin, updateEntryContent, updateEntryDetails } from '@/app/actions/entries'
+import { getEntryImages } from '@/lib/utils/entry-images'
 import { TiptapEditor } from './editor/TiptapEditor'
 import { generateMindMap, toReactFlowFormat } from '@/lib/mindmap/utils'
 import MetadataEnrichment from './entry/MetadataEnrichment'
+import { ImageGallery } from './entry/ImageGallery'
 
 // Dynamic import for MindMapCanvas to avoid SSR issues with ReactFlow
 const MindMapCanvas = dynamic(() => import('./mindmap/MindMapCanvas'), { ssr: false })
@@ -46,6 +48,9 @@ export function EntryModal({
   const [isTogglingPin, setIsTogglingPin] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
+  // Multi-image gallery state
+  const [entryImages, setEntryImages] = useState<EntryImage[]>(() => getEntryImages(entry))
+  
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(entry.content)
@@ -61,6 +66,11 @@ export function EntryModal({
   
   // Metadata state (for enrichment updates)
   const [currentMetadata, setCurrentMetadata] = useState(entry.metadata as EntryMetadata | undefined)
+
+  // Export state
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const exportMenuRef = useRef<HTMLDivElement>(null)
 
   // Mobile detection for responsive button layout
   const [isMobile, setIsMobile] = useState(false)
@@ -97,6 +107,11 @@ export function EntryModal({
     setIsPinned(!!entry.pinned_at)
   }, [entry.pinned_at])
 
+  // Update images when entry changes
+  useEffect(() => {
+    setEntryImages(getEntryImages(entry))
+  }, [entry.images, entry.image_url, entry.photo_url])
+
   // Update edited content when entry changes
   useEffect(() => {
     setEditedContent(entry.content)
@@ -104,6 +119,60 @@ export function EntryModal({
     setEditedSubheading(entry.subheading || '')
     setIsEditing(false)
   }, [entry.id, entry.content, entry.headline, entry.subheading])
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false)
+      }
+    }
+    if (showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showExportMenu])
+
+  // Handle export
+  const handleExport = async (format: 'pdf' | 'csv' | 'xlsx' | 'docx') => {
+    setIsExporting(true)
+    setShowExportMenu(false)
+    try {
+      const response = await fetch('/api/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          format,
+          entryIds: [entry.id],
+          title: entry.headline || 'Entry Export',
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Export failed')
+      }
+
+      // Download the file
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const timestamp = new Date().toISOString().split('T')[0]
+      a.download = `${entry.headline || 'entry'}-${timestamp}.${format}`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Export error:', error)
+      alert(error instanceof Error ? error.message : 'Export failed')
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   // Handle save content
   const handleSaveContent = async (content: string) => {
@@ -508,6 +577,99 @@ export function EntryModal({
             {isMobile ? (isTogglingPin ? '…' : (isPinned ? '◉' : '○')) : (isTogglingPin ? '...' : isPinned ? 'Unpin' : 'Pin')}
           </button>
           
+          {/* Export button with dropdown */}
+          <div ref={exportMenuRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              disabled={isExporting}
+              aria-label="Export"
+              title="Export entry"
+              style={{
+                background: 'transparent',
+                color: '#6366F1',
+                border: '1px solid #6366F1',
+                padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
+                cursor: isExporting ? 'not-allowed' : 'pointer',
+                fontSize: isMobile ? '1rem' : '0.85rem',
+                borderRadius: 0,
+                fontWeight: 600,
+                letterSpacing: '0.05rem',
+                textTransform: 'uppercase',
+                transition: 'all 0.2s ease',
+                opacity: isExporting ? 0.6 : 1,
+                minWidth: isMobile ? '36px' : 'auto',
+              }}
+              onMouseEnter={(e) => {
+                if (!isExporting) {
+                  e.currentTarget.style.background = '#6366F1'
+                  e.currentTarget.style.color = '#FFFFFF'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isExporting) {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = '#6366F1'
+                }
+              }}
+            >
+              {isMobile ? (isExporting ? '…' : '↓') : (isExporting ? 'Exporting...' : 'Export ▾')}
+            </button>
+            
+            {/* Export dropdown menu */}
+            {showExportMenu && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '0.25rem',
+                  background: '#FFFFFF',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '4px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  zIndex: 100,
+                  minWidth: '140px',
+                  overflow: 'hidden',
+                }}
+              >
+                {[
+                  { format: 'pdf' as const, label: 'PDF', icon: '📄' },
+                  { format: 'docx' as const, label: 'Word', icon: '📝' },
+                  { format: 'xlsx' as const, label: 'Excel', icon: '📊' },
+                  { format: 'csv' as const, label: 'CSV', icon: '📋' },
+                ].map(({ format, label, icon }) => (
+                  <button
+                    key={format}
+                    onClick={() => handleExport(format)}
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 1rem',
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: format !== 'csv' ? '1px solid #F3F4F6' : 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      transition: 'background 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#F3F4F6'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                    }}
+                  >
+                    <span>{icon}</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          
           {/* Delete button */}
           <button
             onClick={() => onDeleteEntry(entry.id)}
@@ -635,197 +797,19 @@ export function EntryModal({
           style={{ display: 'none' }}
         />
 
-        {/* Photo Section */}
-        <div style={{ marginBottom: '2rem' }}>
-          {currentPhotoUrl ? (
-            <>
-              <img
-                src={currentPhotoUrl}
-                alt={entry.headline}
-                onError={(e) => {
-                  console.error('Image failed to load:', currentPhotoUrl)
-                  e.currentTarget.style.display = 'none'
-                }}
-                style={{
-                  width: '100%',
-                  maxHeight: '400px',
-                  objectFit: 'cover',
-                  borderRadius: '8px',
-                }}
-              />
-              
-              {/* Display AI-extracted data from multimodal capture */}
-              {entry.image_extracted_data && (
-                <div
-                  style={{
-                    marginTop: '0.75rem',
-                    padding: '0.75rem 1rem',
-                    background: '#f0f9ff',
-                    borderRadius: '6px',
-                    border: '1px solid #bae6fd',
-                  }}
-                >
-                  <div style={{ fontSize: '0.7rem', color: '#0369a1', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase' }}>
-                    🤖 AI Detected: {entry.image_extracted_data.imageType}
-                  </div>
-                  
-                  {/* New context-aware structure: userConnectionAnalysis */}
-                  {entry.image_extracted_data.userConnectionAnalysis && (
-                    <div style={{ marginBottom: '0.5rem' }}>
-                      <div style={{ fontSize: '0.85rem', color: '#374151', fontWeight: 500 }}>
-                        {entry.image_extracted_data.userConnectionAnalysis.whatTheyNoticedAbout}
-                      </div>
-                      {entry.image_extracted_data.userConnectionAnalysis.keyElements?.length > 0 && (
-                        <div style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: '0.25rem' }}>
-                          Key elements: {entry.image_extracted_data.userConnectionAnalysis.keyElements.join(' • ')}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* New structure: extractedText.titles */}
-                  {entry.image_extracted_data.extractedText?.titles && entry.image_extracted_data.extractedText.titles.length > 0 && (
-                    <div style={{ fontSize: '0.85rem', color: '#374151', marginBottom: '0.5rem' }}>
-                      <strong>Titles:</strong> {entry.image_extracted_data.extractedText.titles.join(', ')}
-                    </div>
-                  )}
-
-                  {/* Purchase data (both old and new structure) */}
-                  {entry.image_extracted_data.purchase?.detected && entry.image_extracted_data.purchase.productName && (
-                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                      <strong>{entry.image_extracted_data.purchase.productName}</strong>
-                      {entry.image_extracted_data.purchase.price && (
-                        <span style={{ color: '#6B7280' }}> • ${entry.image_extracted_data.purchase.price}</span>
-                      )}
-                      {entry.image_extracted_data.purchase.seller && (
-                        <span style={{ color: '#6B7280' }}> • {entry.image_extracted_data.purchase.seller}</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Legacy purchase structure (for old entries) */}
-                  {!entry.image_extracted_data.purchase?.detected && (entry.image_extracted_data as any).purchase?.productName && (
-                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                      <strong>{(entry.image_extracted_data as any).purchase.productName}</strong>
-                      <span style={{ color: '#6B7280' }}> • ${(entry.image_extracted_data as any).purchase.price} • {(entry.image_extracted_data as any).purchase.seller}</span>
-                    </div>
-                  )}
-
-                  {/* Legacy receipt (for old entries) */}
-                  {(entry.image_extracted_data as any).receipt?.merchant && (
-                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                      <strong>{(entry.image_extracted_data as any).receipt.merchant}</strong>
-                      <span style={{ color: '#6B7280' }}> • ${(entry.image_extracted_data as any).receipt.total}</span>
-                    </div>
-                  )}
-
-                  {/* Legacy media (for old entries) */}
-                  {(entry.image_extracted_data as any).media?.title && (
-                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                      <strong>{(entry.image_extracted_data as any).media.title}</strong>
-                      {(entry.image_extracted_data as any).media.author && (
-                        <span style={{ color: '#6B7280' }}> by {(entry.image_extracted_data as any).media.author}</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Legacy travel (for old entries) */}
-                  {(entry.image_extracted_data as any).travel?.type && (
-                    <div style={{ fontSize: '0.85rem', color: '#374151' }}>
-                      <strong>{(entry.image_extracted_data as any).travel.type}</strong>
-                      {(entry.image_extracted_data as any).travel.destination && (
-                        <span style={{ color: '#6B7280' }}> → {(entry.image_extracted_data as any).travel.destination}</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Tags */}
-                  {entry.image_extracted_data.suggestedTags && entry.image_extracted_data.suggestedTags.length > 0 && (
-                    <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                      {entry.image_extracted_data.suggestedTags.map((tag: string, i: number) => (
-                        <span
-                          key={i}
-                          style={{
-                            background: '#e0f2fe',
-                            color: '#0369a1',
-                            padding: '0.15rem 0.4rem',
-                            borderRadius: '3px',
-                            fontSize: '0.7rem',
-                          }}
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div style={{ 
-                marginTop: '0.75rem', 
-                display: 'flex', 
-                gap: '0.5rem',
-                flexWrap: 'wrap'
-              }}>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploadingPhoto}
-                  style={{
-                    background: 'transparent',
-                    color: '#666',
-                    border: '1px solid #ddd',
-                    padding: '0.4rem 0.8rem',
-                    cursor: isUploadingPhoto ? 'not-allowed' : 'pointer',
-                    fontSize: '0.75rem',
-                    borderRadius: '4px',
-                    fontWeight: 500,
-                    transition: 'all 0.2s ease',
-                    opacity: isUploadingPhoto ? 0.6 : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isUploadingPhoto) {
-                      e.currentTarget.style.borderColor = '#DC143C'
-                      e.currentTarget.style.color = '#DC143C'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#ddd'
-                    e.currentTarget.style.color = '#666'
-                  }}
-                >
-                  {isUploadingPhoto ? 'Uploading...' : 'Change Photo'}
-                </button>
-                <button
-                  onClick={handleRemovePhoto}
-                  disabled={isRemovingPhoto}
-                  style={{
-                    background: 'transparent',
-                    color: '#DC143C',
-                    border: '1px solid #DC143C',
-                    padding: '0.4rem 0.8rem',
-                    cursor: isRemovingPhoto ? 'not-allowed' : 'pointer',
-                    fontSize: '0.75rem',
-                    borderRadius: '4px',
-                    fontWeight: 500,
-                    transition: 'all 0.2s ease',
-                    opacity: isRemovingPhoto ? 0.6 : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isRemovingPhoto) {
-                      e.currentTarget.style.background = '#DC143C'
-                      e.currentTarget.style.color = '#FFFFFF'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent'
-                    e.currentTarget.style.color = '#DC143C'
-                  }}
-                >
-                  {isRemovingPhoto ? 'Removing...' : 'Remove Photo'}
-                </button>
-              </div>
-            </>
-          ) : (
+        {/* Image Gallery Section */}
+        {entryImages.length > 0 ? (
+          <ImageGallery
+            images={entryImages}
+            entryId={entry.id}
+            onImagesUpdated={(updatedImages) => {
+              setEntryImages(updatedImages)
+              onEntryUpdated?.(entry.id, { images: updatedImages })
+            }}
+            editable={true}
+          />
+        ) : (
+          <div style={{ marginBottom: '2rem' }}>
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploadingPhoto}
@@ -854,8 +838,72 @@ export function EntryModal({
             >
               {isUploadingPhoto ? 'Uploading...' : '📷 Click to Add Photo'}
             </button>
-          )}
-        </div>
+          </div>
+        )}
+        
+        {/* Display AI-extracted data from first image (for backward compatibility) */}
+        {entry.image_extracted_data && (
+          <div
+            style={{
+              marginBottom: '1.5rem',
+              padding: '0.75rem 1rem',
+              background: '#f0f9ff',
+              borderRadius: '6px',
+              border: '1px solid #bae6fd',
+            }}
+          >
+            <div style={{ fontSize: '0.7rem', color: '#0369a1', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase' }}>
+              🤖 AI Detected: {entry.image_extracted_data.imageType}
+            </div>
+            
+            {/* Context-aware structure: userConnectionAnalysis */}
+            {entry.image_extracted_data.userConnectionAnalysis && (
+              <div style={{ marginBottom: '0.5rem' }}>
+                <div style={{ fontSize: '0.85rem', color: '#374151', fontWeight: 500 }}>
+                  {entry.image_extracted_data.userConnectionAnalysis.whatTheyNoticedAbout}
+                </div>
+                {entry.image_extracted_data.userConnectionAnalysis.keyElements?.length > 0 && (
+                  <div style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: '0.25rem' }}>
+                    Key elements: {entry.image_extracted_data.userConnectionAnalysis.keyElements.join(' • ')}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Purchase data */}
+            {entry.image_extracted_data.purchase?.detected && entry.image_extracted_data.purchase.productName && (
+              <div style={{ fontSize: '0.85rem', color: '#374151' }}>
+                <strong>{entry.image_extracted_data.purchase.productName}</strong>
+                {entry.image_extracted_data.purchase.price && (
+                  <span style={{ color: '#6B7280' }}> • ${entry.image_extracted_data.purchase.price}</span>
+                )}
+                {entry.image_extracted_data.purchase.seller && (
+                  <span style={{ color: '#6B7280' }}> • {entry.image_extracted_data.purchase.seller}</span>
+                )}
+              </div>
+            )}
+
+            {/* Tags */}
+            {entry.image_extracted_data.suggestedTags && entry.image_extracted_data.suggestedTags.length > 0 && (
+              <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                {entry.image_extracted_data.suggestedTags.map((tag: string, i: number) => (
+                  <span
+                    key={i}
+                    style={{
+                      background: '#e0f2fe',
+                      color: '#0369a1',
+                      padding: '0.15rem 0.4rem',
+                      borderRadius: '3px',
+                      fontSize: '0.7rem',
+                    }}
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div
           style={{

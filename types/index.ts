@@ -7,6 +7,17 @@ export type { ImageExtraction, ImageAttachment } from './multimodal'
 // Re-export metadata types for convenience
 export type { EntryMetadata, EntryEnrichment, AutoCapturedMetadata } from './metadata'
 
+// Multi-image support: each entry can have up to 6 images
+export interface EntryImage {
+  url: string
+  extracted_data?: import('./multimodal').ImageExtraction
+  is_poster: boolean
+  order: number
+}
+
+// Maximum images allowed per entry
+export const MAX_IMAGES_PER_ENTRY = 6
+
 export interface Entry {
   id: string
   headline: string
@@ -33,9 +44,11 @@ export interface Entry {
   completed_at?: string | null
   // Pin feature
   pinned_at?: string | null
-  // Multimodal capture fields
+  // Multimodal capture fields (legacy single-image support)
   image_url?: string
   image_extracted_data?: import('./multimodal').ImageExtraction
+  // Multi-image gallery (new - up to 6 images)
+  images?: EntryImage[]
   // Metadata capture fields
   metadata?: import('./metadata').EntryMetadata
 }
@@ -72,9 +85,11 @@ export interface CreateEntryInput {
   entry_type?: EntryType
   due_date?: string | null
   recurrence_rule?: string | null
-  // Multimodal capture fields
+  // Multimodal capture fields (legacy single-image support)
   image_url?: string
   image_extracted_data?: import('./multimodal').ImageExtraction
+  // Multi-image gallery (new - up to 6 images)
+  images?: EntryImage[]
   // Metadata capture fields
   metadata?: import('./metadata').EntryMetadata
 }

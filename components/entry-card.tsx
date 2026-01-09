@@ -1,9 +1,29 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Entry } from '@/types'
+import { Entry, EntryImage } from '@/types'
 import { formatEntryDateLong, formatEntryDateShort } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
+
+// Helper to get poster image URL from entry (handles both new images array and legacy fields)
+function getEntryPosterUrl(entry: Entry): string {
+  // Check new images array first
+  if (entry.images && entry.images.length > 0) {
+    const poster = entry.images.find(img => img.is_poster)
+    return poster?.url || entry.images[0]?.url || getCategoryImage(entry.category)
+  }
+  // Fallback to legacy single image fields
+  return entry.image_url || entry.photo_url || getCategoryImage(entry.category)
+}
+
+// Helper to get total image count
+function getImageCount(entry: Entry): number {
+  if (entry.images && entry.images.length > 0) {
+    return entry.images.length
+  }
+  // Legacy: count single image if present
+  return (entry.image_url || entry.photo_url) ? 1 : 0
+}
 
 interface EntryCardProps {
   entry: Entry
@@ -20,9 +40,11 @@ export function EntryCard({
 }: EntryCardProps) {
   const [imageError, setImageError] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
-  // Prefer image_url (from multimodal capture), then photo_url, then category image
-  const imageUrl = entry.image_url || entry.photo_url || getCategoryImage(entry.category)
-  const hasMultimodalImage = Boolean(entry.image_url)
+  
+  // Get poster image URL (handles both new multi-image and legacy single image)
+  const imageUrl = getEntryPosterUrl(entry)
+  const imageCount = getImageCount(entry)
+  const hasMultipleImages = imageCount > 1
 
   useEffect(() => {
     setIsMounted(true)
@@ -38,7 +60,7 @@ export function EntryCard({
 
   return (
     <article className="entry-card">
-      <div className="entry-card__media">
+      <div className="entry-card__media" style={{ position: 'relative' }}>
         {imageError ? (
           <div style={{
             width: '100%',
@@ -53,24 +75,48 @@ export function EntryCard({
             Image unavailable
           </div>
         ) : (
-          <img 
-            src={imageUrl} 
-            alt={entry.photo_url ? entry.headline : `${entry.category} illustration`}
-            loading="lazy"
-            crossOrigin="anonymous"
-            onError={(e) => {
-              // Only handle errors after component is mounted to avoid hydration issues
-              if (isMounted) {
-                console.error('Image failed to load:', imageUrl, 'Entry:', entry.headline)
-                setImageError(true)
-              }
-            }}
-            onLoad={() => {
-              if (entry.photo_url) {
-                console.log('Photo loaded successfully:', imageUrl)
-              }
-            }}
-          />
+          <>
+            <img 
+              src={imageUrl} 
+              alt={entry.photo_url || entry.image_url ? entry.headline : `${entry.category} illustration`}
+              loading="lazy"
+              crossOrigin="anonymous"
+              onError={(e) => {
+                // Only handle errors after component is mounted to avoid hydration issues
+                if (isMounted) {
+                  console.error('Image failed to load:', imageUrl, 'Entry:', entry.headline)
+                  setImageError(true)
+                }
+              }}
+              onLoad={() => {
+                if (entry.photo_url || entry.image_url) {
+                  console.log('Photo loaded successfully:', imageUrl)
+                }
+              }}
+            />
+            {/* Image count badge for multi-image entries */}
+            {hasMultipleImages && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '0.5rem',
+                  right: '0.5rem',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  color: '#fff',
+                  padding: '0.2rem 0.5rem',
+                  borderRadius: '4px',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                }}
+              >
+                <span>📷</span>
+                <span>{imageCount}</span>
+              </div>
+            )}
+          </>
         )}
       </div>
       <div className="entry-card__body">

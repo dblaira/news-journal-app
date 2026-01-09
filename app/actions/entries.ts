@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { CreateEntryInput, WeeklyTheme, Entry } from '@/types'
+import { CreateEntryInput, WeeklyTheme, Entry, EntryImage, MAX_IMAGES_PER_ENTRY } from '@/types'
+import { ImageExtraction } from '@/types/multimodal'
 
 export async function createEntry(input: CreateEntryInput) {
   const supabase = await createClient()
@@ -531,3 +532,251 @@ export async function getPinnedEntries(userId: string): Promise<{
   }
 }
 
+// =============================================================================
+// MULTI-IMAGE GALLERY FEATURE
+// =============================================================================
+
+/**
+ * Add an image to an entry's gallery (max 6 images)
+ */
+export async function addEntryImage(
+  entryId: string,
+  imageUrl: string,
+  extractedData?: ImageExtraction,
+  isPoster: boolean = false
+) {
+  const supabase = await createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Fetch current entry to get existing images
+  const { data: entry, error: fetchError } = await supabase
+    .from('entries')
+    .select('images')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError || !entry) {
+    return { error: 'Entry not found' }
+  }
+
+  const currentImages: EntryImage[] = entry.images || []
+
+  // Check max limit
+  if (currentImages.length >= MAX_IMAGES_PER_ENTRY) {
+    return { error: `Maximum ${MAX_IMAGES_PER_ENTRY} images allowed per entry` }
+  }
+
+  // Create new image object
+  const newImage: EntryImage = {
+    url: imageUrl,
+    extracted_data: extractedData,
+    is_poster: isPoster || currentImages.length === 0, // First image is poster by default
+    order: currentImages.length,
+  }
+
+  // If setting as poster, unset any existing poster
+  let updatedImages = currentImages
+  if (newImage.is_poster) {
+    updatedImages = currentImages.map(img => ({ ...img, is_poster: false }))
+  }
+
+  updatedImages.push(newImage)
+
+  // Update entry
+  const { error: updateError } = await supabase
+    .from('entries')
+    .update({
+      images: updatedImages,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (updateError) {
+    return { error: updateError.message }
+  }
+
+  revalidatePath('/')
+  return { success: true, images: updatedImages }
+}
+
+/**
+ * Remove an image from an entry's gallery
+ */
+export async function removeEntryImage(entryId: string, imageIndex: number) {
+  const supabase = await createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Fetch current entry
+  const { data: entry, error: fetchError } = await supabase
+    .from('entries')
+    .select('images')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError || !entry) {
+    return { error: 'Entry not found' }
+  }
+
+  const currentImages: EntryImage[] = entry.images || []
+
+  if (imageIndex < 0 || imageIndex >= currentImages.length) {
+    return { error: 'Invalid image index' }
+  }
+
+  const removedImage = currentImages[imageIndex]
+  const updatedImages = currentImages
+    .filter((_, i) => i !== imageIndex)
+    .map((img, i) => ({ ...img, order: i })) // Re-order remaining images
+
+  // If removed image was poster and there are remaining images, make first one poster
+  if (removedImage.is_poster && updatedImages.length > 0) {
+    updatedImages[0].is_poster = true
+  }
+
+  // Update entry
+  const { error: updateError } = await supabase
+    .from('entries')
+    .update({
+      images: updatedImages,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (updateError) {
+    return { error: updateError.message }
+  }
+
+  revalidatePath('/')
+  return { success: true, images: updatedImages }
+}
+
+/**
+ * Set an image as the poster (featured) image for an entry
+ */
+export async function setEntryPoster(entryId: string, imageIndex: number) {
+  const supabase = await createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Fetch current entry
+  const { data: entry, error: fetchError } = await supabase
+    .from('entries')
+    .select('images')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError || !entry) {
+    return { error: 'Entry not found' }
+  }
+
+  const currentImages: EntryImage[] = entry.images || []
+
+  if (imageIndex < 0 || imageIndex >= currentImages.length) {
+    return { error: 'Invalid image index' }
+  }
+
+  // Update poster status
+  const updatedImages = currentImages.map((img, i) => ({
+    ...img,
+    is_poster: i === imageIndex,
+  }))
+
+  // Update entry
+  const { error: updateError } = await supabase
+    .from('entries')
+    .update({
+      images: updatedImages,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (updateError) {
+    return { error: updateError.message }
+  }
+
+  revalidatePath('/')
+  return { success: true, images: updatedImages }
+}
+
+/**
+ * Reorder images in an entry's gallery
+ */
+export async function reorderEntryImages(entryId: string, newOrder: number[]) {
+  const supabase = await createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Fetch current entry
+  const { data: entry, error: fetchError } = await supabase
+    .from('entries')
+    .select('images')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError || !entry) {
+    return { error: 'Entry not found' }
+  }
+
+  const currentImages: EntryImage[] = entry.images || []
+
+  // Validate newOrder array
+  if (newOrder.length !== currentImages.length) {
+    return { error: 'Invalid order array length' }
+  }
+
+  // Reorder images according to newOrder
+  const updatedImages = newOrder.map((oldIndex, newIndex) => ({
+    ...currentImages[oldIndex],
+    order: newIndex,
+  }))
+
+  // Update entry
+  const { error: updateError } = await supabase
+    .from('entries')
+    .update({
+      images: updatedImages,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (updateError) {
+    return { error: updateError.message }
+  }
+
+  revalidatePath('/')
+  return { success: true, images: updatedImages }
+}

@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useVoiceInput } from '@/lib/hooks/use-voice-input'
-import { Entry, EntryType, ImageExtraction, EntryMetadata } from '@/types'
-import { ImageAttachment } from '@/types/multimodal'
-import ImageAttachmentButton from './capture/ImageAttachmentButton'
+import { Entry, EntryType, ImageExtraction, EntryMetadata, EntryImage, MAX_IMAGES_PER_ENTRY } from '@/types'
+import { FileAttachment, ImageAttachment } from '@/types/multimodal'
+import FileAttachmentButton from './capture/FileAttachmentButton'
 import { useMultimodalCapture } from '@/hooks/useMultimodalCapture'
 import { captureMetadata } from '@/lib/captureMetadata'
 
@@ -16,9 +16,11 @@ interface InferredData {
   content: string
   entry_type: EntryType
   due_date: string | null
-  // Multimodal fields
+  // Multimodal fields (legacy single image)
   image_url?: string
   image_extracted_data?: ImageExtraction
+  // Multi-image gallery (new)
+  images?: EntryImage[]
   // Metadata fields
   metadata?: EntryMetadata
 }
@@ -45,7 +47,7 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
   const [selectedType, setSelectedType] = useState<EntryType>('story')
   const [userExplicitlySelectedType, setUserExplicitlySelectedType] = useState(false)
   const [showTypeDropdown, setShowTypeDropdown] = useState(false)
-  const [imageAttachment, setImageAttachment] = useState<ImageAttachment | null>(null)
+  const [fileAttachments, setFileAttachments] = useState<FileAttachment[]>([])
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typeDropdownRef = useRef<HTMLDivElement>(null)
@@ -105,8 +107,8 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
     // Use transcript in voice mode, text otherwise
     const content = mode === 'voice' ? transcript.trim() : text.trim()
     
-    // Allow submission if there's text OR an image
-    if (!content && !imageAttachment) {
+    // Allow submission if there's text OR files
+    if (!content && fileAttachments.length === 0) {
       setError('Please enter some text or attach an image.')
       return
     }
@@ -118,6 +120,7 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
       let finalContent = content
       let imageUrl: string | undefined
       let imageExtractedData: ImageExtraction | undefined
+      const processedImages: EntryImage[] = []
 
       // Capture metadata (time, device, location) silently in background
       // Don't block on location - it's optional and may take time
@@ -131,17 +134,98 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
         }
       }
 
-      // Process image if attached
-      if (imageAttachment && userId) {
-        const imageResult = await processImage(imageAttachment, content, userId)
-        if (imageResult.imageUrl) {
-          imageUrl = imageResult.imageUrl
+      // Separate image attachments from document attachments
+      const imageFiles = fileAttachments.filter(f => f.fileType === 'image')
+      const documentFiles = fileAttachments.filter(f => f.fileType !== 'image')
+
+      // Process image attachments (existing multimodal flow)
+      if (imageFiles.length > 0 && userId) {
+        for (let i = 0; i < imageFiles.length; i++) {
+          const attachment = imageFiles[i]
+          try {
+            // Convert FileAttachment to ImageAttachment for existing processor
+            const imageAttachment: ImageAttachment = {
+              uri: attachment.uri,
+              base64: attachment.base64,
+              mimeType: attachment.mimeType,
+            }
+            const imageResult = await processImage(imageAttachment, content, userId)
+            
+            // Build EntryImage object
+            const entryImage: EntryImage = {
+              url: imageResult.imageUrl || '',
+              extracted_data: imageResult.extractedData || undefined,
+              is_poster: i === 0, // First image is poster
+              order: i,
+            }
+            
+            if (entryImage.url) {
+              processedImages.push(entryImage)
+            }
+            
+            // Use first image's data for legacy fields and content inference
+            if (i === 0) {
+              imageUrl = imageResult.imageUrl ?? undefined
+              imageExtractedData = imageResult.extractedData ?? undefined
+              // Use AI-generated narrative if available and user didn't provide text
+              if (imageResult.finalContent && !content) {
+                finalContent = imageResult.finalContent
+              }
+            }
+          } catch (err) {
+            console.error(`Error processing image ${i}:`, err)
+            // Continue with other images
+          }
         }
-        if (imageResult.extractedData) {
-          imageExtractedData = imageResult.extractedData
-          // Use AI-generated narrative if available and user didn't provide text
-          if (imageResult.finalContent && !content) {
-            finalContent = imageResult.finalContent
+      }
+
+      // Process document attachments (PDF, CSV, XLSX, DOCX)
+      if (documentFiles.length > 0 && userId) {
+        for (const docFile of documentFiles) {
+          try {
+            // Upload document file to storage and get URL
+            const formData = new FormData()
+            // Convert base64 back to blob
+            const byteCharacters = atob(docFile.base64)
+            const byteNumbers = new Array(byteCharacters.length)
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i)
+            }
+            const byteArray = new Uint8Array(byteNumbers)
+            const blob = new Blob([byteArray], { type: docFile.mimeType })
+            
+            formData.append('file', blob, docFile.fileName)
+            formData.append('userId', userId)
+            formData.append('fileType', docFile.fileType)
+
+            const uploadResponse = await fetch('/api/upload-document', {
+              method: 'POST',
+              body: formData,
+            })
+
+            if (uploadResponse.ok) {
+              const { url, extractedText } = await uploadResponse.json()
+              
+              // Add document as an EntryImage (reusing the gallery structure)
+              processedImages.push({
+                url,
+                extracted_data: extractedText ? { 
+                  imageType: 'document' as const,
+                  combinedNarrative: extractedText,
+                  suggestedTags: [],
+                  suggestedEntryType: 'note' as const,
+                } : undefined,
+                is_poster: processedImages.length === 0, // First file is poster if no images
+                order: processedImages.length,
+              })
+
+              // If we extracted text and user didn't provide any, use it
+              if (extractedText && !content && !finalContent) {
+                finalContent = `Document: ${docFile.fileName}\n\n${extractedText.substring(0, 500)}${extractedText.length > 500 ? '...' : ''}`
+              }
+            }
+          } catch (err) {
+            console.error(`Error processing document ${docFile.fileName}:`, err)
           }
         }
       }
@@ -184,8 +268,11 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
         ...inferred,
         content: finalContent || imageExtractedData?.combinedNarrative || inferred.content,
         entry_type: finalEntryType,
+        // Legacy single-image fields (for backward compatibility)
         image_url: imageUrl,
         image_extracted_data: imageExtractedData,
+        // New multi-image array
+        images: processedImages.length > 0 ? processedImages : undefined,
         metadata,
       })
     } catch (err: any) {
@@ -319,11 +406,21 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
           {/* Divider */}
           <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.2)' }} />
 
-          {/* Image attachment button */}
-          <ImageAttachmentButton
-            attachment={imageAttachment}
-            onAttach={setImageAttachment}
-            onRemove={() => setImageAttachment(null)}
+          {/* File attachment button (images, PDF, CSV, XLSX, DOCX) */}
+          <FileAttachmentButton
+            attachments={fileAttachments}
+            onAttach={(attachment) => {
+              // Use functional setState to avoid stale closure when multiple files selected
+              setFileAttachments(prev => {
+                if (prev.length < MAX_IMAGES_PER_ENTRY) {
+                  return [...prev, attachment]
+                }
+                return prev
+              })
+            }}
+            onRemove={(index) => {
+              setFileAttachments(prev => prev.filter((_, i) => i !== index))
+            }}
             disabled={isInferring || isProcessingImage}
           />
 
@@ -589,7 +686,7 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
           - No content and no image: Nothing to submit
         */}
         {(() => {
-          const hasContent = text.trim() || transcript.trim() || imageAttachment
+          const hasContent = text.trim() || transcript.trim() || fileAttachments.length > 0
           const isDisabled = isInferring || voiceProcessing || isProcessingImage || (mode === 'voice' && isListening) || !hasContent
           return (
             <button

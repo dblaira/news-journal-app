@@ -6,6 +6,62 @@ export interface ImageAttachment {
   mimeType: string      // image/jpeg, image/png, etc.
 }
 
+// Supported file types for attachments
+export type FileType = 'image' | 'pdf' | 'csv' | 'xlsx' | 'docx'
+
+export interface FileAttachment {
+  uri: string           // Local URI/blob URL for display
+  base64: string        // Base64 encoded data
+  mimeType: string      // Full MIME type
+  fileType: FileType    // Simplified type category
+  fileName: string      // Original filename
+  fileSize: number      // Size in bytes
+}
+
+// File type detection helpers
+export const SUPPORTED_MIME_TYPES: Record<FileType, string[]> = {
+  image: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
+  pdf: ['application/pdf'],
+  csv: ['text/csv', 'application/csv'],
+  xlsx: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'],
+  docx: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'],
+}
+
+export const FILE_EXTENSIONS: Record<FileType, string[]> = {
+  image: ['.jpg', '.jpeg', '.png', '.webp', '.gif'],
+  pdf: ['.pdf'],
+  csv: ['.csv'],
+  xlsx: ['.xlsx', '.xls'],
+  docx: ['.docx', '.doc'],
+}
+
+export function detectFileType(mimeType: string, fileName?: string): FileType | null {
+  // Check by MIME type first
+  for (const [type, mimes] of Object.entries(SUPPORTED_MIME_TYPES)) {
+    if (mimes.includes(mimeType.toLowerCase())) {
+      return type as FileType
+    }
+  }
+  
+  // Fallback to extension check
+  if (fileName) {
+    const ext = fileName.toLowerCase().slice(fileName.lastIndexOf('.'))
+    for (const [type, exts] of Object.entries(FILE_EXTENSIONS)) {
+      if (exts.includes(ext)) {
+        return type as FileType
+      }
+    }
+  }
+  
+  return null
+}
+
+export function getAcceptString(): string {
+  const allMimes = Object.values(SUPPORTED_MIME_TYPES).flat()
+  const allExts = Object.values(FILE_EXTENSIONS).flat()
+  return [...allMimes, ...allExts].join(',')
+}
+
 // New context-aware extraction structure
 
 export interface PrimaryContent {
