@@ -23,7 +23,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { content, selectedType } = await request.json()
+    const { content, selectedType, documentContent } = await request.json()
+
+    console.log('🤖 infer-entry received:', {
+      contentLength: content?.length || 0,
+      contentPreview: content?.substring(0, 100) || 'none',
+      selectedType,
+      hasDocumentContent: !!documentContent,
+      documentContentLength: documentContent?.length || 0,
+      documentContentPreview: documentContent?.substring(0, 200) || 'none'
+    })
 
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return NextResponse.json(
@@ -40,7 +49,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const inferred = await inferEntryMetadata(content.trim(), apiKey)
+    console.log('🤖 Calling AI with:', {
+      contentLength: content.trim().length,
+      hasDocumentContent: !!documentContent,
+      documentContentLength: documentContent?.length || 0
+    })
+
+    const inferred = await inferEntryMetadata(content.trim(), apiKey, documentContent)
 
     // SAFETY NET: If AI returned "story" but content has obvious action patterns, override
     if (inferred.entry_type === 'story') {
@@ -72,7 +87,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function inferEntryMetadata(content: string, apiKey: string): Promise<InferredEntry> {
+async function inferEntryMetadata(content: string, apiKey: string, documentContent?: string): Promise<InferredEntry> {
   // Get current date for relative date inference
   const today = new Date()
   const todayStr = today.toISOString().split('T')[0]
@@ -85,8 +100,28 @@ async function inferEntryMetadata(content: string, apiKey: string): Promise<Infe
   const nextWeek = new Date(today)
   nextWeek.setDate(nextWeek.getDate() + 7)
   const nextWeekStr = nextWeek.toISOString().split('T')[0]
-  
+
+  // Build document context section if documents were attached
+  const documentSection = documentContent ? `
+## ATTACHED DOCUMENT(S) - EXTRACTED TEXT:
+The user has uploaded document(s). Analyze this extracted text to understand context:
+"""
+${documentContent}
+"""
+
+DOCUMENT ANALYSIS GUIDELINES:
+- **Receipts/Invoices**: Typically "Finance" category. Could be "note" (record keeping) or "action" (if user might want to track, return, or follow up)
+- **Contracts/Agreements**: Typically "Business" category, often "action" (deadlines, signatures needed)
+- **Medical docs**: "Health" category
+- **Financial statements**: "Finance" category, usually "note"
+- Create a headline that summarizes the document content meaningfully
+- If it's a purchase receipt, include the vendor and total in headline (e.g., "Amazon Order: $22.85 - Allergy Meds & Water")
+- If user added notes, consider if they're tagging this as something to track (impulse buy, need to return, etc.)
+
+` : ''
+
   const prompt = `You are a journal entry classifier. Your #1 job is detecting ACTIONABLE INTENT.
+${documentSection}
 
 ## CRITICAL RULES - READ CAREFULLY:
 
@@ -215,7 +250,13 @@ Return ONLY valid JSON:
     throw new Error('Invalid API response: missing text in content')
   }
   
-  const text = firstContent.text.trim()
+  let text = firstContent.text.trim()
+  
+  // Strip markdown code blocks if present (AI sometimes wraps JSON in ```json ... ```)
+  if (text.startsWith('```')) {
+    // Remove opening ```json or ``` and closing ```
+    text = text.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+  }
 
   // Parse JSON response
   try {

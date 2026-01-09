@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { CreateEntryInput, Entry, EntryType, MAX_IMAGES_PER_ENTRY } from '@/types'
+import { CreateEntryInput, Entry, EntryType, MAX_IMAGES_PER_ENTRY, EntryImage } from '@/types'
 import { createEntry } from '@/app/actions/entries'
 import { TiptapEditor } from '@/components/editor/TiptapEditor'
 
@@ -10,9 +10,10 @@ interface EntryFormProps {
   onCancel: () => void
 }
 
-interface PhotoPreview {
+interface FilePreview {
   file: File
   preview: string
+  type: 'image' | 'pdf' | 'document' | 'spreadsheet'
 }
 
 const categories: CreateEntryInput['category'][] = [
@@ -31,10 +32,32 @@ const entryTypes: { id: EntryType; label: string }[] = [
   { id: 'action', label: 'Action' },
 ]
 
+// Helper to determine file type category
+function getFileType(mimeType: string): FilePreview['type'] {
+  if (mimeType.startsWith('image/')) return 'image'
+  if (mimeType === 'application/pdf') return 'pdf'
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || mimeType === 'text/csv') return 'spreadsheet'
+  return 'document'
+}
+
+// Helper to get icon for file type
+function getFileIcon(type: FilePreview['type']): string {
+  switch (type) {
+    case 'image': return '📷'
+    case 'pdf': return '📄'
+    case 'spreadsheet': return '📊'
+    case 'document': return '📝'
+    default: return '📎'
+  }
+}
+
+// Accepted file types
+const ACCEPTED_FILES = 'image/jpeg,image/jpg,image/png,image/webp,application/pdf,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
 export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [photos, setPhotos] = useState<PhotoPreview[]>([])
+  const [files, setFiles] = useState<FilePreview[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState<CreateEntryInput>({
     headline: '',
@@ -45,22 +68,24 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
     entry_type: 'story',
   })
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files) return
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files
+    if (!selectedFiles) return
 
-    const newPhotos: PhotoPreview[] = []
-    const remainingSlots = MAX_IMAGES_PER_ENTRY - photos.length
+    const newFiles: FilePreview[] = []
+    const remainingSlots = MAX_IMAGES_PER_ENTRY - files.length
 
-    for (let i = 0; i < Math.min(files.length, remainingSlots); i++) {
-      const file = files[i]
-      newPhotos.push({
+    for (let i = 0; i < Math.min(selectedFiles.length, remainingSlots); i++) {
+      const file = selectedFiles[i]
+      const fileType = getFileType(file.type)
+      newFiles.push({
         file,
-        preview: URL.createObjectURL(file),
+        preview: fileType === 'image' ? URL.createObjectURL(file) : '',
+        type: fileType,
       })
     }
 
-    setPhotos([...photos, ...newPhotos])
+    setFiles([...files, ...newFiles])
 
     // Reset input so same file can be selected again
     if (fileInputRef.current) {
@@ -68,10 +93,12 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
     }
   }
 
-  const handleRemovePhoto = (index: number) => {
-    const photo = photos[index]
-    URL.revokeObjectURL(photo.preview) // Clean up object URL
-    setPhotos(photos.filter((_, i) => i !== index))
+  const handleRemoveFile = (index: number) => {
+    const fileItem = files[index]
+    if (fileItem.preview) {
+      URL.revokeObjectURL(fileItem.preview) // Clean up object URL for images
+    }
+    setFiles(files.filter((_, i) => i !== index))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,6 +107,7 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
     setIsSubmitting(true)
 
     try {
+      // Create entry first
       const result = await createEntry(formData)
       if (result.error) {
         setError(result.error)
@@ -87,38 +115,66 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
         return
       }
 
-      // Upload photos if provided
-      if (photos.length > 0 && result.data) {
-        try {
-          const photoFormData = new FormData()
-          photos.forEach((photo) => {
-            photoFormData.append('files', photo.file)
-          })
-          photoFormData.append('entryId', result.data.id)
+      // Upload files if provided
+      if (files.length > 0 && result.data) {
+        const imageFiles = files.filter(f => f.type === 'image')
+        const documentFiles = files.filter(f => f.type !== 'image')
 
-          const photoResponse = await fetch('/api/upload-photo', {
-            method: 'POST',
-            body: photoFormData,
-          })
+        // Upload images via upload-photo endpoint
+        if (imageFiles.length > 0) {
+          try {
+            const photoFormData = new FormData()
+            imageFiles.forEach((photo) => {
+              photoFormData.append('files', photo.file)
+            })
+            photoFormData.append('entryId', result.data.id)
 
-          if (!photoResponse.ok) {
-            const photoError = await photoResponse.json()
-            console.error('Photo upload failed:', photoError)
-            // Show warning but don't fail entry creation
-            alert(`Entry created successfully, but photo upload failed: ${photoError.error || 'Unknown error'}. You can try uploading the photos again by editing the entry.`)
-          } else {
-            const photoData = await photoResponse.json()
-            console.log('Photos uploaded successfully:', photoData.uploadedUrls)
+            const photoResponse = await fetch('/api/upload-photo', {
+              method: 'POST',
+              body: photoFormData,
+            })
+
+            if (!photoResponse.ok) {
+              const photoError = await photoResponse.json()
+              console.error('Photo upload failed:', photoError)
+              alert(`Entry created, but image upload failed: ${photoError.error || 'Unknown error'}`)
+            }
+          } catch (photoErr: any) {
+            console.error('Error uploading photos:', photoErr)
+            alert(`Entry created, but image upload failed: ${photoErr.message || 'Network error'}`)
           }
-        } catch (photoErr: any) {
-          console.error('Error uploading photos:', photoErr)
-          // Show warning but don't fail entry creation
-          alert(`Entry created successfully, but photo upload failed: ${photoErr.message || 'Network error'}. You can try uploading the photos again by editing the entry.`)
+        }
+
+        // Upload documents via upload-document endpoint
+        if (documentFiles.length > 0) {
+          try {
+            const docFormData = new FormData()
+            documentFiles.forEach((doc) => {
+              docFormData.append('files', doc.file)
+            })
+            docFormData.append('entryId', result.data.id)
+
+            const docResponse = await fetch('/api/upload-document', {
+              method: 'POST',
+              body: docFormData,
+            })
+
+            if (!docResponse.ok) {
+              const docError = await docResponse.json()
+              console.error('Document upload failed:', docError)
+              alert(`Entry created, but document upload failed: ${docError.error || 'Unknown error'}`)
+            }
+          } catch (docErr: any) {
+            console.error('Error uploading documents:', docErr)
+            alert(`Entry created, but document upload failed: ${docErr.message || 'Network error'}`)
+          }
         }
       }
 
       // Clean up object URLs
-      photos.forEach((photo) => URL.revokeObjectURL(photo.preview))
+      files.forEach((f) => {
+        if (f.preview) URL.revokeObjectURL(f.preview)
+      })
 
       onSuccess()
     } catch (err) {
@@ -127,7 +183,7 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
     }
   }
 
-  const canAddMorePhotos = photos.length < MAX_IMAGES_PER_ENTRY
+  const canAddMoreFiles = files.length < MAX_IMAGES_PER_ENTRY
 
   return (
     <section className="entry-form">
@@ -246,27 +302,27 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
             </div>
 
             <div className="form-group">
-              <label htmlFor="photo">
-                Photos (optional) 
+              <label htmlFor="files">
+                Attachments (optional) 
                 <span style={{ 
                   fontWeight: 400, 
                   color: '#6B7280', 
                   marginLeft: '0.5rem',
                   fontSize: '0.85rem' 
                 }}>
-                  {photos.length}/{MAX_IMAGES_PER_ENTRY}
+                  {files.length}/{MAX_IMAGES_PER_ENTRY} • Images, PDF, Excel, Word, CSV
                 </span>
               </label>
               
-              {/* Photo previews grid */}
-              {photos.length > 0 && (
+              {/* File previews grid */}
+              {files.length > 0 && (
                 <div style={{ 
                   display: 'grid', 
                   gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
                   gap: '0.75rem',
                   marginBottom: '1rem',
                 }}>
-                  {photos.map((photo, index) => (
+                  {files.map((fileItem, index) => (
                     <div 
                       key={index}
                       style={{ 
@@ -274,23 +330,58 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
                         paddingTop: '100%', // Square aspect ratio
                         borderRadius: '8px',
                         overflow: 'hidden',
-                        background: '#f3f4f6',
+                        background: fileItem.type === 'image' ? '#f3f4f6' : '#2D3748',
                       }}
                     >
-                      <img
-                        src={photo.preview}
-                        alt={`Preview ${index + 1}`}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                      {/* First image badge */}
-                      {index === 0 && (
+                      {fileItem.type === 'image' ? (
+                        <img
+                          src={fileItem.preview}
+                          alt={`Preview ${index + 1}`}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#FFFFFF',
+                            padding: '0.5rem',
+                          }}
+                        >
+                          <span style={{ fontSize: '2rem' }}>{getFileIcon(fileItem.type)}</span>
+                          <span style={{ 
+                            fontSize: '0.6rem', 
+                            marginTop: '0.25rem',
+                            textAlign: 'center',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            width: '100%',
+                            padding: '0 0.25rem',
+                          }}>
+                            {fileItem.file.name.length > 12 
+                              ? fileItem.file.name.substring(0, 10) + '...' 
+                              : fileItem.file.name
+                            }
+                          </span>
+                        </div>
+                      )}
+                      {/* First file badge (poster) */}
+                      {index === 0 && fileItem.type === 'image' && (
                         <div
                           style={{
                             position: 'absolute',
@@ -310,7 +401,7 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
                       {/* Remove button */}
                       <button
                         type="button"
-                        onClick={() => handleRemovePhoto(index)}
+                        onClick={() => handleRemoveFile(index)}
                         disabled={isSubmitting}
                         style={{
                           position: 'absolute',
@@ -320,7 +411,7 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
                           height: '20px',
                           borderRadius: '50%',
                           border: 'none',
-                          background: 'rgba(0, 0, 0, 0.6)',
+                          background: 'rgba(220, 20, 60, 0.9)',
                           color: '#fff',
                           fontSize: '12px',
                           cursor: isSubmitting ? 'not-allowed' : 'pointer',
@@ -337,16 +428,16 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
                 </div>
               )}
 
-              {/* Add photos button */}
-              {canAddMorePhotos && (
+              {/* Add files button */}
+              {canAddMoreFiles && (
                 <>
                   <input
                     ref={fileInputRef}
                     type="file"
-                    id="photo"
-                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    id="files"
+                    accept={ACCEPTED_FILES}
                     multiple
-                    onChange={handlePhotoChange}
+                    onChange={handleFileChange}
                     disabled={isSubmitting}
                     style={{ display: 'none' }}
                   />
@@ -376,7 +467,7 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
                       e.currentTarget.style.color = '#666'
                     }}
                   >
-                    📷 {photos.length === 0 ? 'Add Photos' : 'Add More Photos'}
+                    📎 {files.length === 0 ? 'Add Files' : 'Add More Files'}
                   </button>
                 </>
               )}

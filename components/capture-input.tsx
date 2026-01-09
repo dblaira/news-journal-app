@@ -204,7 +204,16 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
             })
 
             if (uploadResponse.ok) {
-              const { url, extractedText } = await uploadResponse.json()
+              const responseData = await uploadResponse.json()
+              const { url, extractedText, fileType: responseFileType } = responseData
+              console.log('📄 Document upload response:', { 
+                fileName: docFile.fileName, 
+                url, 
+                fileType: responseFileType,
+                hasExtractedText: !!extractedText,
+                extractedTextLength: extractedText?.length || 0,
+                extractedTextPreview: extractedText?.substring(0, 200) || 'none'
+              })
               
               // Add document as an EntryImage (reusing the gallery structure)
               processedImages.push({
@@ -212,7 +221,7 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
                 extracted_data: extractedText ? { 
                   imageType: 'document' as const,
                   combinedNarrative: extractedText,
-                  suggestedTags: [],
+                  suggestedTags: [responseFileType || docFile.fileType],
                   suggestedEntryType: 'note' as const,
                 } : undefined,
                 is_poster: processedImages.length === 0, // First file is poster if no images
@@ -223,6 +232,19 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
               if (extractedText && !content && !finalContent) {
                 finalContent = `Document: ${docFile.fileName}\n\n${extractedText.substring(0, 500)}${extractedText.length > 500 ? '...' : ''}`
               }
+            } else {
+              let errorData = {}
+              try {
+                errorData = await uploadResponse.json()
+              } catch {
+                // Response may not be JSON
+              }
+              console.error('📄 Document upload failed:', { 
+                fileName: docFile.fileName, 
+                status: uploadResponse.status, 
+                statusText: uploadResponse.statusText,
+                error: errorData 
+              })
             }
           } catch (err) {
             console.error(`Error processing document ${docFile.fileName}:`, err)
@@ -230,6 +252,21 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
         }
       }
 
+      // Collect extracted text from all documents for AI inference
+      const documentTexts = processedImages
+        .filter(img => img.extracted_data?.imageType === 'document')
+        .map(img => img.extracted_data?.combinedNarrative)
+        .filter(Boolean)
+        .join('\n\n---\n\n')
+      
+      console.log('📄 Document texts for AI inference:', {
+        hasDocumentTexts: !!documentTexts,
+        documentTextsLength: documentTexts?.length || 0,
+        documentTextsPreview: documentTexts?.substring(0, 300) || 'none',
+        processedImagesCount: processedImages.length,
+        documentCount: processedImages.filter(img => img.extracted_data?.imageType === 'document').length
+      })
+      
       // Determine if we should pass an explicit type to override AI inference:
       // 1. User explicitly clicked the type selector dropdown
       // 2. Image processing suggested a type (like a receipt suggesting 'note')
@@ -238,11 +275,19 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
         ? selectedType 
         : imageExtractedData?.suggestedEntryType || null
 
+      // Build content for AI inference - prioritize user text, then document content, then image content
+      const contentForInference = finalContent 
+        || documentTexts 
+        || imageExtractedData?.combinedNarrative 
+        || 'File capture'
+
       const response = await fetch('/api/infer-entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          content: finalContent || imageExtractedData?.combinedNarrative || 'Image capture', 
+          content: contentForInference,
+          // Pass document extracted text separately so AI knows it's from a document
+          documentContent: documentTexts || undefined,
           // Only pass selectedType if user explicitly chose or image suggests one
           // This allows AI to infer type when user hasn't made an explicit choice
           selectedType: explicitTypeOverride
@@ -263,6 +308,14 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
       if (!userExplicitlySelectedType && inferred.entry_type) {
         setSelectedType(inferred.entry_type)
       }
+      
+      // Debug: log what we're passing to confirmation
+      console.log('📁 Capture - passing to confirmation:', {
+        processedImagesCount: processedImages.length,
+        processedImages: processedImages,
+        imageUrl,
+        hasExtractedData: !!imageExtractedData,
+      })
       
       onCapture({
         ...inferred,

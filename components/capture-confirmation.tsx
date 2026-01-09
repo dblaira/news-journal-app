@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Entry, EntryType, ImageExtraction, EntryMetadata } from '@/types'
+import { Entry, EntryType, ImageExtraction, EntryMetadata, EntryImage } from '@/types'
 import { TiptapEditor } from './editor/TiptapEditor'
 
 interface InferredData {
@@ -12,9 +12,11 @@ interface InferredData {
   content: string
   entry_type: EntryType
   due_date: string | null
-  // Multimodal fields from image capture
+  // Multimodal fields from image capture (legacy single image)
   image_url?: string
   image_extracted_data?: ImageExtraction
+  // Multi-file gallery (new - includes images and documents)
+  images?: EntryImage[]
   // Metadata fields
   metadata?: EntryMetadata
 }
@@ -48,6 +50,13 @@ export function CaptureConfirmation({
   onBack,
   isPublishing,
 }: CaptureConfirmationProps) {
+  // Debug: log incoming data
+  console.log('🔍 Confirmation screen - received data:', {
+    hasImages: !!data.images,
+    imagesCount: data.images?.length || 0,
+    images: data.images,
+    image_url: data.image_url,
+  })
   const [headline, setHeadline] = useState(data.headline)
   const [subheading, setSubheading] = useState(data.subheading)
   const [category, setCategory] = useState(data.category)
@@ -94,6 +103,8 @@ export function CaptureConfirmation({
       // Pass through the multimodal image data (already uploaded)
       image_url: data.image_url,
       image_extracted_data: data.image_extracted_data,
+      // Pass through the multi-file gallery (includes PDFs and documents)
+      images: data.images,
       // Pass through the metadata (auto-captured context)
       metadata: data.metadata,
     })
@@ -456,6 +467,82 @@ export function CaptureConfirmation({
           </div>
         )}
 
+        {/* AI Detected Section - Show extracted document content */}
+        {data.images && data.images.some(img => img.extracted_data?.imageType === 'document' && img.extracted_data?.combinedNarrative) && (
+          <div style={{ 
+            marginBottom: '1.5rem',
+            background: 'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%)',
+            border: '1px solid #C7D2FE',
+            borderRadius: '8px',
+            padding: '1rem',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginBottom: '0.75rem',
+            }}>
+              <span style={{ fontSize: '1.2rem' }}>✨</span>
+              <span style={{
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08rem',
+                color: '#6366F1',
+              }}>
+                AI Detected from Documents
+              </span>
+            </div>
+            
+            {data.images.filter(img => img.extracted_data?.imageType === 'document').map((doc, idx) => {
+              const text = doc.extracted_data?.combinedNarrative || ''
+              const isLongText = text.length > 300
+              const displayText = isLongText ? text.substring(0, 300) + '...' : text
+              
+              return (
+                <div key={idx} style={{
+                  background: '#FFFFFF',
+                  borderRadius: '6px',
+                  padding: '0.75rem',
+                  marginBottom: idx < data.images!.filter(img => img.extracted_data?.imageType === 'document').length - 1 ? '0.5rem' : 0,
+                  fontSize: '0.85rem',
+                  color: '#374151',
+                  lineHeight: 1.5,
+                }}>
+                  <div style={{ 
+                    fontSize: '0.7rem', 
+                    color: '#6B7280', 
+                    marginBottom: '0.5rem',
+                    fontWeight: 600,
+                  }}>
+                    📄 Document {idx + 1}
+                  </div>
+                  <pre style={{
+                    margin: 0,
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    fontFamily: 'inherit',
+                    fontSize: '0.8rem',
+                    maxHeight: '150px',
+                    overflowY: 'auto',
+                  }}>
+                    {displayText || 'No text extracted'}
+                  </pre>
+                </div>
+              )
+            })}
+            
+            <p style={{
+              margin: '0.75rem 0 0 0',
+              fontSize: '0.75rem',
+              color: '#6366F1',
+              fontStyle: 'italic',
+            }}>
+              💡 Review and edit the headline, category, and entry type above based on this content.
+            </p>
+          </div>
+        )}
+
         {/* Content - Rich Text Editor */}
         <div style={{ marginBottom: '1.5rem' }}>
           <label
@@ -639,8 +726,146 @@ export function CaptureConfirmation({
           </div>
         )}
 
-        {/* Additional Photo Upload (optional, separate from captured image) */}
-        {!data.image_url && (
+        {/* Attached Files Section - Show all files from the images array */}
+        {(data.images && data.images.length > 0) && (
+          <div style={{ marginBottom: '2rem' }}>
+            <label
+              style={{
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08rem',
+                color: '#999',
+                display: 'block',
+                marginBottom: '0.5rem',
+              }}
+            >
+              Attached Files ({data.images.length})
+            </label>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+              gap: '0.75rem',
+            }}>
+              {data.images.map((file, index) => {
+                // Determine if it's an image or document based on URL or extracted_data
+                const isDocument = file.extracted_data?.imageType === 'document' ||
+                  file.url.includes('/documents/') ||
+                  file.url.match(/\.(pdf|csv|xlsx|docx|doc|xls)$/i)
+                
+                // Get filename from URL
+                const urlParts = file.url.split('/')
+                const filename = urlParts[urlParts.length - 1].split('-').slice(1).join('-') || 'File'
+                const displayName = decodeURIComponent(filename).replace(/_/g, ' ')
+                
+                // Determine icon based on file type
+                const getFileIcon = () => {
+                  if (file.url.includes('.pdf')) return '📄'
+                  if (file.url.includes('.csv')) return '📊'
+                  if (file.url.includes('.xlsx') || file.url.includes('.xls')) return '📊'
+                  if (file.url.includes('.docx') || file.url.includes('.doc')) return '📝'
+                  return '📎'
+                }
+                
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      position: 'relative',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: file.is_poster ? '2px solid #DC143C' : '1px solid #eee',
+                      background: isDocument ? '#2D3748' : '#f3f4f6',
+                    }}
+                  >
+                    {isDocument ? (
+                      // Document preview
+                      <div
+                        style={{
+                          padding: '1rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minHeight: '100px',
+                          color: '#FFFFFF',
+                        }}
+                      >
+                        <span style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+                          {getFileIcon()}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.7rem',
+                            textAlign: 'center',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            width: '100%',
+                            padding: '0 0.25rem',
+                          }}
+                          title={displayName}
+                        >
+                          {displayName.length > 18 ? displayName.substring(0, 16) + '...' : displayName}
+                        </span>
+                      </div>
+                    ) : (
+                      // Image preview
+                      <img
+                        src={file.url}
+                        alt={`Attached ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100px',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    )}
+                    
+                    {/* Poster badge */}
+                    {file.is_poster && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '0.25rem',
+                          left: '0.25rem',
+                          background: '#DC143C',
+                          color: '#FFFFFF',
+                          padding: '0.15rem 0.35rem',
+                          borderRadius: '3px',
+                          fontSize: '0.6rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Poster
+                      </div>
+                    )}
+                    
+                    {/* Uploaded badge */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '0.25rem',
+                        right: '0.25rem',
+                        background: 'rgba(34, 197, 94, 0.9)',
+                        color: '#FFFFFF',
+                        padding: '0.15rem 0.35rem',
+                        borderRadius: '3px',
+                        fontSize: '0.55rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      ✓
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Photo Upload - Only show if NO files attached yet */}
+        {!data.image_url && (!data.images || data.images.length === 0) && (
           <div style={{ marginBottom: '2rem' }}>
             <label
               style={{

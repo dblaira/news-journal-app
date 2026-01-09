@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { CaptureInput } from './capture-input'
 import { CaptureConfirmation } from './capture-confirmation'
-import { Entry, EntryType, ImageExtraction, EntryMetadata } from '@/types'
+import { Entry, EntryType, ImageExtraction, EntryMetadata, EntryImage } from '@/types'
 
 interface InferredData {
   headline: string
@@ -13,9 +13,11 @@ interface InferredData {
   content: string
   entry_type: EntryType
   due_date: string | null
-  // Multimodal fields
+  // Multimodal fields (legacy single image)
   image_url?: string
   image_extracted_data?: ImageExtraction
+  // Multi-image gallery (new)
+  images?: EntryImage[]
   // Metadata fields
   metadata?: EntryMetadata
 }
@@ -63,9 +65,11 @@ export function CaptureFAB({ onEntryCreated, userId }: CaptureFABProps) {
         mood: data.mood,
         entry_type: data.entry_type,
         due_date: data.due_date,
-        // Multimodal fields - image_url from Vision API processing
+        // Multimodal fields - image_url from Vision API processing (legacy)
         image_url: data.image_url,
         image_extracted_data: data.image_extracted_data,
+        // Multi-image gallery (new) - includes PDFs and documents
+        images: data.images,
         // Metadata fields - auto-captured context
         metadata: data.metadata,
       })
