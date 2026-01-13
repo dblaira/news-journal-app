@@ -1124,13 +1124,22 @@ export function EntryModal({
           </div>
           
           {isEditing ? (
-            <TiptapEditor
-              content={editedContent}
-              onChange={setEditedContent}
-              // Auto-save disabled for debugging - manual save only via Save & Close
-              // onSave={handleAutoSaveContent}
-              editable={true}
-              autoSaveDelay={2000}
+            // DEBUG: Using simple textarea instead of TiptapEditor to isolate bug
+            <textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              style={{
+                width: '100%',
+                minHeight: '300px',
+                padding: '1rem',
+                fontSize: '1rem',
+                lineHeight: 1.6,
+                border: '1px solid #374151',
+                borderRadius: '8px',
+                background: '#1a1a2e',
+                color: '#fff',
+                resize: 'vertical',
+              }}
             />
           ) : (
             <div
