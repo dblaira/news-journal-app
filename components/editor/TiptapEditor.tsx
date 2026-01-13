@@ -93,7 +93,7 @@ export function TiptapEditor({
 }: TiptapEditorProps) {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isFirstRenderRef = useRef(true)
-  const isUserEditingRef = useRef(false)
+  const hasPendingChangesRef = useRef(false)
   const lastContentPropRef = useRef(content)
   
   // For Actions, convert content to task list format on initial render
@@ -125,8 +125,8 @@ export function TiptapEditor({
       const html = editor.getHTML()
       onChange?.(html)
 
-      // Mark that user is actively editing (will be cleared after save)
-      isUserEditingRef.current = true
+      // Mark that we have unsaved changes - prevents prop sync from overwriting
+      hasPendingChangesRef.current = true
 
       // Debounced auto-save
       if (onSave && html !== lastSavedContentRef.current) {
@@ -136,10 +136,13 @@ export function TiptapEditor({
         saveTimeoutRef.current = setTimeout(() => {
           onSave(html)
           lastSavedContentRef.current = html
-          // Clear editing flag after save completes + buffer time
+          // Clear pending flag ONLY if content matches what we just saved
+          // This prevents race conditions where user types during save
           setTimeout(() => {
-            isUserEditingRef.current = false
-          }, 500)
+            if (editor.getHTML() === html) {
+              hasPendingChangesRef.current = false
+            }
+          }, 100)
         }, autoSaveDelay)
       }
     },
@@ -147,7 +150,7 @@ export function TiptapEditor({
 
   // Update content when prop changes (e.g., switching entries)
   // Skip on first render to preserve our task list conversion
-  // Skip if user is actively editing to prevent cursor reset
+  // Skip if user has pending changes to prevent cursor reset during auto-save
   useEffect(() => {
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false
@@ -155,9 +158,15 @@ export function TiptapEditor({
       return
     }
     
-    // Don't sync if user is actively editing - this prevents cursor reset
+    // Don't sync if user has unsaved changes - this prevents cursor reset
     // when auto-save triggers a parent state update
-    if (isUserEditingRef.current) {
+    if (hasPendingChangesRef.current) {
+      lastContentPropRef.current = content
+      return
+    }
+    
+    // Also check if editor is focused - user might be typing without triggering onUpdate yet
+    if (editor?.isFocused) {
       lastContentPropRef.current = content
       return
     }
