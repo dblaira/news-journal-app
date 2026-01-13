@@ -69,6 +69,9 @@ export function EntryModal({
   // Track if we're intentionally exiting edit mode (to prevent accidental exits)
   const isIntentionallyExitingRef = useRef(false)
   
+  // Track edit state in ref for use in effects (avoids stale closures)
+  const isEditingRef = useRef(false)
+  
   // DEBUG: Track all state changes
   const [debugLog, setDebugLog] = useState<Array<{time: string, action: string, isEditing: boolean, source: string}>>([])
   
@@ -80,6 +83,7 @@ export function EntryModal({
     console.log(`[EDIT MODE DEBUG] isIntentionallyExiting: ${isIntentionallyExitingRef.current}`)
     console.trace('[EDIT MODE DEBUG] Stack trace:')
     setDebugLog(prev => [...prev.slice(-9), logEntry]) // Keep last 10 entries
+    isEditingRef.current = value // Update ref immediately
     setIsEditingInternal(value)
   }
   
@@ -139,12 +143,13 @@ export function EntryModal({
     setEntryImages(getEntryImages(entry))
   }, [entry.images, entry.image_url, entry.photo_url])
 
-  // Handle entry changes - only reset if entry ID changed (different entry)
-  // Don't reset if just content updated (could be from auto-save)
+  // Handle entry changes - ONLY reset if entry ID changed (different entry)
+  // CRITICAL: While editing, completely ignore all prop updates (including auto-save)
   useEffect(() => {
     const currentEntryId = entry.id
+    const currentIsEditing = isEditingRef.current // Use ref for current value (always up-to-date)
     
-    // Never exit edit mode unless we're intentionally doing so or entry ID changed
+    // Only process if entry ID actually changed
     if (prevEntryIdRef.current !== currentEntryId) {
       // Different entry - reset everything
       console.log('[EDIT MODE DEBUG] Entry ID changed, resetting edit mode')
@@ -158,19 +163,32 @@ export function EntryModal({
       setTimeout(() => {
         isIntentionallyExitingRef.current = false
       }, 100)
-    } else if (!isEditing && !isIntentionallyExitingRef.current) {
-      // Same entry, not editing - sync with prop changes
-      // Only sync if we're not intentionally exiting (to prevent race conditions)
-      console.log('[EDIT MODE DEBUG] Syncing content (not editing)')
-      setEditedContent(entry.content)
-      setEditedHeadline(entry.headline)
-      setEditedSubheading(entry.subheading || '')
-    } else if (isEditing) {
-      console.log('[EDIT MODE DEBUG] Editing active - skipping content sync')
+    } else {
+      // Same entry ID - IGNORE all prop updates while editing
+      if (currentIsEditing) {
+        console.log('[EDIT MODE DEBUG] Editing active - IGNORING all prop updates (including auto-save)')
+        // Do nothing - user's edits take precedence
+        return
+      }
+      
+      // Not editing - sync with prop changes only if not intentionally exiting
+      if (!isIntentionallyExitingRef.current) {
+        // Only sync if content actually changed (not just object reference)
+        const contentChanged = editedContent !== entry.content
+        const headlineChanged = editedHeadline !== entry.headline
+        const subheadingChanged = editedSubheading !== (entry.subheading || '')
+        
+        if (contentChanged || headlineChanged || subheadingChanged) {
+          console.log('[EDIT MODE DEBUG] Syncing content (not editing, content changed)')
+          setEditedContent(entry.content)
+          setEditedHeadline(entry.headline)
+          setEditedSubheading(entry.subheading || '')
+        }
+      }
     }
-    // If editing, don't sync - user's changes take precedence
-    // IMPORTANT: This effect should NOT cause edit mode to exit
-  }, [entry.id, entry.content, entry.headline, entry.subheading, isEditing])
+    // IMPORTANT: This effect should NEVER cause edit mode to exit
+    // NOTE: Early return when editing prevents any syncing while user is editing
+  }, [entry.id, entry.content, entry.headline, entry.subheading]) // Depend on all, but early return when editing
 
   // Close export menu when clicking outside
   useEffect(() => {
