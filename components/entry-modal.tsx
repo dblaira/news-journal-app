@@ -414,7 +414,7 @@ export function EntryModal({
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 1000,
-        padding: '2rem',
+        padding: isMobile ? '0.5rem' : '2rem',
         overflowY: 'auto',
       }}
       onClick={(e) => {
@@ -430,7 +430,7 @@ export function EntryModal({
           width: '100%',
           maxHeight: '90vh',
           overflowY: 'auto',
-          padding: '3rem',
+          padding: isMobile ? '1rem' : '3rem',
           position: 'relative',
           borderRadius: 0,
         }}
@@ -1050,7 +1050,7 @@ export function EntryModal({
           style={{
             background: isEditing ? '#1a1a2e' : '#f8f9fb',
             border: isEditing ? '1px solid #374151' : '1px solid #dfe3ef',
-            padding: '2rem',
+            padding: isMobile ? '1rem' : '2rem',
             borderRadius: '12px',
             marginBottom: '2.5rem',
             transition: 'all 0.2s ease',
@@ -1147,7 +1147,7 @@ export function EntryModal({
             style={{
               background: '#fff3cd',
               border: '1px solid #ffc107',
-              padding: '2rem',
+              padding: isMobile ? '1rem' : '2rem',
               borderRadius: '8px',
               textAlign: 'center',
               color: '#856404',
@@ -1182,12 +1182,12 @@ export function EntryModal({
                   <div
                     key={version.name}
                     style={{
-                      maxWidth: '650px',
+                      maxWidth: isMobile ? '100%' : '650px',
                       margin: '0 auto 2rem',
-                      padding: '2rem 3rem',
+                      padding: isMobile ? '1.5rem 1rem' : '2rem 3rem',
                       background: '#FAF9F6',
                       boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)',
-                      minHeight: '400px',
+                      minHeight: isMobile ? '300px' : '400px',
                     }}
                   >
                     <h4
@@ -1256,17 +1256,17 @@ export function EntryModal({
                   <div
                     key={version.name}
                     style={{
-                      maxWidth: '56rem',
+                      maxWidth: isMobile ? '100%' : '56rem',
                       margin: '0 auto 2rem',
                       background: '#F1F1F1',
                       color: '#000000',
                       boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                       overflow: 'hidden',
-                      minHeight: '400px',
+                      minHeight: isMobile ? '300px' : '400px',
                       border: '1px solid #D1D5DB',
                     }}
                   >
-                    <div style={{ padding: '2rem 3rem' }}>
+                    <div style={{ padding: isMobile ? '1.5rem 1rem' : '2rem 3rem' }}>
                       <h4
                         style={{
                           fontSize: '0.65rem',
@@ -1307,9 +1307,9 @@ export function EntryModal({
                       <div
                         style={{
                           fontFamily: "'Georgia', 'Times New Roman', serif",
-                          textAlign: 'justify',
+                          textAlign: isMobile ? 'left' : 'justify',
                           lineHeight: 1.6,
-                          columnCount: 2,
+                          columnCount: isMobile ? 1 : 2,
                           columnGap: '2rem',
                         }}
                       >
@@ -1341,13 +1341,13 @@ export function EntryModal({
                   <div
                     key={version.name}
                     style={{
-                      maxWidth: '40rem',
+                      maxWidth: isMobile ? '100%' : '40rem',
                       margin: '0 auto 2rem',
-                      padding: '3rem 4rem',
+                      padding: isMobile ? '2rem 1rem' : '3rem 4rem',
                       background: '#f4ebd0',
                       boxShadow: 'inset 0 0 80px rgba(139, 69, 19, 0.15), 0 10px 30px rgba(0,0,0,0.1)',
                       borderRadius: '2px',
-                      minHeight: '400px',
+                      minHeight: isMobile ? '250px' : '400px',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -1390,7 +1390,7 @@ export function EntryModal({
                   key={version.name}
                   style={{
                     background: '#f0f9f1',
-                    padding: '2rem',
+                    padding: isMobile ? '1rem' : '2rem',
                     borderRadius: '8px',
                     marginBottom: '2rem',
                     borderLeft: '4px solid #4CAF50',
@@ -1427,7 +1427,7 @@ export function EntryModal({
             style={{
               background: '#e3f2fd',
               border: '1px solid #2196F3',
-              padding: '2rem',
+              padding: isMobile ? '1rem' : '2rem',
               borderRadius: '8px',
               textAlign: 'center',
               color: '#0d47a1',

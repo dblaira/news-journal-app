@@ -281,14 +281,13 @@ export function JournalPageClient({
       e.id === entryId ? { ...e, content } : e
     )
     setEntries(updatedEntries)
-    
+
     // Update selected entry if it's the one being modified
     if (selectedEntry?.id === entryId) {
       setSelectedEntry({ ...selectedEntry, content })
     }
-    
-    // Refresh to update all views
-    router.refresh()
+    // Note: Removed router.refresh() here as it was causing edit mode issues
+    // The local state update is sufficient for the current view
   }
 
   const handleEntryUpdated = (entryId: string, updates: Partial<Entry>) => {

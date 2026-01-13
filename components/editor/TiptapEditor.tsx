@@ -93,6 +93,8 @@ export function TiptapEditor({
 }: TiptapEditorProps) {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isFirstRenderRef = useRef(true)
+  const isUserEditingRef = useRef(false)
+  const lastContentPropRef = useRef(content)
   
   // For Actions, convert content to task list format on initial render
   const initialContent = entryType === 'action' 
@@ -123,6 +125,9 @@ export function TiptapEditor({
       const html = editor.getHTML()
       onChange?.(html)
 
+      // Mark that user is actively editing (will be cleared after save)
+      isUserEditingRef.current = true
+
       // Debounced auto-save
       if (onSave && html !== lastSavedContentRef.current) {
         if (saveTimeoutRef.current) {
@@ -131,6 +136,10 @@ export function TiptapEditor({
         saveTimeoutRef.current = setTimeout(() => {
           onSave(html)
           lastSavedContentRef.current = html
+          // Clear editing flag after save completes + buffer time
+          setTimeout(() => {
+            isUserEditingRef.current = false
+          }, 500)
         }, autoSaveDelay)
       }
     },
@@ -138,17 +147,28 @@ export function TiptapEditor({
 
   // Update content when prop changes (e.g., switching entries)
   // Skip on first render to preserve our task list conversion
+  // Skip if user is actively editing to prevent cursor reset
   useEffect(() => {
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false
+      lastContentPropRef.current = content
       return
     }
+    
+    // Don't sync if user is actively editing - this prevents cursor reset
+    // when auto-save triggers a parent state update
+    if (isUserEditingRef.current) {
+      lastContentPropRef.current = content
+      return
+    }
+    
     if (editor && content !== editor.getHTML()) {
       // For actions, convert to task list; otherwise use as-is
       const newContent = entryType === 'action' ? convertToTaskList(content) : content
       editor.commands.setContent(newContent)
       lastSavedContentRef.current = newContent
     }
+    lastContentPropRef.current = content
   }, [content, editor, entryType])
 
   // Cleanup timeout on unmount
