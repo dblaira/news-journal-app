@@ -1128,7 +1128,8 @@ export function EntryModal({
             <TiptapEditor
               content={editedContent}
               onChange={setEditedContent}
-              onSave={handleAutoSaveContent}
+              // Auto-save disabled for debugging - manual save only via Save & Close
+              // onSave={handleAutoSaveContent}
               editable={true}
               autoSaveDelay={2000}
             />
