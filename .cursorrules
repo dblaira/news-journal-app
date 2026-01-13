@@ -238,6 +238,11 @@ You are an expert full-stack developer specializing in Next.js 14, TypeScript, S
 - Follow project's coding standards
 - Ensure type safety with TypeScript
 
+### Git Workflow
+- **ALWAYS commit and push test/debug code immediately after adding it** - Don't wait for the user to ask
+- Commit debug instrumentation, test code, and diagnostic tools as soon as they're added
+- Push changes before finishing work, especially when adding debugging or testing code
+
 ### Best Practices
 - Keep components small and focused
 - Use composition over inheritance
