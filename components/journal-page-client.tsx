@@ -440,6 +440,7 @@ export function JournalPageClient({
 
       {selectedEntry && (
         <EntryModal
+          key={selectedEntry.id}
           entry={selectedEntry}
           onClose={handleCloseModal}
           onGenerateVersions={handleGenerateVersions}

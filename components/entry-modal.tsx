@@ -217,23 +217,22 @@ export function EntryModal({
     }
   }
 
-  // Handle save content
-  const handleSaveContent = async (content: string) => {
-    setIsSaving(true)
+  // Handle auto-save content (from TiptapEditor)
+  // This saves to DB but does NOT update parent state to avoid re-render issues
+  const handleAutoSaveContent = async (content: string) => {
+    // Don't show saving indicator for auto-save to avoid UI flicker
     try {
       const result = await updateEntryContent(entry.id, content)
       if (result.error) {
-        console.error('Failed to save content:', result.error)
-        alert('Failed to save changes. Please try again.')
+        console.error('Auto-save failed:', result.error)
+        // Don't alert for auto-save failures - just log
       } else {
         setLastSaved(new Date())
-        onContentUpdated?.(entry.id, content)
+        // NOTE: Intentionally NOT calling onContentUpdated here
+        // Parent state will be updated on manual save or modal close
       }
     } catch (error) {
-      console.error('Failed to save content:', error)
-      alert('Failed to save changes. Please try again.')
-    } finally {
-      setIsSaving(false)
+      console.error('Auto-save error:', error)
     }
   }
 
@@ -1121,7 +1120,7 @@ export function EntryModal({
             <TiptapEditor
               content={editedContent}
               onChange={setEditedContent}
-              onSave={handleSaveContent}
+              onSave={handleAutoSaveContent}
               editable={true}
               autoSaveDelay={2000}
             />
