@@ -283,3 +283,37 @@ You are an expert full-stack developer specializing in Next.js 14, TypeScript, S
 - Anthropic Claude API documentation for AI integration
 - Stripe documentation for payment processing (V4)
 
+## Debugging Strategy
+
+When fixing bugs, especially ones that can't be reproduced directly:
+
+### The 3-Attempt Rule
+1. **Attempt 1-2**: Try obvious fixes based on code analysis
+2. **Attempt 3**: If still broken, STOP guessing. Add debug instrumentation:
+   - Console.log statements at key points
+   - Visible debug UI panels showing state changes
+   - Track what triggered state changes (add `source` parameter to setters)
+3. **Then**: Wait for real data before making more fixes
+
+### Debug Instrumentation Patterns
+
+**For React state bugs:**
+```typescript
+// Wrap state setter to log what's changing it
+const [value, setValueInternal] = useState(initial)
+const setValue = (newValue: T, source: string = 'unknown') => {
+  console.log(`${stateName} changed to ${newValue} from: ${source}`)
+  setValueInternal(newValue)
+}
+```
+
+**For visual debugging:**
+- Add a colored debug panel showing current state
+- Log last 5 state changes with timestamps
+- Remove after bug is fixed
+
+### Never
+- Make more than 3 blind fix attempts without instrumentation
+- Assume a fix worked without user confirmation
+- Waste user's time with repeated guessing
+
