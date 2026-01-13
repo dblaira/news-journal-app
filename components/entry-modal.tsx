@@ -115,27 +115,26 @@ export function EntryModal({
     setEntryImages(getEntryImages(entry))
   }, [entry.images, entry.image_url, entry.photo_url])
 
-  // Reset state only when SWITCHING to a different entry (not on initial mount)
-  useEffect(() => {
-    // Only reset if we're actually switching to a different entry
-    // This prevents resetting on mount or re-renders
-    if (prevEntryIdRef.current !== entry.id) {
-      setEditedContent(entry.content)
-      setEditedHeadline(entry.headline)
-      setEditedSubheading(entry.subheading || '')
-      setIsEditing(false)
-      prevEntryIdRef.current = entry.id
-    }
-  }, [entry.id, entry.content, entry.headline, entry.subheading])
+  // DEBUG: All useEffects that touch isEditing or editedContent are DISABLED
+  // to isolate the bug. If bug persists, it's somewhere else entirely.
+  
+  // useEffect(() => {
+  //   if (prevEntryIdRef.current !== entry.id) {
+  //     setEditedContent(entry.content)
+  //     setEditedHeadline(entry.headline)
+  //     setEditedSubheading(entry.subheading || '')
+  //     setIsEditing(false)
+  //     prevEntryIdRef.current = entry.id
+  //   }
+  // }, [entry.id, entry.content, entry.headline, entry.subheading])
 
-  // Sync content from server only when NOT editing (handles external updates)
-  useEffect(() => {
-    if (!isEditing) {
-      setEditedContent(entry.content)
-      setEditedHeadline(entry.headline)
-      setEditedSubheading(entry.subheading || '')
-    }
-  }, [entry.content, entry.headline, entry.subheading, isEditing])
+  // useEffect(() => {
+  //   if (!isEditing) {
+  //     setEditedContent(entry.content)
+  //     setEditedHeadline(entry.headline)
+  //     setEditedSubheading(entry.subheading || '')
+  //   }
+  // }, [entry.content, entry.headline, entry.subheading, isEditing])
 
   // Close export menu when clicking outside
   useEffect(() => {
