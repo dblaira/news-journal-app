@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { Entry, Version, MindMap, ReactFlowNode, ReactFlowEdge, EntryMetadata, EntryImage } from '@/types'
 import { formatEntryDateLong, stripHtml } from '@/lib/utils'
@@ -65,6 +65,26 @@ export function EntryModal({
   
   // Track previous entry ID to detect actual entry changes
   const prevEntryIdRef = useRef(entry.id)
+  
+  // Track if we're intentionally exiting edit mode (to prevent accidental exits)
+  const isIntentionallyExitingRef = useRef(false)
+  
+  // DEBUG: Track all state changes
+  const [debugLog, setDebugLog] = useState<Array<{time: string, action: string, isEditing: boolean, source: string}>>([])
+  
+  // Wrapper to log all setIsEditingInternal calls
+  const setIsEditingWithLog = (value: boolean, source: string) => {
+    const timestamp = new Date().toLocaleTimeString()
+    const logEntry = { time: timestamp, action: value ? 'ENTER_EDIT' : 'EXIT_EDIT', isEditing: value, source }
+    console.log(`[EDIT MODE DEBUG] ${logEntry.action} from: ${source} at ${timestamp}`)
+    console.log(`[EDIT MODE DEBUG] isIntentionallyExiting: ${isIntentionallyExitingRef.current}`)
+    console.trace('[EDIT MODE DEBUG] Stack trace:')
+    setDebugLog(prev => [...prev.slice(-9), logEntry]) // Keep last 10 entries
+    setIsEditingInternal(value)
+  }
+  
+  // Edit mode is "sticky" - once entered, it can only be exited via explicit user action
+  // This prevents accidental exits on mobile from touch events, blur, etc.
 
   // Mind map state
   const [showMindMap, setShowMindMap] = useState(false)
@@ -122,21 +142,34 @@ export function EntryModal({
   // Handle entry changes - only reset if entry ID changed (different entry)
   // Don't reset if just content updated (could be from auto-save)
   useEffect(() => {
-    if (prevEntryIdRef.current !== entry.id) {
+    const currentEntryId = entry.id
+    
+    // Never exit edit mode unless we're intentionally doing so or entry ID changed
+    if (prevEntryIdRef.current !== currentEntryId) {
       // Different entry - reset everything
+      console.log('[EDIT MODE DEBUG] Entry ID changed, resetting edit mode')
+      isIntentionallyExitingRef.current = true // Allow exit for different entry
       setEditedContent(entry.content)
       setEditedHeadline(entry.headline)
       setEditedSubheading(entry.subheading || '')
-      setIsEditingInternal(false)
+      setIsEditingWithLog(false, 'useEffect-entryIdChanged')
       setSavedCursorPosition(null)
-      prevEntryIdRef.current = entry.id
-    } else if (!isEditing) {
+      prevEntryIdRef.current = currentEntryId
+      setTimeout(() => {
+        isIntentionallyExitingRef.current = false
+      }, 100)
+    } else if (!isEditing && !isIntentionallyExitingRef.current) {
       // Same entry, not editing - sync with prop changes
+      // Only sync if we're not intentionally exiting (to prevent race conditions)
+      console.log('[EDIT MODE DEBUG] Syncing content (not editing)')
       setEditedContent(entry.content)
       setEditedHeadline(entry.headline)
       setEditedSubheading(entry.subheading || '')
+    } else if (isEditing) {
+      console.log('[EDIT MODE DEBUG] Editing active - skipping content sync')
     }
     // If editing, don't sync - user's changes take precedence
+    // IMPORTANT: This effect should NOT cause edit mode to exit
   }, [entry.id, entry.content, entry.headline, entry.subheading, isEditing])
 
   // Close export menu when clicking outside
@@ -295,16 +328,22 @@ export function EntryModal({
 
   // Handle cancel editing
   const handleCancelEdit = () => {
+    isIntentionallyExitingRef.current = true
     setEditedContent(entry.content)
     setEditedHeadline(entry.headline)
     setEditedSubheading(entry.subheading || '')
-    setIsEditingInternal(false)
+    setIsEditingWithLog(false, 'handleCancelEdit')
     setSavedCursorPosition(null)
+    // Reset flag after state update
+    setTimeout(() => {
+      isIntentionallyExitingRef.current = false
+    }, 100)
   }
   
   // Handle entering edit mode - preserve cursor position if available
   const handleEnterEditMode = () => {
-    setIsEditingInternal(true)
+    isIntentionallyExitingRef.current = false
+    setIsEditingWithLog(true, 'handleEnterEditMode')
     // Restore cursor position after a brief delay to ensure textarea is rendered
     setTimeout(() => {
       if (contentTextareaRef.current && savedCursorPosition !== null) {
@@ -321,11 +360,16 @@ export function EntryModal({
   
   // Save cursor position when exiting edit mode
   const handleExitEditMode = () => {
+    isIntentionallyExitingRef.current = true
     if (contentTextareaRef.current) {
       const cursorPos = contentTextareaRef.current.selectionStart
       setSavedCursorPosition(cursorPos)
     }
-    setIsEditingInternal(false)
+    setIsEditingWithLog(false, 'handleExitEditMode')
+    // Reset flag after state update
+    setTimeout(() => {
+      isIntentionallyExitingRef.current = false
+    }, 100)
   }
 
   // Handle mind map generation
@@ -452,11 +496,34 @@ export function EntryModal({
         zIndex: 1000,
         padding: isMobile ? '0.5rem' : '2rem',
         overflowY: 'auto',
+        pointerEvents: isEditing ? 'auto' : 'auto', // Allow interactions when editing
       }}
       onClick={(e) => {
-        // Don't close if clicking inside the modal content or if editing
-        if (e.target === e.currentTarget && !isEditing) {
+        // NEVER close modal if editing - this prevents accidental exits on mobile
+        if (isEditing) {
+          console.log('[EDIT MODE DEBUG] Modal onClick blocked - editing active')
+          e.stopPropagation()
+          e.preventDefault()
+          return
+        }
+        // Only close if clicking the background (not modal content) and not editing
+        if (e.target === e.currentTarget && !isIntentionallyExitingRef.current) {
+          console.log('[EDIT MODE DEBUG] Modal onClick - closing modal')
           onClose()
+        } else {
+          console.log('[EDIT MODE DEBUG] Modal onClick - not background or intentional exit')
+        }
+      }}
+      onTouchStart={(e) => {
+        // Prevent any touch events on background from closing if editing
+        if (isEditing) {
+          e.stopPropagation()
+        }
+      }}
+      onTouchEnd={(e) => {
+        // Prevent touch end from closing if editing
+        if (isEditing) {
+          e.stopPropagation()
         }
       }}
     >
@@ -474,9 +541,47 @@ export function EntryModal({
         }}
         onClick={(e) => {
           // Prevent modal close when clicking inside modal content
+          if (isEditing) {
+            console.log('[EDIT MODE DEBUG] Modal content onClick - editing active, blocking')
+          }
           e.stopPropagation()
+          // If editing, also prevent any propagation
+          if (isEditing) {
+            e.preventDefault()
+          }
+        }}
+        onTouchStart={(e) => {
+          // Prevent touch events from bubbling when editing
+          if (isEditing) {
+            console.log('[EDIT MODE DEBUG] Modal content onTouchStart - editing active, blocking')
+            e.stopPropagation()
+          }
         }}
       >
+        {/* DEBUG PANEL */}
+        {isMobile && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            background: isEditing ? '#22C55E' : '#DC143C',
+            color: '#fff',
+            padding: '0.5rem',
+            fontSize: '0.7rem',
+            zIndex: 9999,
+            fontFamily: 'monospace',
+            maxHeight: '150px',
+            overflowY: 'auto',
+          }}>
+            <strong>DEBUG: isEditing={isEditing ? 'TRUE' : 'FALSE'}</strong>
+            <div style={{ marginTop: '0.25rem', fontSize: '0.65rem' }}>
+              {debugLog.slice(-5).map((log, i) => (
+                <div key={i}>{log.time} - {log.action} from {log.source}</div>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Close button - separate on mobile for cleaner UX */}
         <button
           onClick={onClose}
@@ -524,6 +629,7 @@ export function EntryModal({
               {/* Save button */}
               <button
                 onClick={async () => {
+                  console.log('[EDIT MODE DEBUG] Save button clicked')
                   await handleSaveAll()
                   handleExitEditMode()
                 }}
@@ -1172,11 +1278,24 @@ export function EntryModal({
               onChange={(e) => {
                 setEditedContent(e.target.value)
                 // Save cursor position on change
-                setSavedCursorPosition(e.target.selectionStart)
+                // Use requestAnimationFrame to ensure selectionStart is accurate
+                requestAnimationFrame(() => {
+                  if (contentTextareaRef.current) {
+                    setSavedCursorPosition(contentTextareaRef.current.selectionStart)
+                  }
+                })
               }}
               onBlur={(e) => {
                 // Save cursor position when losing focus
+                // BUT don't exit edit mode on blur - user might just be scrolling on mobile
+                console.log('[EDIT MODE DEBUG] Textarea onBlur - saving cursor position, NOT exiting edit mode')
                 setSavedCursorPosition(e.target.selectionStart)
+                // Only exit if we're intentionally exiting (not just blur)
+                if (!isIntentionallyExitingRef.current) {
+                  // Keep edit mode active even on blur
+                  // This prevents mobile keyboard from closing edit mode
+                  console.log('[EDIT MODE DEBUG] onBlur - keeping edit mode active')
+                }
               }}
               onFocus={(e) => {
                 // Restore cursor position when gaining focus
