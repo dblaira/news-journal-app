@@ -52,12 +52,22 @@ export function EntryModal({
   const [entryImages, setEntryImages] = useState<EntryImage[]>(() => getEntryImages(entry))
   
   // Edit mode state
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, setIsEditingInternal] = useState(false)
   const [editedContent, setEditedContent] = useState(entry.content)
   const [editedHeadline, setEditedHeadline] = useState(entry.headline)
   const [editedSubheading, setEditedSubheading] = useState(entry.subheading || '')
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  
+  // DEBUG: Track what's changing isEditing
+  const [debugLog, setDebugLog] = useState<string[]>([])
+  const setIsEditing = (value: boolean, source: string = 'unknown') => {
+    const timestamp = new Date().toLocaleTimeString()
+    const msg = `${timestamp}: isEditing=${value} (from: ${source})`
+    console.log('DEBUG:', msg)
+    setDebugLog(prev => [...prev.slice(-4), msg])
+    setIsEditingInternal(value)
+  }
   
   // Track previous entry ID to detect actual entry changes
   const prevEntryIdRef = useRef(entry.id)
@@ -295,7 +305,7 @@ export function EntryModal({
     setEditedContent(entry.content)
     setEditedHeadline(entry.headline)
     setEditedSubheading(entry.subheading || '')
-    setIsEditing(false)
+    setIsEditing(false, 'handleCancelEdit')
   }
 
   // Handle mind map generation
@@ -322,7 +332,7 @@ export function EntryModal({
   // Handle manual save and exit edit mode
   const handleSaveAndClose = async () => {
     await handleSaveAll()
-    setIsEditing(false)
+    setIsEditing(false, 'handleSaveAndClose')
   }
 
   const handleTogglePin = async () => {
@@ -429,12 +439,30 @@ export function EntryModal({
         }
       }}
     >
+      {/* DEBUG PANEL - Remove after fixing bug */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        background: '#ff0000',
+        color: '#fff',
+        padding: '0.5rem',
+        fontSize: '0.75rem',
+        zIndex: 9999,
+        fontFamily: 'monospace',
+      }}>
+        <strong>DEBUG: isEditing={isEditing ? 'TRUE' : 'FALSE'}</strong>
+        <br />
+        {debugLog.map((log, i) => <div key={i}>{log}</div>)}
+      </div>
       <div
         style={{
           background: '#FFFFFF',
           maxWidth: '900px',
           width: '100%',
           maxHeight: '90vh',
+          marginTop: '80px', // Make room for debug panel
           overflowY: 'auto',
           padding: isMobile ? '1rem' : '3rem',
           position: 'relative',
@@ -489,7 +517,7 @@ export function EntryModal({
               <button
                 onClick={async () => {
                   await handleSaveAll()
-                  setIsEditing(false)
+                  setIsEditing(false, 'SaveButton')
                 }}
                 disabled={isSaving}
                 aria-label="Save"
@@ -554,7 +582,7 @@ export function EntryModal({
           ) : (
             /* Edit button */
             <button
-              onClick={() => setIsEditing(true)}
+              onClick={() => setIsEditing(true, 'EditButton')}
               aria-label="Edit"
               title="Edit"
               style={{
@@ -1144,7 +1172,7 @@ export function EntryModal({
           ) : (
             <div
               className="rendered-content"
-              onClick={() => setIsEditing(true)}
+              onClick={() => setIsEditing(true, 'ContentClick')}
               style={{
                 fontSize: '1rem',
                 lineHeight: 1.85,
