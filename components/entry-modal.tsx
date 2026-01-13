@@ -59,15 +59,9 @@ export function EntryModal({
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   
-  // DEBUG: Track what's changing isEditing
-  const [debugLog, setDebugLog] = useState<string[]>([])
-  const setIsEditing = (value: boolean, source: string = 'unknown') => {
-    const timestamp = new Date().toLocaleTimeString()
-    const msg = `${timestamp}: isEditing=${value} (from: ${source})`
-    console.log('DEBUG:', msg)
-    setDebugLog(prev => [...prev.slice(-4), msg])
-    setIsEditingInternal(value)
-  }
+  // Cursor position tracking for textarea
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const [savedCursorPosition, setSavedCursorPosition] = useState<number | null>(null)
   
   // Track previous entry ID to detect actual entry changes
   const prevEntryIdRef = useRef(entry.id)
@@ -125,26 +119,25 @@ export function EntryModal({
     setEntryImages(getEntryImages(entry))
   }, [entry.images, entry.image_url, entry.photo_url])
 
-  // DEBUG: All useEffects that touch isEditing or editedContent are DISABLED
-  // to isolate the bug. If bug persists, it's somewhere else entirely.
-  
-  // useEffect(() => {
-  //   if (prevEntryIdRef.current !== entry.id) {
-  //     setEditedContent(entry.content)
-  //     setEditedHeadline(entry.headline)
-  //     setEditedSubheading(entry.subheading || '')
-  //     setIsEditing(false)
-  //     prevEntryIdRef.current = entry.id
-  //   }
-  // }, [entry.id, entry.content, entry.headline, entry.subheading])
-
-  // useEffect(() => {
-  //   if (!isEditing) {
-  //     setEditedContent(entry.content)
-  //     setEditedHeadline(entry.headline)
-  //     setEditedSubheading(entry.subheading || '')
-  //   }
-  // }, [entry.content, entry.headline, entry.subheading, isEditing])
+  // Handle entry changes - only reset if entry ID changed (different entry)
+  // Don't reset if just content updated (could be from auto-save)
+  useEffect(() => {
+    if (prevEntryIdRef.current !== entry.id) {
+      // Different entry - reset everything
+      setEditedContent(entry.content)
+      setEditedHeadline(entry.headline)
+      setEditedSubheading(entry.subheading || '')
+      setIsEditingInternal(false)
+      setSavedCursorPosition(null)
+      prevEntryIdRef.current = entry.id
+    } else if (!isEditing) {
+      // Same entry, not editing - sync with prop changes
+      setEditedContent(entry.content)
+      setEditedHeadline(entry.headline)
+      setEditedSubheading(entry.subheading || '')
+    }
+    // If editing, don't sync - user's changes take precedence
+  }, [entry.id, entry.content, entry.headline, entry.subheading, isEditing])
 
   // Close export menu when clicking outside
   useEffect(() => {
@@ -305,7 +298,34 @@ export function EntryModal({
     setEditedContent(entry.content)
     setEditedHeadline(entry.headline)
     setEditedSubheading(entry.subheading || '')
-    setIsEditing(false, 'handleCancelEdit')
+    setIsEditingInternal(false)
+    setSavedCursorPosition(null)
+  }
+  
+  // Handle entering edit mode - preserve cursor position if available
+  const handleEnterEditMode = () => {
+    setIsEditingInternal(true)
+    // Restore cursor position after a brief delay to ensure textarea is rendered
+    setTimeout(() => {
+      if (contentTextareaRef.current && savedCursorPosition !== null) {
+        contentTextareaRef.current.focus()
+        contentTextareaRef.current.setSelectionRange(savedCursorPosition, savedCursorPosition)
+      } else if (contentTextareaRef.current) {
+        // If no saved position, focus at the end
+        contentTextareaRef.current.focus()
+        const length = contentTextareaRef.current.value.length
+        contentTextareaRef.current.setSelectionRange(length, length)
+      }
+    }, 50)
+  }
+  
+  // Save cursor position when exiting edit mode
+  const handleExitEditMode = () => {
+    if (contentTextareaRef.current) {
+      const cursorPos = contentTextareaRef.current.selectionStart
+      setSavedCursorPosition(cursorPos)
+    }
+    setIsEditingInternal(false)
   }
 
   // Handle mind map generation
@@ -332,7 +352,7 @@ export function EntryModal({
   // Handle manual save and exit edit mode
   const handleSaveAndClose = async () => {
     await handleSaveAll()
-    setIsEditing(false, 'handleSaveAndClose')
+    handleExitEditMode()
   }
 
   const handleTogglePin = async () => {
@@ -434,39 +454,27 @@ export function EntryModal({
         overflowY: 'auto',
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) {
+        // Don't close if clicking inside the modal content or if editing
+        if (e.target === e.currentTarget && !isEditing) {
           onClose()
         }
       }}
     >
-      {/* DEBUG PANEL - Remove after fixing bug */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        background: '#ff0000',
-        color: '#fff',
-        padding: '0.5rem',
-        fontSize: '0.75rem',
-        zIndex: 9999,
-        fontFamily: 'monospace',
-      }}>
-        <strong>DEBUG: isEditing={isEditing ? 'TRUE' : 'FALSE'}</strong>
-        <br />
-        {debugLog.map((log, i) => <div key={i}>{log}</div>)}
-      </div>
       <div
         style={{
           background: '#FFFFFF',
           maxWidth: '900px',
           width: '100%',
           maxHeight: '90vh',
-          marginTop: '80px', // Make room for debug panel
+          marginTop: isMobile ? '0.5rem' : '2rem',
           overflowY: 'auto',
           padding: isMobile ? '1rem' : '3rem',
           position: 'relative',
           borderRadius: 0,
+        }}
+        onClick={(e) => {
+          // Prevent modal close when clicking inside modal content
+          e.stopPropagation()
         }}
       >
         {/* Close button - separate on mobile for cleaner UX */}
@@ -517,7 +525,7 @@ export function EntryModal({
               <button
                 onClick={async () => {
                   await handleSaveAll()
-                  setIsEditing(false, 'SaveButton')
+                  handleExitEditMode()
                 }}
                 disabled={isSaving}
                 aria-label="Save"
@@ -582,7 +590,7 @@ export function EntryModal({
           ) : (
             /* Edit button */
             <button
-              onClick={() => setIsEditing(true, 'EditButton')}
+              onClick={handleEnterEditMode}
               aria-label="Edit"
               title="Edit"
               style={{
@@ -1089,6 +1097,10 @@ export function EntryModal({
             marginBottom: '2.5rem',
             transition: 'all 0.2s ease',
           }}
+          onClick={(e) => {
+            // Prevent clicks inside this div from bubbling to modal
+            e.stopPropagation()
+          }}
         >
           <div style={{ 
             display: 'flex', 
@@ -1117,6 +1129,7 @@ export function EntryModal({
                 )}
                 <button
                   onClick={handleCancelEdit}
+                  type="button"
                   style={{
                     background: 'transparent',
                     color: '#9CA3AF',
@@ -1132,6 +1145,7 @@ export function EntryModal({
                 </button>
                 <button
                   onClick={handleSaveAndClose}
+                  type="button"
                   disabled={isSaving}
                   style={{
                     background: '#22C55E',
@@ -1152,10 +1166,26 @@ export function EntryModal({
           </div>
           
           {isEditing ? (
-            // DEBUG: Using simple textarea instead of TiptapEditor to isolate bug
             <textarea
+              ref={contentTextareaRef}
               value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
+              onChange={(e) => {
+                setEditedContent(e.target.value)
+                // Save cursor position on change
+                setSavedCursorPosition(e.target.selectionStart)
+              }}
+              onBlur={(e) => {
+                // Save cursor position when losing focus
+                setSavedCursorPosition(e.target.selectionStart)
+              }}
+              onFocus={(e) => {
+                // Restore cursor position when gaining focus
+                if (savedCursorPosition !== null) {
+                  setTimeout(() => {
+                    e.target.setSelectionRange(savedCursorPosition, savedCursorPosition)
+                  }, 0)
+                }
+              }}
               style={{
                 width: '100%',
                 minHeight: '300px',
@@ -1172,7 +1202,7 @@ export function EntryModal({
           ) : (
             <div
               className="rendered-content"
-              onClick={() => setIsEditing(true, 'ContentClick')}
+              onClick={handleEnterEditMode}
               style={{
                 fontSize: '1rem',
                 lineHeight: 1.85,
