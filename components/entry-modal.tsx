@@ -58,6 +58,9 @@ export function EntryModal({
   const [editedSubheading, setEditedSubheading] = useState(entry.subheading || '')
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  
+  // Track previous entry ID to detect actual entry changes
+  const prevEntryIdRef = useRef(entry.id)
 
   // Mind map state
   const [showMindMap, setShowMindMap] = useState(false)
@@ -112,13 +115,18 @@ export function EntryModal({
     setEntryImages(getEntryImages(entry))
   }, [entry.images, entry.image_url, entry.photo_url])
 
-  // Reset state only when viewing a different entry
+  // Reset state only when SWITCHING to a different entry (not on initial mount)
   useEffect(() => {
-    setEditedContent(entry.content)
-    setEditedHeadline(entry.headline)
-    setEditedSubheading(entry.subheading || '')
-    setIsEditing(false)
-  }, [entry.id]) // Only entry.id - don't reset edit mode on content changes
+    // Only reset if we're actually switching to a different entry
+    // This prevents resetting on mount or re-renders
+    if (prevEntryIdRef.current !== entry.id) {
+      setEditedContent(entry.content)
+      setEditedHeadline(entry.headline)
+      setEditedSubheading(entry.subheading || '')
+      setIsEditing(false)
+      prevEntryIdRef.current = entry.id
+    }
+  }, [entry.id, entry.content, entry.headline, entry.subheading])
 
   // Sync content from server only when NOT editing (handles external updates)
   useEffect(() => {
