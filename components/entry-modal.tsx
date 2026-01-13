@@ -112,13 +112,22 @@ export function EntryModal({
     setEntryImages(getEntryImages(entry))
   }, [entry.images, entry.image_url, entry.photo_url])
 
-  // Update edited content when entry changes
+  // Reset state only when viewing a different entry
   useEffect(() => {
     setEditedContent(entry.content)
     setEditedHeadline(entry.headline)
     setEditedSubheading(entry.subheading || '')
     setIsEditing(false)
-  }, [entry.id, entry.content, entry.headline, entry.subheading])
+  }, [entry.id]) // Only entry.id - don't reset edit mode on content changes
+
+  // Sync content from server only when NOT editing (handles external updates)
+  useEffect(() => {
+    if (!isEditing) {
+      setEditedContent(entry.content)
+      setEditedHeadline(entry.headline)
+      setEditedSubheading(entry.subheading || '')
+    }
+  }, [entry.content, entry.headline, entry.subheading, isEditing])
 
   // Close export menu when clicking outside
   useEffect(() => {
