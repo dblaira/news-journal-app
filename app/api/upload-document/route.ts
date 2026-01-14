@@ -55,7 +55,9 @@ async function convertPdfToImage(buffer: Buffer): Promise<string | null> {
     // Use pdf-to-png-converter - works in serverless without external dependencies
     const { pdfToPng } = await import('pdf-to-png-converter')
     
-    const pngPages = await pdfToPng(new Uint8Array(buffer), {
+    // Convert Node.js Buffer to ArrayBuffer (pdfToPng expects string path or ArrayBufferLike)
+    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+    const pngPages = await pdfToPng(arrayBuffer, {
       viewportScale: 2.0, // Higher scale for better OCR quality
       disableFontFace: true, // Avoid font loading issues in serverless
       useSystemFonts: true,
