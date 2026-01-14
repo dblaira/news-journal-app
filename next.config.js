@@ -1,6 +1,10 @@
+const path = require('path')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Fix for multiple lockfiles issue - explicitly set the workspace root
+  outputFileTracingRoot: path.join(__dirname, './'),
   // External packages that should NOT be bundled (native modules, PDF libraries)
   serverExternalPackages: [
     'pdf-parse', 
