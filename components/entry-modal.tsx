@@ -85,20 +85,16 @@ export function EntryModal({
     } catch (e) { /* ignore */ }
   }
 
-  // Wrapper to log all setIsEditingInternal calls
+  // Wrapper to log all setIsEditingInternal calls (for debugging)
   const setIsEditingWithLog = (value: boolean, source: string) => {
     const timestamp = new Date().toLocaleTimeString()
     const logEntry = { time: timestamp, action: value ? 'ENTER_EDIT' : 'EXIT_EDIT', isEditing: value, source }
-    console.log(`[EDIT MODE DEBUG] ${logEntry.action} from: ${source} at ${timestamp}`)
-    console.log(`[EDIT MODE DEBUG] isIntentionallyExiting: ${isIntentionallyExitingRef.current}`)
-    console.trace('[EDIT MODE DEBUG] Stack trace:')
+    console.log(`[EDIT MODE] ${logEntry.action} from: ${source}`)
     setDebugLog(prev => [...prev.slice(-9), logEntry]) // Keep last 10 entries
     isEditingRef.current = value // Update ref immediately
     setIsEditingInternal(value)
-    // #region agent log
-    saveDebugToStorage({location:'entry-modal.tsx:setIsEditingWithLog',message:`EDIT_STATE_CHANGE: ${value ? 'ENTER' : 'EXIT'}`,data:{newValue:value,source,isIntentionallyExiting:isIntentionallyExitingRef.current,prevRefValue:isEditingRef.current,timestamp}});
-    fetch('http://127.0.0.1:7242/ingest/cd060c6d-4dc4-486f-814d-a752806ed6a5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'entry-modal.tsx:setIsEditingWithLog',message:`EDIT_STATE_CHANGE: ${value ? 'ENTER' : 'EXIT'}`,data:{newValue:value,source,isIntentionallyExiting:isIntentionallyExitingRef.current,prevRefValue:isEditingRef.current,timestamp},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H5'})}).catch(()=>{});
-    // #endregion
+    // Save to localStorage for debugging (accessible via ?debug=true)
+    saveDebugToStorage({location:'entry-modal.tsx:setIsEditingWithLog',message:`EDIT_STATE_CHANGE: ${value ? 'ENTER' : 'EXIT'}`,data:{newValue:value,source,isIntentionallyExiting:isIntentionallyExitingRef.current,timestamp}})
   }
   
   // Edit mode is "sticky" - once entered, it can only be exited via explicit user action
@@ -120,14 +116,14 @@ export function EntryModal({
   // Mobile detection for responsive button layout
   const [isMobile, setIsMobile] = useState(false)
   
-  // #region agent log
-  // Track component renders with current isEditing state
-  useEffect(() => {
-    fetch('http://127.0.0.1:7242/ingest/cd060c6d-4dc4-486f-814d-a752806ed6a5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'entry-modal.tsx:RENDER',message:'COMPONENT_RENDERED',data:{isEditing,isEditingRef:isEditingRef.current,entryId:entry.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
-  });
-  // #endregion
+  // Debug mode - only show panel when ?debug=true is in URL
+  const [showDebugPanel, setShowDebugPanel] = useState(false)
   
   useEffect(() => {
+    // Check URL for debug parameter
+    const urlParams = new URLSearchParams(window.location.search)
+    setShowDebugPanel(urlParams.get('debug') === 'true')
+    
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 640)
     }
@@ -170,17 +166,10 @@ export function EntryModal({
     const currentEntryId = entry.id
     const currentIsEditing = isEditingRef.current // Use ref for current value (always up-to-date)
     
-    // #region agent log
-    saveDebugToStorage({location:'entry-modal.tsx:useEffect-entryChanges',message:'ENTRY_PROP_USEEFFECT_FIRED',data:{currentEntryId,prevEntryId:prevEntryIdRef.current,currentIsEditing,isIntentionallyExiting:isIntentionallyExitingRef.current,entryIdChanged:prevEntryIdRef.current!==currentEntryId}});
-    // #endregion
-    
     // Only process if entry ID actually changed
     if (prevEntryIdRef.current !== currentEntryId) {
       // Different entry - reset everything
-      console.log('[EDIT MODE DEBUG] Entry ID changed, resetting edit mode')
-      // #region agent log
-      saveDebugToStorage({location:'entry-modal.tsx:useEffect-entryIdChanged',message:'ENTRY_ID_CHANGED_RESETTING',data:{oldId:prevEntryIdRef.current,newId:currentEntryId}});
-      // #endregion
+      console.log('[EDIT MODE] Entry ID changed, resetting edit mode')
       isIntentionallyExitingRef.current = true // Allow exit for different entry
       setEditedContent(entry.content)
       setEditedHeadline(entry.headline)
@@ -194,10 +183,6 @@ export function EntryModal({
     } else {
       // Same entry ID - IGNORE all prop updates while editing
       if (currentIsEditing) {
-        console.log('[EDIT MODE DEBUG] Editing active - IGNORING all prop updates (including auto-save)')
-        // #region agent log
-        saveDebugToStorage({location:'entry-modal.tsx:useEffect-ignoringProps',message:'IGNORING_PROPS_WHILE_EDITING',data:{currentIsEditing}});
-        // #endregion
         // Do nothing - user's edits take precedence
         return
       }
@@ -210,19 +195,13 @@ export function EntryModal({
         const subheadingChanged = editedSubheading !== (entry.subheading || '')
         
         if (contentChanged || headlineChanged || subheadingChanged) {
-          console.log('[EDIT MODE DEBUG] Syncing content (not editing, content changed)')
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/cd060c6d-4dc4-486f-814d-a752806ed6a5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'entry-modal.tsx:useEffect-syncingContent',message:'SYNCING_CONTENT_NOT_EDITING',data:{contentChanged,headlineChanged,subheadingChanged},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-          // #endregion
           setEditedContent(entry.content)
           setEditedHeadline(entry.headline)
           setEditedSubheading(entry.subheading || '')
         }
       }
     }
-    // IMPORTANT: This effect should NEVER cause edit mode to exit
-    // NOTE: Early return when editing prevents any syncing while user is editing
-  }, [entry.id, entry.content, entry.headline, entry.subheading]) // Depend on all, but early return when editing
+  }, [entry.id, entry.content, entry.headline, entry.subheading])
 
   // Close export menu when clicking outside
   useEffect(() => {
@@ -315,9 +294,6 @@ export function EntryModal({
   // Handle auto-save content (from TiptapEditor)
   // This saves to DB but does NOT update parent state to avoid re-render issues
   const handleAutoSaveContent = async (content: string) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/cd060c6d-4dc4-486f-814d-a752806ed6a5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'entry-modal.tsx:handleAutoSaveContent',message:'AUTO_SAVE_START',data:{isEditing,entryId:entry.id,contentLength:content.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-    // #endregion
     // Don't show saving indicator for auto-save to avoid UI flicker
     try {
       const result = await updateEntryContent(entry.id, content)
@@ -326,9 +302,6 @@ export function EntryModal({
         // Don't alert for auto-save failures - just log
       } else {
         setLastSaved(new Date())
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/cd060c6d-4dc4-486f-814d-a752806ed6a5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'entry-modal.tsx:handleAutoSaveContent',message:'AUTO_SAVE_SUCCESS',data:{isEditing,isEditingRef:isEditingRef.current},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-        // #endregion
         // NOTE: Intentionally NOT calling onContentUpdated here
         // Parent state will be updated on manual save or modal close
       }
@@ -400,9 +373,6 @@ export function EntryModal({
   
   // Handle entering edit mode - preserve cursor position if available
   const handleEnterEditMode = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/cd060c6d-4dc4-486f-814d-a752806ed6a5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'entry-modal.tsx:handleEnterEditMode',message:'ENTERING_EDIT_MODE',data:{prevIsEditing:isEditing,prevRefValue:isEditingRef.current},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H5'})}).catch(()=>{});
-    // #endregion
     isIntentionallyExitingRef.current = false
     setIsEditingWithLog(true, 'handleEnterEditMode')
     // Restore cursor position after a brief delay to ensure textarea is rendered
@@ -560,37 +530,24 @@ export function EntryModal({
         pointerEvents: isEditing ? 'auto' : 'auto', // Allow interactions when editing
       }}
       onClick={(e) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/cd060c6d-4dc4-486f-814d-a752806ed6a5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'entry-modal.tsx:modalBackgroundOnClick',message:'MODAL_BACKGROUND_CLICK',data:{isEditing,targetIsCurrentTarget:e.target===e.currentTarget,isIntentionallyExiting:isIntentionallyExitingRef.current},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4'})}).catch(()=>{});
-        // #endregion
         // NEVER close modal if editing - this prevents accidental exits on mobile
         if (isEditing) {
-          console.log('[EDIT MODE DEBUG] Modal onClick blocked - editing active')
           e.stopPropagation()
           e.preventDefault()
           return
         }
         // Only close if clicking the background (not modal content) and not editing
         if (e.target === e.currentTarget && !isIntentionallyExitingRef.current) {
-          console.log('[EDIT MODE DEBUG] Modal onClick - closing modal')
           onClose()
-        } else {
-          console.log('[EDIT MODE DEBUG] Modal onClick - not background or intentional exit')
         }
       }}
       onTouchStart={(e) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/cd060c6d-4dc4-486f-814d-a752806ed6a5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'entry-modal.tsx:modalBackgroundTouchStart',message:'MODAL_TOUCH_START',data:{isEditing,targetTagName:(e.target as HTMLElement)?.tagName},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H4'})}).catch(()=>{});
-        // #endregion
         // Prevent any touch events on background from closing if editing
         if (isEditing) {
           e.stopPropagation()
         }
       }}
       onTouchEnd={(e) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/cd060c6d-4dc4-486f-814d-a752806ed6a5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'entry-modal.tsx:modalBackgroundTouchEnd',message:'MODAL_TOUCH_END',data:{isEditing,targetTagName:(e.target as HTMLElement)?.tagName},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H4'})}).catch(()=>{});
-        // #endregion
         // Prevent touch end from closing if editing
         if (isEditing) {
           e.stopPropagation()
@@ -611,11 +568,7 @@ export function EntryModal({
         }}
         onClick={(e) => {
           // Prevent modal close when clicking inside modal content
-          if (isEditing) {
-            console.log('[EDIT MODE DEBUG] Modal content onClick - editing active, blocking')
-          }
           e.stopPropagation()
-          // If editing, also prevent any propagation
           if (isEditing) {
             e.preventDefault()
           }
@@ -623,55 +576,56 @@ export function EntryModal({
         onTouchStart={(e) => {
           // Prevent touch events from bubbling when editing
           if (isEditing) {
-            console.log('[EDIT MODE DEBUG] Modal content onTouchStart - editing active, blocking')
             e.stopPropagation()
           }
         }}
       >
-        {/* DEBUG PANEL - Always visible for debugging */}
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          background: isEditing ? '#22C55E' : '#DC143C',
-          color: '#fff',
-          padding: '0.5rem',
-          fontSize: '0.7rem',
-          zIndex: 9999,
-          fontFamily: 'monospace',
-          maxHeight: '180px',
-          overflowY: 'auto',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <strong>DEBUG: isEditing={isEditing ? 'TRUE' : 'FALSE'}</strong>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button 
-                onClick={() => {
-                  localStorage.removeItem('debug_logs')
-                  alert('Logs cleared!')
-                }}
-                style={{ background: '#fff', color: '#000', border: 'none', padding: '2px 6px', fontSize: '0.6rem', borderRadius: '3px' }}
-              >
-                🗑️ Clear
-              </button>
-              <button 
-                onClick={() => {
-                  const logs = localStorage.getItem('debug_logs') || '[]'
-                  navigator.clipboard.writeText(logs).then(() => alert('Logs copied!')).catch(() => alert('Copy failed'))
-                }}
-                style={{ background: '#fff', color: '#000', border: 'none', padding: '2px 6px', fontSize: '0.6rem', borderRadius: '3px' }}
-              >
-                📋 Copy Logs
-              </button>
+        {/* DEBUG PANEL - Only visible when ?debug=true in URL */}
+        {showDebugPanel && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            background: isEditing ? '#22C55E' : '#DC143C',
+            color: '#fff',
+            padding: '0.5rem',
+            fontSize: '0.7rem',
+            zIndex: 9999,
+            fontFamily: 'monospace',
+            maxHeight: '180px',
+            overflowY: 'auto',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <strong>DEBUG: isEditing={isEditing ? 'TRUE' : 'FALSE'}</strong>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button 
+                  onClick={() => {
+                    localStorage.removeItem('debug_logs')
+                    alert('Logs cleared!')
+                  }}
+                  style={{ background: '#fff', color: '#000', border: 'none', padding: '2px 6px', fontSize: '0.6rem', borderRadius: '3px' }}
+                >
+                  🗑️ Clear
+                </button>
+                <button 
+                  onClick={() => {
+                    const logs = localStorage.getItem('debug_logs') || '[]'
+                    navigator.clipboard.writeText(logs).then(() => alert('Logs copied!')).catch(() => alert('Copy failed'))
+                  }}
+                  style={{ background: '#fff', color: '#000', border: 'none', padding: '2px 6px', fontSize: '0.6rem', borderRadius: '3px' }}
+                >
+                  📋 Copy Logs
+                </button>
+              </div>
+            </div>
+            <div style={{ marginTop: '0.25rem', fontSize: '0.65rem' }}>
+              {debugLog.slice(-5).map((log, i) => (
+                <div key={i}>{log.time} - {log.action} from {log.source}</div>
+              ))}
             </div>
           </div>
-          <div style={{ marginTop: '0.25rem', fontSize: '0.65rem' }}>
-            {debugLog.slice(-5).map((log, i) => (
-              <div key={i}>{log.time} - {log.action} from {log.source}</div>
-            ))}
-          </div>
-        </div>
+        )}
         {/* Close button - separate on mobile for cleaner UX */}
         <button
           onClick={onClose}
@@ -719,7 +673,6 @@ export function EntryModal({
               {/* Save button */}
               <button
                 onClick={async () => {
-                  console.log('[EDIT MODE DEBUG] Save button clicked')
                   await handleSaveAll()
                   handleExitEditMode()
                 }}
@@ -1376,19 +1329,10 @@ export function EntryModal({
                 })
               }}
               onBlur={(e) => {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/cd060c6d-4dc4-486f-814d-a752806ed6a5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'entry-modal.tsx:textareaOnBlur',message:'TEXTAREA_BLUR_EVENT',data:{isEditing,isIntentionallyExiting:isIntentionallyExitingRef.current,cursorPosition:e.target.selectionStart,relatedTarget:e.relatedTarget?.tagName||'none'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
-                // #endregion
                 // Save cursor position when losing focus
                 // BUT don't exit edit mode on blur - user might just be scrolling on mobile
-                console.log('[EDIT MODE DEBUG] Textarea onBlur - saving cursor position, NOT exiting edit mode')
                 setSavedCursorPosition(e.target.selectionStart)
-                // Only exit if we're intentionally exiting (not just blur)
-                if (!isIntentionallyExitingRef.current) {
-                  // Keep edit mode active even on blur
-                  // This prevents mobile keyboard from closing edit mode
-                  console.log('[EDIT MODE DEBUG] onBlur - keeping edit mode active')
-                }
+                // Keep edit mode active even on blur - this prevents mobile keyboard issues
               }}
               onFocus={(e) => {
                 // Restore cursor position when gaining focus
