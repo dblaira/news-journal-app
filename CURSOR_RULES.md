@@ -292,34 +292,185 @@ You are an expert full-stack developer specializing in Next.js 14, TypeScript, S
 
 ## Debugging Strategy
 
-When fixing bugs, especially ones that can't be reproduced directly:
+### Core Principle: Observe Before You Operate
+
+Never change code until you understand *exactly* what's happening. Follow this sequence:
+
+```
+1. REPRODUCE → Can I make the bug happen consistently?
+2. LOCATE    → Where in the code does it break? (which layer?)
+3. ISOLATE   → What's the smallest unit that fails?
+4. DIAGNOSE  → Why does it fail? (state hypothesis)
+5. FIX       → Now change the code
+6. VERIFY    → Confirm the fix works before moving on
+```
+
+**Do not skip steps 1-4 and jump to step 5.**
+
+---
 
 ### The 3-Attempt Rule
-1. **Attempt 1-2**: Try obvious fixes based on code analysis
-2. **Attempt 3**: If still broken, STOP guessing. Add debug instrumentation:
+
+1. **Attempts 1-2**: Try fixes based on code analysis, but STATE YOUR HYPOTHESIS first:
+   - "I believe the bug is caused by X because Y"
+   - If the fix doesn't work, the hypothesis was wrong—gather more data
+
+2. **Attempt 3**: STOP guessing. Add debug instrumentation:
    - Console.log statements at key points
+   - Network tab inspection for API issues
    - Visible debug UI panels showing state changes
-   - Track what triggered state changes (add `source` parameter to setters)
-3. **Then**: Wait for real data before making more fixes
+   - Track what triggered state changes
+
+3. **After instrumentation**: Wait for real data before making more fixes
+
+---
+
+### The Debugging Hierarchy
+
+Check these layers in order before attempting fixes:
+
+| Layer | Question | Tool |
+|-------|----------|------|
+| 1. Running? | Any errors in console? | Browser console |
+| 2. Called? | Does the function execute? | console.log at function entry |
+| 3. Data correct? | Are inputs what you expect? | console.log inputs |
+| 4. Sent? | Is API request correct? | Network tab → Request |
+| 5. Received? | Is API response correct? | Network tab → Response |
+| 6. Stored? | Did database save it? | Supabase dashboard |
+| 7. Rendered? | Is component receiving props? | React DevTools / console.log |
+
+**Work down the list. Don't jump to layer 7 when the bug is at layer 4.**
+
+---
 
 ### Debug Instrumentation Patterns
 
-**For React state bugs:**
+#### For tracing data flow (most common):
+```typescript
+// Add at start of function
+console.log('=== functionName START ===')
+console.log('Input:', JSON.stringify(input, null, 2))
+
+// Add at end of function
+console.log('Output:', result)
+console.log('=== functionName END ===')
+```
+
+#### For React state bugs:
 ```typescript
 // Wrap state setter to log what's changing it
 const [value, setValueInternal] = useState(initial)
 const setValue = (newValue: T, source: string = 'unknown') => {
-  console.log(`${stateName} changed to ${newValue} from: ${source}`)
+  console.log(`[STATE] ${stateName}: ${value} → ${newValue} (source: ${source})`)
   setValueInternal(newValue)
 }
 ```
 
-**For visual debugging:**
-- Add a colored debug panel showing current state
-- Log last 5 state changes with timestamps
-- Remove after bug is fixed
+#### For API route debugging:
+```typescript
+// In API route handler
+export async function POST(request: Request) {
+  console.log('=== API /api/route-name ===')
+  
+  const body = await request.json()
+  console.log('Request body:', JSON.stringify(body, null, 2))
+  
+  // ... your logic ...
+  
+  console.log('Response:', JSON.stringify(response, null, 2))
+  return NextResponse.json(response)
+}
+```
+
+#### For Supabase operations:
+```typescript
+const { data, error } = await supabase
+  .from('table')
+  .insert(payload)
+  .select()
+  .single()
+
+console.log('Supabase insert:', { payload, data, error })
+
+if (error) {
+  console.error('Supabase error details:', {
+    message: error.message,
+    code: error.code,
+    details: error.details,
+    hint: error.hint
+  })
+}
+```
+
+#### For visual debugging (complex state):
+```typescript
+// Temporary debug panel - remove after bug is fixed
+{process.env.NODE_ENV === 'development' && (
+  <div className="fixed bottom-4 left-4 p-4 bg-black/90 text-green-400 text-xs font-mono rounded max-w-md max-h-64 overflow-auto z-50">
+    <div>Current State:</div>
+    <pre>{JSON.stringify({ value1, value2, value3 }, null, 2)}</pre>
+  </div>
+)}
+```
+
+---
+
+### Network Debugging (API Issues)
+
+When an API call isn't working:
+
+1. **Open Network tab** in browser DevTools
+2. **Find the request** (filter by Fetch/XHR)
+3. **Check these in order:**
+   - Status code (200? 400? 500?)
+   - Request payload (is it what you expected?)
+   - Response body (what error message?)
+   - Request headers (auth token present?)
+
+**Common issues:**
+- 401/403: Auth token missing or expired
+- 400: Malformed request body
+- 500: Server-side error (check Vercel logs)
+- No request at all: Function never called (check console for earlier errors)
+
+---
+
+### Binary Search Debugging
+
+When you can't find where it breaks:
+
+1. Comment out half the code
+2. Does it still break?
+   - **Yes**: Bug is in the remaining half
+   - **No**: Bug is in the commented half
+3. Repeat until you find the exact line
+
+---
+
+### Minimal Reproduction
+
+When a bug is complex:
+
+1. Create a new test component/function
+2. Add only the minimum code needed to reproduce
+3. If it works in isolation, the bug is in how it integrates
+4. If it fails in isolation, you've found the core issue
+
+---
 
 ### Never
-- Make more than 3 blind fix attempts without instrumentation
+
+- Make more than 3 blind fix attempts without adding instrumentation
 - Assume a fix worked without user confirmation
-- Waste user's time with repeated guessing
+- Skip checking the Network tab for API issues
+- Ignore the debugging hierarchy (jumping to React when the bug is in Supabase)
+- Remove debug logging until the bug is confirmed fixed
+- Guess at what data looks like—log it and see
+
+### Always
+
+- State your hypothesis before attempting a fix
+- Add console.log at function entry AND exit
+- Check the browser console AND Network tab before suggesting fixes
+- Ask the user what they see in console/network if you can't access it
+- Commit debug instrumentation immediately (don't wait)
