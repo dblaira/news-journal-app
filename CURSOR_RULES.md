@@ -1,0 +1,325 @@
+# Cursor Rules
+
+You are an expert full-stack developer specializing in Next.js 14, TypeScript, Supabase, Vercel, and AI integration for a personal journal/newsroom application.
+
+## Tech Stack
+
+- **Frontend**: Next.js 14 App Router with TypeScript
+- **Backend**: Next.js API Routes (replacing Express.js)
+- **Database & Auth**: Supabase (PostgreSQL, Authentication, Storage)
+- **AI**: Anthropic Claude API (Claude Sonnet 4)
+- **Deployment**: Vercel (with Cron, Edge Functions, Analytics)
+- **Payments**: Stripe (for V4 subscription model)
+- **Image Processing**: Sharp
+- **PDF Generation**: PDFKit or Puppeteer
+
+## Code Style and Structure
+
+### TypeScript and Type Safety
+- Use TypeScript for all code; prefer interfaces over types for object shapes
+- Use Zod for schema validation and type inference
+- Avoid enums; use literal types or const objects instead
+- Use descriptive variable names with auxiliary verbs (e.g., `isLoading`, `hasError`, `isGenerating`)
+- Implement functional components with TypeScript interfaces for props
+
+### File Structure
+- Use lowercase with dashes for directory names (e.g., `components/entry-card`, `api/generate-versions`)
+- Favor named exports for components and functions
+- Structure files: exported component, subcomponents, helpers, static content, types
+- Use `.server.ts` suffix for server-only utilities
+- Use `.client.tsx` suffix when client component is required
+
+### Syntax and Formatting
+- Use the `function` keyword for pure functions and components
+- Write declarative JSX with clear and readable structure
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements
+- Omit semicolons (project preference)
+- Use early returns and guard clauses for error handling
+
+## Next.js 14 App Router Patterns
+
+### Server Components (Default)
+- Prefer Server Components for data fetching and static content
+- Use Server Components for Supabase queries
+- Minimize 'use client' usage - only use for interactivity (forms, modals, real-time updates)
+- Use async/await in Server Components for data fetching
+
+### API Routes
+- Use Next.js API Routes (`app/api/route.ts`) instead of Express.js
+- Follow RESTful conventions
+- Use Route Handlers (not Pages Router API routes)
+- Return proper HTTP status codes and JSON responses
+- Handle CORS in API routes when needed
+
+### Data Fetching
+- Use Server Components for initial data fetching
+- Use `fetch` with Next.js caching strategies
+- Implement loading.tsx and error.tsx for route segments
+- Use Suspense boundaries for async components
+- Prefer Server Actions for mutations (form submissions, updates)
+
+### Server Actions
+- Use Server Actions for form submissions and mutations
+- Validate input with Zod schemas
+- Return user-friendly errors (not try/catch for expected errors)
+- Use `useActionState` with react-hook-form for form validation
+- Implement proper error boundaries for unexpected errors
+
+## Supabase Integration
+
+### Client Setup
+- Use `@supabase/supabase-js` for client-side operations
+- Create Supabase client in `lib/supabase/client.ts` for browser
+- Create Supabase client in `lib/supabase/server.ts` for Server Components/Actions
+- Use Row Level Security (RLS) policies for all tables
+- Always filter queries by `user_id` for user-specific data
+
+### Authentication
+- Use Supabase Auth for user authentication
+- Implement proper session checking in middleware
+- Use `getUser()` helper in Server Components
+- Handle auth redirects appropriately
+- Store user session securely
+
+### Database Patterns
+- Use Supabase client for all database operations
+- Implement proper error handling for Supabase queries
+- Use transactions for multi-step operations
+- Leverage Supabase real-time subscriptions when needed
+- Use Supabase Storage for image uploads
+
+### Security
+- Never expose service role key in client code
+- Use RLS policies for data access control
+- Validate all user inputs before database operations
+- Use parameterized queries (Supabase handles this)
+
+## Vercel-Specific Features
+
+### Vercel Cron Jobs
+- Use `vercel.json` for scheduled cron jobs
+- Schedule nightly generation at specific times (e.g., 2 AM)
+- Use cron expressions: `"0 2 * * *"` for daily at 2 AM
+- Implement cron handlers in `app/api/cron/route.ts`
+- Use Vercel Cron secret for security
+
+### Edge Functions
+- Use Edge Runtime for API routes when possible (faster cold starts)
+- Specify `export const runtime = 'edge'` in API routes
+- Consider Edge Functions for AI API calls (lower latency)
+
+### Vercel Analytics
+- Enable Vercel Analytics for production
+- Use for admin dashboard analytics (V4)
+- Track page views and performance metrics
+
+## AI Integration (Anthropic Claude)
+
+### API Patterns
+- Use Anthropic Claude API for content generation
+- Generate 4 versions: poetic, news feature, humorous, literary
+- Implement proper error handling and retries
+- Use environment variables for API keys (`ANTHROPIC_API_KEY`)
+- Handle rate limiting gracefully
+- Show loading states during generation
+
+### Scheduled Generation
+- Use Vercel Cron to trigger nightly generation
+- Process entries in batches (7 entries for weekly theme)
+- Update database with `generating_versions` flag
+- Handle failures and retry logic
+- Queue system for processing multiple entries
+
+### Cost Optimization
+- Batch API calls when possible (weekly theme analysis)
+- Cache generated versions
+- Only regenerate when entry content changes
+- Monitor API usage and costs
+
+## Application-Specific Patterns
+
+### Journal Entry Structure
+- Entries have: headline, category, subheading, content, mood, versions
+- Categories: Business, Finance, Health, Spiritual, Fun, Social, Romance
+- Versions array contains 4 AI-generated rewrites
+- Track `generating_versions` boolean flag
+
+### Weekly Theme Generation
+- Analyze 7 entries at once (single API call)
+- Generate unifying theme and headline
+- Store weekly theme in database
+- Display on frontend
+
+### Scheduled Features
+- "Apple Music Tuesday" - scheduled drop of enhanced content
+- Nightly generation at set time
+- Create anticipation/ritual around content drops
+
+### Rich Media (V3)
+- Photo integration from entries
+- Image processing with Sharp
+- PDF export functionality
+- Beautiful news-style card layouts
+
+## Multi-Tenancy (V4)
+
+### User Management
+- Each user has isolated data (filtered by `user_id`)
+- Implement admin panel for user management
+- Use Supabase RLS for data isolation
+- Whitelist beta users functionality
+
+### Subscription Model
+- Use Stripe for payment processing
+- Implement Stripe Checkout for subscriptions
+- Sync subscription status with Supabase user data
+- Handle webhooks for subscription events
+- Use Stripe Customer Portal for management
+
+### Admin Dashboard
+- Build admin panel with Next.js + Shadcn UI
+- Show usage analytics, popular styles, engagement
+- User management interface
+- Subscription management
+
+## Error Handling
+
+### Principles
+- Handle errors and edge cases at the beginning of functions
+- Use early returns for error conditions
+- Avoid deep nesting with guard clauses
+- Return user-friendly error messages
+- Log errors for debugging (use console.error in development)
+
+### Patterns
+- Use try/catch for unexpected errors
+- Return error objects for expected errors (Server Actions)
+- Implement error boundaries for React components
+- Use error.tsx files for route-level error handling
+
+## Performance Optimization
+
+### Next.js Optimizations
+- Use dynamic imports for code splitting
+- Implement lazy loading for non-critical components
+- Optimize images (use Next.js Image component)
+- Use WebP format, include size data, lazy loading
+- Minimize client-side JavaScript
+
+### Database Optimizations
+- Use Supabase indexes for frequently queried fields
+- Implement pagination for large datasets
+- Cache frequently accessed data
+- Use Supabase real-time sparingly (only when needed)
+
+## UI/UX Patterns
+
+### Component Library
+- Use Shadcn UI for components (V4)
+- Use Tailwind CSS for styling
+- Implement responsive design (mobile-first)
+- Ensure accessibility (keyboard navigation, ARIA labels)
+
+### Loading States
+- Show loading indicators during AI generation
+- Use Suspense boundaries for async data
+- Implement skeleton loaders for better UX
+- Handle empty states gracefully
+
+### User Feedback
+- Show success/error messages for actions
+- Provide clear feedback during long operations
+- Use optimistic updates where appropriate
+- Handle form validation errors clearly
+
+## Testing and Quality
+
+### Code Quality
+- Write clean, well-documented code
+- Use meaningful commit messages
+- Follow project's coding standards
+- Ensure type safety with TypeScript
+
+### Git Workflow
+- **ALWAYS commit and push test/debug code immediately after adding it** - Don't wait for the user to ask
+- Commit debug instrumentation, test code, and diagnostic tools as soon as they're added
+- Push changes before finishing work, especially when adding debugging or testing code
+
+### Best Practices
+- Keep components small and focused
+- Use composition over inheritance
+- Prefer functional programming patterns
+- Avoid premature optimization
+
+## Migration Considerations
+
+### From Vanilla JS
+- Convert vanilla JS modules to Next.js components
+- Move Express routes to Next.js API routes
+- Convert client-side Supabase calls to Server Components where possible
+- Maintain existing functionality during migration
+
+### Environment Variables
+- Use `.env.local` for local development
+- Use Vercel environment variables for production
+- Never commit API keys or secrets
+- Use different Supabase projects for dev/prod if needed
+
+## Key Conventions
+
+1. **Data Fetching**: Prefer Server Components, use Client Components only for interactivity
+2. **State Management**: Use React state, Server Components, or Supabase real-time (avoid Zustand/Redux unless needed)
+3. **Forms**: Use Server Actions with react-hook-form and Zod validation
+4. **Styling**: Tailwind CSS (Shadcn UI components for V4)
+5. **Deployment**: Vercel (already configured)
+6. **Scheduled Jobs**: Vercel Cron (not external services)
+7. **File Structure**: App Router conventions (app/ directory)
+
+## Output Expectations
+
+- **Code Examples**: Provide code snippets that align with Next.js 14 App Router patterns
+- **Explanations**: Include brief explanations for complex implementations
+- **Clarity**: Ensure all code is clear, correct, and production-ready
+- **Best Practices**: Demonstrate adherence to performance, security, and maintainability standards
+
+## Follow Official Documentation
+
+- Next.js 14 App Router documentation for routing and data fetching
+- Supabase documentation for database and auth patterns
+- Vercel documentation for deployment and cron jobs
+- Anthropic Claude API documentation for AI integration
+- Stripe documentation for payment processing (V4)
+
+## Debugging Strategy
+
+When fixing bugs, especially ones that can't be reproduced directly:
+
+### The 3-Attempt Rule
+1. **Attempt 1-2**: Try obvious fixes based on code analysis
+2. **Attempt 3**: If still broken, STOP guessing. Add debug instrumentation:
+   - Console.log statements at key points
+   - Visible debug UI panels showing state changes
+   - Track what triggered state changes (add `source` parameter to setters)
+3. **Then**: Wait for real data before making more fixes
+
+### Debug Instrumentation Patterns
+
+**For React state bugs:**
+```typescript
+// Wrap state setter to log what's changing it
+const [value, setValueInternal] = useState(initial)
+const setValue = (newValue: T, source: string = 'unknown') => {
+  console.log(`${stateName} changed to ${newValue} from: ${source}`)
+  setValueInternal(newValue)
+}
+```
+
+**For visual debugging:**
+- Add a colored debug panel showing current state
+- Log last 5 state changes with timestamps
+- Remove after bug is fixed
+
+### Never
+- Make more than 3 blind fix attempts without instrumentation
+- Assume a fix worked without user confirmation
+- Waste user's time with repeated guessing
