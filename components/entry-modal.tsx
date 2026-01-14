@@ -628,24 +628,33 @@ export function EntryModal({
           }
         }}
       >
-        {/* DEBUG PANEL */}
-        {isMobile && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            background: isEditing ? '#22C55E' : '#DC143C',
-            color: '#fff',
-            padding: '0.5rem',
-            fontSize: '0.7rem',
-            zIndex: 9999,
-            fontFamily: 'monospace',
-            maxHeight: '180px',
-            overflowY: 'auto',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <strong>DEBUG: isEditing={isEditing ? 'TRUE' : 'FALSE'}</strong>
+        {/* DEBUG PANEL - Always visible for debugging */}
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          background: isEditing ? '#22C55E' : '#DC143C',
+          color: '#fff',
+          padding: '0.5rem',
+          fontSize: '0.7rem',
+          zIndex: 9999,
+          fontFamily: 'monospace',
+          maxHeight: '180px',
+          overflowY: 'auto',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong>DEBUG: isEditing={isEditing ? 'TRUE' : 'FALSE'}</strong>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('debug_logs')
+                  alert('Logs cleared!')
+                }}
+                style={{ background: '#fff', color: '#000', border: 'none', padding: '2px 6px', fontSize: '0.6rem', borderRadius: '3px' }}
+              >
+                🗑️ Clear
+              </button>
               <button 
                 onClick={() => {
                   const logs = localStorage.getItem('debug_logs') || '[]'
@@ -656,13 +665,13 @@ export function EntryModal({
                 📋 Copy Logs
               </button>
             </div>
-            <div style={{ marginTop: '0.25rem', fontSize: '0.65rem' }}>
-              {debugLog.slice(-5).map((log, i) => (
-                <div key={i}>{log.time} - {log.action} from {log.source}</div>
-              ))}
-            </div>
           </div>
-        )}
+          <div style={{ marginTop: '0.25rem', fontSize: '0.65rem' }}>
+            {debugLog.slice(-5).map((log, i) => (
+              <div key={i}>{log.time} - {log.action} from {log.source}</div>
+            ))}
+          </div>
+        </div>
         {/* Close button - separate on mobile for cleaner UX */}
         <button
           onClick={onClose}
