@@ -109,6 +109,51 @@ export async function updateEntryVersions(id: string, versions: any[], generatin
   return { success: true }
 }
 
+export async function toggleActionComplete(entryId: string) {
+  const supabase = await createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // First, get the current entry to check its completion state
+  const { data: entry, error: fetchError } = await supabase
+    .from('entries')
+    .select('id, completed_at')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError || !entry) {
+    return { error: 'Entry not found' }
+  }
+
+  // Toggle the completion state
+  const newCompletedAt = entry.completed_at ? null : new Date().toISOString()
+
+  const { data, error } = await supabase
+    .from('entries')
+    .update({
+      completed_at: newCompletedAt,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .select()
+    .single()
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath('/')
+  return { data, success: true, isCompleted: !!newCompletedAt }
+}
+
 export async function updateEntryContent(entryId: string, content: string) {
   const supabase = await createClient()
   

@@ -556,3 +556,103 @@ li[data-type="taskItem"]::marker {
     display: block;
   }
 }
+
+/* Desktop sidebar - hidden on mobile, shown on desktop */
+.desktop-sidebar {
+  display: none !important;
+}
+
+/* Desktop main content - hidden on mobile */
+.desktop-main-content {
+  display: none;
+}
+
+/* Mobile main content - shown on mobile */
+.mobile-main-content {
+  display: block;
+}
+
+@media (min-width: 1024px) {
+  .desktop-sidebar {
+    display: flex !important;
+  }
+  
+  /* Desktop main content - shown on desktop */
+  .desktop-main-content {
+    display: block;
+    margin-left: 260px;
+    min-height: 100vh;
+    transition: margin-left 0.25s ease;
+  }
+  
+  /* Mobile main content - hidden on desktop */
+  .mobile-main-content {
+    display: none !important;
+  }
+  
+  /* Desktop content padding for non-story views */
+  .desktop-content-padded {
+    padding: 1.5rem 2rem;
+    max-width: 900px;
+    background: #F9FAFB;
+  }
+  
+  /* Desktop footer for non-story views */
+  .desktop-footer {
+    padding: 2rem;
+    text-align: center;
+    color: #9CA3AF;
+    font-size: 0.8rem;
+    border-top: 1px solid #E5E7EB;
+    margin-top: 2rem;
+    background: #F9FAFB;
+  }
+  
+  /* Hide all headers on desktop when sidebar is active */
+  .site-header {
+    display: none !important;
+  }
+  
+  /* Hide legacy desktop logout button - logout is in sidebar */
+  .desktop-logout-btn {
+    display: none !important;
+  }
+  
+  /* Hide desktop category nav - categories are in sidebar */
+  .desktop-only-nav,
+  .section-nav.desktop-only-nav {
+    display: none !important;
+  }
+}
+
+/* Sidebar transition support */
+.sidebar-layout-main {
+  transition: margin-left 0.25s ease;
+}
+
+/* Actions content list styles */
+.actions-section-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Scrollbar styling for sidebar */
+@media (min-width: 1024px) {
+  .desktop-sidebar::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .desktop-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .desktop-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+  
+  .desktop-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}

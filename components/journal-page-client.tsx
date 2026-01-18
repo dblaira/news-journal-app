@@ -2,8 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Entry, WeeklyTheme } from '@/types'
+import { Entry, WeeklyTheme, EntryType } from '@/types'
 import { Header } from './header'
+import { DesktopSidebar } from './desktop-sidebar'
+import { ContentHeader } from './content-header'
+import { ActionsContent } from './actions-content'
+import { NotesContent } from './notes-content'
+import { StoryContent } from './story-content'
 import { MindsetBanner } from './mindset-banner'
 import { WeeklyThemeBanner } from './weekly-theme-banner'
 import { CategoryNav } from './category-nav'
@@ -14,8 +19,7 @@ import { EntryFormModal } from './entry-form-modal'
 import { EntryModal } from './entry-modal'
 import { CaptureFAB } from './capture-fab'
 import { deriveMindsetPreset } from '@/lib/mindset'
-import { formatEntryDateLong } from '@/lib/utils'
-import { deleteEntry, updateEntryVersions, generateWeeklyTheme } from '@/app/actions/entries'
+import { deleteEntry, updateEntryVersions, generateWeeklyTheme, toggleActionComplete } from '@/app/actions/entries'
 import { supabase } from '@/lib/supabase/client'
 
 interface JournalPageClientProps {
@@ -43,14 +47,21 @@ export function JournalPageClient({
 }: JournalPageClientProps) {
   const router = useRouter()
   const [entries, setEntries] = useState<Entry[]>(initialEntries)
-  const [currentFilter, setCurrentFilter] = useState('all')
+  const [currentFilter, setCurrentFilter] = useState('all') // Life area filter (persists across entry types)
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery)
   const [showForm, setShowForm] = useState(false)
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
   const [isGeneratingVersions, setIsGeneratingVersions] = useState<string | null>(null)
   const [weeklyTheme, setWeeklyTheme] = useState<WeeklyTheme | null>(initialWeeklyTheme || null)
   const [isGeneratingTheme, setIsGeneratingTheme] = useState(false)
-  const [currentEntryType, setCurrentEntryType] = useState<string | null>(null)
+  const [currentEntryType, setCurrentEntryType] = useState<EntryType | null>('story') // Default to story view
+
+  // Calculate action count for sidebar badge
+  const actionCount = entries.filter(e => 
+    e.entry_type === 'action' && 
+    !e.completed_at &&
+    (currentFilter === 'all' || e.category.toLowerCase() === currentFilter.toLowerCase())
+  ).length
 
   // Filter entries
   let filtered = [...entries]
@@ -306,129 +317,211 @@ export function JournalPageClient({
     router.refresh()
   }
 
+  const handleToggleComplete = async (entryId: string) => {
+    // Optimistically update local state
+    const entry = entries.find(e => e.id === entryId)
+    if (!entry) return
+
+    const newCompletedAt = entry.completed_at ? null : new Date().toISOString()
+    
+    // Update local state immediately for instant UI feedback
+    const updatedEntries = entries.map((e) =>
+      e.id === entryId ? { ...e, completed_at: newCompletedAt } : e
+    )
+    setEntries(updatedEntries)
+
+    // Update selected entry if it's the one being toggled
+    if (selectedEntry?.id === entryId) {
+      setSelectedEntry({ ...selectedEntry, completed_at: newCompletedAt })
+    }
+
+    // Call server action
+    const result = await toggleActionComplete(entryId)
+    
+    if (result.error) {
+      // Revert on error
+      setEntries(entries)
+      if (selectedEntry?.id === entryId) {
+        setSelectedEntry(entry)
+      }
+      alert(`Failed to update: ${result.error}`)
+      return
+    }
+
+    // Refresh to ensure server state is synced
+    router.refresh()
+  }
+
+  // Render desktop content based on entry type selection
+  const renderDesktopContent = () => {
+    switch (currentEntryType) {
+      case 'action':
+        return (
+          <ActionsContent
+            entries={entries}
+            lifeArea={currentFilter}
+            onViewEntry={handleViewEntry}
+            onToggleComplete={handleToggleComplete}
+          />
+        )
+      case 'note':
+        return (
+          <NotesContent
+            entries={entries}
+            lifeArea={currentFilter}
+            onViewEntry={handleViewEntry}
+          />
+        )
+      case 'story':
+      default:
+        return (
+          <StoryContent
+            entries={entries}
+            lifeArea={currentFilter}
+            onViewEntry={handleViewEntry}
+            onCreateEntry={handleCreateEntry}
+            onGenerateVersions={handleGenerateVersions}
+            weeklyTheme={weeklyTheme}
+            onViewTheme={handleViewTheme}
+            onGenerateWeeklyTheme={handleGenerateWeeklyTheme}
+            isGeneratingTheme={isGeneratingTheme}
+            categoryEntries={categoryEntries}
+            latestEntries={latestEntries}
+            pinnedStories={pinnedStories}
+            pinnedNotes={pinnedNotes}
+            pinnedActions={pinnedActions}
+          />
+        )
+    }
+  }
+
   return (
     <div className="page-shell">
-      <Header 
-        issueTagline={issueTagline} 
-        onNewEntry={handleCreateEntry}
-        currentFilter={currentFilter}
-        onFilterChange={setCurrentFilter}
+      {/* Desktop Sidebar - CSS hides on mobile */}
+      <DesktopSidebar
+        currentLifeArea={currentFilter}
+        onLifeAreaChange={setCurrentFilter}
         currentEntryType={currentEntryType}
         onEntryTypeChange={setCurrentEntryType}
+        onCompose={handleCreateEntry}
         onLogout={handleLogout}
+        actionCount={actionCount}
       />
-      {/* Desktop-only logout button - hidden on mobile (logout is in mobile menu) */}
-      <button
-        onClick={handleLogout}
-        className="desktop-logout-btn"
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          padding: '10px 20px',
-          background: '#ff4444',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontWeight: 600,
-          zIndex: 1000,
-        }}
-      >
-        Logout
-      </button>
 
-      <div className="hero-section-wrapper">
-        <CategoryNav
+      {/* Header - hidden on lg+ (desktop uses sidebar) */}
+      <div className="lg:hidden">
+        <Header 
+          issueTagline={issueTagline} 
+          onNewEntry={handleCreateEntry}
           currentFilter={currentFilter}
           onFilterChange={setCurrentFilter}
-        />
-
-        <HeroStory
-          entry={filtered[0] || null}
-          onCreateEntry={handleCreateEntry}
-          onViewEntry={handleViewEntry}
-          onGenerateVersions={handleGenerateVersions}
+          currentEntryType={currentEntryType}
+          onEntryTypeChange={(type) => setCurrentEntryType(type as EntryType | null)}
+          onLogout={handleLogout}
         />
       </div>
 
-      {weeklyTheme ? (
-        <WeeklyThemeBanner
-          theme={weeklyTheme}
-          onViewTheme={handleViewTheme}
-        />
-      ) : (
-        <MindsetBanner
-          headline={mindset.headline}
-          subtitle={mindset.subtitle}
-        />
-      )}
+      {/* Desktop Main Content Area - hidden on mobile, shown on lg+ */}
+      <main className="hidden lg:block lg:ml-[260px] min-h-screen transition-[margin] duration-300">
+        {/* Desktop Content Header with Breadcrumb (notes only - actions has its own hero) */}
+        {currentEntryType === 'note' && (
+          <ContentHeader
+            entryType={currentEntryType}
+            lifeArea={currentFilter}
+            issueTagline={issueTagline}
+          />
+        )}
 
-      {entries.length >= 7 && !weeklyTheme && (
-        <div style={{ 
-          padding: '1.5rem 2rem', 
-          textAlign: 'center',
-          background: '#F5F0E8',
-          borderRadius: '0',
-          border: 'none',
-          borderBottom: '2px solid var(--color-red)',
-        }}>
-          <p style={{ 
-            marginBottom: '1rem', 
-            color: '#666666',
-            fontSize: '0.95rem'
+        {/* Desktop Content */}
+        <div
+          className={currentEntryType !== 'story' ? 'desktop-content-padded' : ''}
+        >
+          {renderDesktopContent()}
+        </div>
+
+        {/* Footer for desktop non-story views */}
+        {currentEntryType !== 'story' && (
+          <footer className="desktop-footer">
+            <p>&copy; 2025 Personal Press. Your story, your way.</p>
+          </footer>
+        )}
+      </main>
+
+      {/* Mobile Main Content Area - shown on mobile, hidden on lg+ */}
+      <main className="block lg:hidden">
+        <div className="hero-section-wrapper">
+          <CategoryNav
+            currentFilter={currentFilter}
+            onFilterChange={setCurrentFilter}
+          />
+
+          <HeroStory
+            entry={filtered[0] || null}
+            onCreateEntry={handleCreateEntry}
+            onViewEntry={handleViewEntry}
+            onGenerateVersions={handleGenerateVersions}
+          />
+        </div>
+
+        {weeklyTheme ? (
+          <WeeklyThemeBanner
+            theme={weeklyTheme}
+            onViewTheme={handleViewTheme}
+          />
+        ) : (
+          <MindsetBanner
+            headline={mindset.headline}
+            subtitle={mindset.subtitle}
+          />
+        )}
+
+        {entries.length >= 7 && !weeklyTheme && (
+          <div style={{ 
+            padding: '1.5rem 2rem', 
+            textAlign: 'center',
+            background: '#F5F0E8',
           }}>
-            You have {entries.length} entries. Generate your weekly theme!
-          </p>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={handleGenerateWeeklyTheme}
-            disabled={isGeneratingTheme}
-            style={{ fontSize: '1rem', padding: '0.9rem 2rem' }}
-          >
-            {isGeneratingTheme ? 'Generating...' : '✨ Generate Weekly Theme'}
-          </button>
+            <p style={{ 
+              marginBottom: '1rem', 
+              color: '#666666',
+              fontSize: '0.95rem'
+            }}>
+              You have {entries.length} entries. Generate your weekly theme!
+            </p>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={handleGenerateWeeklyTheme}
+              disabled={isGeneratingTheme}
+              style={{ fontSize: '1rem', padding: '0.9rem 2rem' }}
+            >
+              {isGeneratingTheme ? 'Generating...' : '✨ Generate Weekly Theme'}
+            </button>
+          </div>
+        )}
+
+        {/* WHITE SECTION - Latest Stories, Category Layout, Footer */}
+        <div className="white-content-section" style={{ background: '#FFFFFF' }}>
+          <StoryCarousel
+            entries={latestEntries}
+            title="LATEST STORIES"
+            onViewEntry={handleViewEntry}
+          />
+
+          <VanityFairLayout
+            categoryEntries={categoryEntries}
+            latestEntries={latestEntries}
+            pinnedStories={pinnedStories}
+            pinnedNotes={pinnedNotes}
+            pinnedActions={pinnedActions}
+            onViewEntry={handleViewEntry}
+          />
+
+          <footer>
+            <p>&copy; 2025 Personal Press. Your story, your way.</p>
+          </footer>
         </div>
-      )}
-      
-      {/* Debug info - remove in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{ 
-          padding: '0.5rem 1.5rem', 
-          fontSize: '0.75rem', 
-          color: '#666666',
-          background: '#F5F0E8',
-          borderRadius: '0',
-          borderBottom: '2px solid var(--color-red)',
-        }}>
-          Debug: {entries.length} entries, Weekly theme: {weeklyTheme ? 'exists' : 'none'}
-        </div>
-      )}
-
-      {/* WHITE SECTION - Latest Stories, Category Layout, Footer */}
-      <div className="white-content-section" style={{ background: '#FFFFFF' }}>
-        {/* Story Carousel - Latest Stories */}
-        <StoryCarousel
-          entries={latestEntries}
-          title="LATEST STORIES"
-          onViewEntry={handleViewEntry}
-        />
-
-        {/* 3-Column Vanity Fair Layout */}
-        <VanityFairLayout
-          categoryEntries={categoryEntries}
-          latestEntries={latestEntries}
-          pinnedStories={pinnedStories}
-          pinnedNotes={pinnedNotes}
-          pinnedActions={pinnedActions}
-          onViewEntry={handleViewEntry}
-        />
-
-        <footer>
-          <p>&copy; 2025 Personal Press. Your story, your way.</p>
-        </footer>
-      </div>
+      </main>
 
       {/* Floating Action Button for Quick Capture */}
       <CaptureFAB onEntryCreated={handleEntryCreated} userId={userId} />
