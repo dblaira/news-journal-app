@@ -149,8 +149,8 @@ export async function GET(request: NextRequest) {
               <div style={{ display: 'flex', color: '#6B7280', fontSize: 16 }}>
                 {dateStr}
               </div>
-              <div style={{ display: 'flex', color: '#DC143C', fontSize: 20, fontWeight: 700 }}>
-                Personal Press
+              <div style={{ display: 'flex', color: '#DC143C', fontSize: 20, fontWeight: 700, fontFamily: "'Playfair Display', serif" }}>
+                Understood.
               </div>
             </div>
           </div>
@@ -239,8 +239,8 @@ export async function GET(request: NextRequest) {
                 borderTop: '1px solid #E5E7EB',
               }}
             >
-              <div style={{ display: 'flex', color: '#DC143C', fontSize: 16, fontWeight: 700 }}>
-                Personal Press
+              <div style={{ display: 'flex', color: '#DC143C', fontSize: 16, fontWeight: 700, fontFamily: "'Playfair Display', serif" }}>
+                Understood.
               </div>
             </div>
           </div>

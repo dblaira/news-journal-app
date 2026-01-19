@@ -337,7 +337,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { format, entryIds, title = 'Personal Press Export' } = body as {
+    const { format, entryIds, title = 'Understood. Export' } = body as {
       format: ExportFormat
       entryIds?: string[]
       title?: string

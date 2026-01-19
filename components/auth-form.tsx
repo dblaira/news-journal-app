@@ -108,7 +108,7 @@ export function AuthForm() {
         <div className="w-full max-w-lg overflow-hidden rounded-[1.5rem]">
           <img
             src="/login-hero.png"
-            alt="Arrows pointing upward - Personal Press"
+            alt="Arrows pointing upward - Understood."
             className="w-full h-full object-cover"
             style={{ transform: 'scale(1.15)' }}
           />
@@ -117,13 +117,13 @@ export function AuthForm() {
 
       {/* Right Column - Pure Black Background with Form */}
       <div className="w-full md:w-1/2 bg-black flex flex-col min-h-screen">
-        {/* Personal Press Branding */}
+        {/* Understood. Branding */}
         <header className="px-6 py-8 md:px-12 lg:px-16 text-center">
           <h1 
             className="text-xl md:text-2xl tracking-[0.2em] text-white uppercase"
             style={{ fontFamily: "'Playfair Display', 'Times New Roman', serif" }}
           >
-            Personal Press
+            Understood.
           </h1>
         </header>
 

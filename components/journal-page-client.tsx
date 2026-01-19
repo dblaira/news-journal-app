@@ -442,7 +442,7 @@ export function JournalPageClient({
         {/* Footer for desktop non-story views */}
         {currentEntryType !== 'story' && (
           <footer className="desktop-footer">
-            <p>&copy; 2025 Personal Press. Your story, your way.</p>
+            <p>&copy; 2025 Understood.</p>
           </footer>
         )}
       </main>
@@ -518,7 +518,7 @@ export function JournalPageClient({
           />
 
           <footer>
-            <p>&copy; 2025 Personal Press. Your story, your way.</p>
+            <p>&copy; 2025 Understood.</p>
           </footer>
         </div>
       </main>

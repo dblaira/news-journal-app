@@ -14,7 +14,7 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: 'Personal Press - Your Story, Your Way',
+  title: 'Understood.',
   description: 'Your story, your way.',
   icons: {
     icon: '/favicon.ico',

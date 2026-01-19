@@ -82,13 +82,14 @@ export function DesktopSidebar({
             <span
               style={{
                 color: '#FFFFFF',
-                fontSize: '1.1rem',
-                fontWeight: 700,
+                fontSize: '1.15rem',
+                fontWeight: 400,
+                fontFamily: "'Playfair Display', 'Times New Roman', serif",
                 letterSpacing: '0.02rem',
                 whiteSpace: 'nowrap',
               }}
             >
-              Personal Press
+              Understood.
             </span>
             <button
               onClick={() => setIsExpanded(false)}

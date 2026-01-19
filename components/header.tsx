@@ -83,12 +83,13 @@ export function Header({
             <span 
               className="brand-title" 
               style={{ 
-                fontSize: '1.1rem',
-                fontWeight: 700,
-                letterSpacing: '0.05rem',
+                fontSize: '1.15rem',
+                fontWeight: 400,
+                fontFamily: "'Playfair Display', 'Times New Roman', serif",
+                letterSpacing: '0.02rem',
               }}
             >
-              Personal Press
+              Understood.
             </span>
           </div>
 
@@ -135,7 +136,7 @@ export function Header({
   return (
     <header className="site-header">
       <div className="brand-block">
-        <span className="brand-title">Personal Press</span>
+        <span className="brand-title">Understood.</span>
         <span className="brand-edition" id="issueTagline">
           {issueTagline}
         </span>
