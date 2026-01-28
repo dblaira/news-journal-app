@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { EntryMetadata, EntryEnrichment, UserPreference } from '@/types/metadata'
 import ChipSelector from '@/components/ui/ChipSelector'
 import EditableField from '@/components/ui/EditableField'
+import { ContextSummaryDisplay } from '@/components/context'
 
 interface MetadataEnrichmentProps {
   entryId: string
@@ -287,40 +288,53 @@ export default function MetadataEnrichment({
         onClick={() => setIsExpanded(!isExpanded)}
         style={{ 
           cursor: 'pointer',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          padding: '0.75rem',
+          background: 'linear-gradient(135deg, rgba(39, 39, 42, 0.8) 0%, rgba(24, 24, 27, 0.9) 100%)',
+          borderRadius: '10px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          transition: 'all 0.2s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'rgba(220, 20, 60, 0.3)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
         }}
       >
-        <div style={{ fontSize: '0.8rem', color: '#6B7280' }}>
-          {/* Auto-captured summary */}
-          {metadata.day_of_week && (
-            <span>{metadata.day_of_week.slice(0, 3)}</span>
-          )}
-          {metadata.captured_at && (
-            <span> {formatTime(metadata.captured_at)}</span>
-          )}
-          {metadata.location && (
-            <span> • {metadata.location.display_name}</span>
-          )}
-          {metadata.location?.label && (
-            <span style={{ 
-              marginLeft: '6px',
-              padding: '2px 6px',
-              background: 'var(--bg-panel-alt, #374151)',
-              borderRadius: '4px',
+        {/* Context summary with emojis */}
+        <ContextSummaryDisplay 
+          metadata={{ ...metadata, enrichment }} 
+          variant="full"
+          showLocation={true}
+          maxItems={5}
+        />
+        
+        {/* Expand indicator */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: '0.5rem',
+            paddingTop: '0.5rem',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          }}
+        >
+          <span
+            style={{
               fontSize: '0.7rem',
-            }}>
-              {metadata.location.label}
-            </span>
-          )}
-          {/* Enrichment summary */}
-          {enrichment.activity && <span> • {enrichment.activity}</span>}
-          {enrichment.energy && <span> • {enrichment.energy} energy</span>}
+              textTransform: 'uppercase',
+              letterSpacing: '0.08rem',
+              color: 'rgba(255, 255, 255, 0.5)',
+              fontWeight: 500,
+            }}
+          >
+            {metadata.day_of_week?.slice(0, 3)} {metadata.captured_at && formatTime(metadata.captured_at)}
+          </span>
+          <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.75rem' }}>
+            {isExpanded ? '▲ Hide' : '▼ Edit Context'}
+          </span>
         </div>
-        <span style={{ color: '#6B7280', fontSize: '0.8rem' }}>
-          {isExpanded ? '▼' : '▶'} Context
-        </span>
       </div>
       
       {/* Expanded view - enrichment fields */}

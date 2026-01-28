@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Entry, EntryImage } from '@/types'
 import { formatEntryDateLong, formatEntryDateShort } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
+import { ContextSummaryDisplay } from './context'
 
 // Helper to get poster image URL from entry (handles both new images array and legacy fields)
 function getEntryPosterUrl(entry: Entry): string {
@@ -124,6 +125,17 @@ export function EntryCard({
           <span className="category-label">{entry.category}</span>
           <span>{shortDate}</span>
         </div>
+        
+        {/* Context summary - compact inline display */}
+        {entry.metadata && (
+          <ContextSummaryDisplay 
+            metadata={entry.metadata} 
+            variant="inline" 
+            showLocation={false}
+            maxItems={3}
+          />
+        )}
+        
         <h3 className="entry-headline">{entry.headline}</h3>
         {entry.subheading && (
           <p className="entry-subheading">{entry.subheading}</p>
