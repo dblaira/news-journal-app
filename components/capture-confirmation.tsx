@@ -72,6 +72,9 @@ export function CaptureConfirmation({
   
   // Enrichment fields for context metadata
   const [enrichment, setEnrichment] = useState<EntryEnrichment>(data.metadata?.enrichment || {})
+  const [contextOrder, setContextOrder] = useState<string[]>(
+    data.metadata?.enrichment?.context_order || ['environment', 'activity', 'energy', 'mood']
+  )
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -96,8 +99,9 @@ export function CaptureConfirmation({
   }
 
   const handlePublish = () => {
-    // Build metadata with enrichment
-    const hasEnrichment = enrichment.activity || enrichment.energy || enrichment.mood?.length || enrichment.environment || enrichment.trigger
+    // Build metadata with enrichment (include context order)
+    const enrichmentWithOrder = { ...enrichment, context_order: contextOrder }
+    const hasEnrichment = enrichmentWithOrder.activity || enrichmentWithOrder.energy || enrichmentWithOrder.mood?.length || enrichmentWithOrder.environment || enrichmentWithOrder.trigger || enrichmentWithOrder.context_order?.length
     const finalMetadata: EntryMetadata | undefined = data.metadata || hasEnrichment ? {
       ...(data.metadata || {
         captured_at: new Date().toISOString(),
@@ -105,7 +109,7 @@ export function CaptureConfirmation({
         time_of_day: getTimeOfDay(),
         device: getDeviceType(),
       }),
-      enrichment: hasEnrichment ? enrichment : undefined,
+      enrichment: hasEnrichment ? enrichmentWithOrder : undefined,
     } : undefined
     
     onPublish({
@@ -508,6 +512,12 @@ export function CaptureConfirmation({
           metadata={data.metadata}
           enrichment={enrichment}
           onEnrichmentChange={setEnrichment}
+          contextOrder={contextOrder as ('environment' | 'activity' | 'energy' | 'mood' | 'trigger' | 'location')[]}
+          onContextOrderChange={(newOrder) => {
+            setContextOrder(newOrder)
+            // Also update enrichment so it's saved with the entry
+            setEnrichment(prev => ({ ...prev, context_order: newOrder }))
+          }}
           defaultExpanded={true}
         />
 

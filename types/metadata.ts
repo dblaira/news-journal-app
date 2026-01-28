@@ -22,6 +22,7 @@ export interface EntryEnrichment {
   mood?: string[]              // ["focused", "anxious", "playful"]
   environment?: string         // Free text: "standing desk in living room"
   trigger?: string             // Free text: "saw a tweet about..."
+  context_order?: string[]     // Order of context categories for display ["environment", "activity", "mood"]
 }
 
 // Combined metadata stored on entry

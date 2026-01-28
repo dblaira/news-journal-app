@@ -223,11 +223,13 @@ export default function ContextBuilder({
       {expanded && (
         <div
           style={{
-            marginTop: '0.75rem',
-            padding: '1rem',
-            background: '#FAFAFA',
-            borderRadius: '8px',
-            border: '1px solid #E5E7EB',
+            marginTop: '0',
+            padding: '1.25rem',
+            background: '#FDFCFA',
+            borderRadius: '0 0 8px 8px',
+            borderLeft: '3px solid #DC143C',
+            borderRight: '1px solid #E5E7EB',
+            borderBottom: '1px solid #E5E7EB',
           }}
         >
           {/* Location (auto-captured, display only) */}

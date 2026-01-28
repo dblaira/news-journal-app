@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import ContextChip from './ContextChip'
 import { ContextCategoryKey, getCategoryEmoji } from './constants'
 
 export interface ContextItem {
@@ -29,7 +28,7 @@ export default function ContextSummaryLine({
   editable = true,
 }: ContextSummaryLineProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null)
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const [, setDragOverIndex] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Build display items from context items
@@ -42,9 +41,9 @@ export default function ContextSummaryLine({
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDragIndex(index)
     e.dataTransfer.effectAllowed = 'move'
-    // Add drag styling
     const target = e.target as HTMLElement
     target.style.opacity = '0.5'
+    target.style.transform = 'scale(1.05)'
   }
 
   const handleDragEnd = (e: React.DragEvent) => {
@@ -52,6 +51,7 @@ export default function ContextSummaryLine({
     setDragOverIndex(null)
     const target = e.target as HTMLElement
     target.style.opacity = '1'
+    target.style.transform = 'scale(1)'
   }
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
@@ -75,112 +75,147 @@ export default function ContextSummaryLine({
 
   const hasContent = displayItems.length > 0 || location
 
+  // Build the summary text for display
+  const summaryParts: string[] = []
+  if (location) {
+    summaryParts.push(`📍 ${location}`)
+  }
+  displayItems.forEach((item) => {
+    summaryParts.push(`${item.emoji} ${item.displayValue}`)
+  })
+
   return (
     <div
       ref={containerRef}
       onClick={onClick}
       style={{
-        background: 'linear-gradient(135deg, rgba(39, 39, 42, 0.95) 0%, rgba(24, 24, 27, 0.98) 100%)',
-        borderRadius: '12px',
-        padding: '0.875rem 1rem',
+        background: '#F5F0E8',
+        borderRadius: expanded ? '8px 8px 0 0' : '8px',
+        padding: '1rem 1.25rem',
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s ease',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-      }}
-      onMouseEnter={(e) => {
-        if (onClick) {
-          e.currentTarget.style.borderColor = 'rgba(220, 20, 60, 0.3)'
-        }
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
+        borderLeft: '3px solid #DC143C',
+        boxShadow: expanded ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.06)',
       }}
     >
-      {/* Summary content */}
+      {/* Hero Summary Line */}
       <div
         style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          gap: '0.5rem',
-          minHeight: '1.5rem',
+          fontSize: '1.1rem',
+          fontWeight: 500,
+          color: '#1A1A1A',
+          lineHeight: 1.5,
+          minHeight: '1.75rem',
         }}
       >
-        {/* Location (always first if present) */}
-        {location && (
-          <>
-            <ContextChip
-              emoji="📍"
-              label={location}
-              variant="summary"
-              size="sm"
-            />
-            {displayItems.length > 0 && (
-              <span style={{ color: 'rgba(255, 255, 255, 0.3)', fontSize: '0.8rem' }}>•</span>
+        {hasContent ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+            {/* Location (always first, not draggable) */}
+            {location && (
+              <>
+                <span style={{ whiteSpace: 'nowrap' }}>📍 {location}</span>
+                {displayItems.length > 0 && (
+                  <span style={{ color: '#999', margin: '0 0.25rem' }}>•</span>
+                )}
+              </>
             )}
-          </>
-        )}
-
-        {/* Context items */}
-        {displayItems.map((item, index) => (
-          <div
-            key={`${item.category}-${index}`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <ContextChip
-              emoji={item.emoji}
-              label={item.displayValue}
-              variant="summary"
-              size="sm"
-              draggable={editable && onReorder !== undefined}
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragEnd={handleDragEnd}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDrop={(e) => handleDrop(e, index)}
-              onRemove={editable && onRemove ? () => onRemove(index) : undefined}
-            />
-            {index < displayItems.length - 1 && (
-              <span style={{ color: 'rgba(255, 255, 255, 0.3)', fontSize: '0.8rem' }}>•</span>
-            )}
+            
+            {/* Draggable context items */}
+            {displayItems.map((item, index) => (
+              <span
+                key={`${item.category}-${index}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  cursor: editable && onReorder ? 'grab' : 'default',
+                  padding: '0.2rem 0.5rem',
+                  borderRadius: '4px',
+                  transition: 'background 0.15s ease',
+                  background: dragIndex === index ? 'rgba(220, 20, 60, 0.1)' : 'transparent',
+                }}
+                draggable={editable && onReorder !== undefined}
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
+                onMouseEnter={(e) => {
+                  if (editable && onReorder) {
+                    e.currentTarget.style.background = 'rgba(220, 20, 60, 0.08)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (dragIndex !== index) {
+                    e.currentTarget.style.background = 'transparent'
+                  }
+                }}
+              >
+                <span>{item.emoji}</span>
+                <span>{item.displayValue}</span>
+                {editable && onRemove && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onRemove(index)
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#999',
+                      cursor: 'pointer',
+                      padding: '0 0.2rem',
+                      fontSize: '1rem',
+                      lineHeight: 1,
+                      marginLeft: '0.1rem',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = '#DC143C'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = '#999'
+                    }}
+                  >
+                    ×
+                  </button>
+                )}
+                {index < displayItems.length - 1 && (
+                  <span style={{ color: '#999', marginLeft: '0.5rem' }}>•</span>
+                )}
+              </span>
+            ))}
           </div>
-        ))}
-
-        {/* Empty state */}
-        {!hasContent && (
-          <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-            Tap to add context...
+        ) : (
+          <span style={{ color: '#666', fontStyle: 'italic', fontSize: '1rem' }}>
+            Ground yourself — add context to this moment...
           </span>
         )}
       </div>
 
-      {/* Expand indicator */}
+      {/* Expand/collapse indicator */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginTop: '0.5rem',
+          marginTop: '0.75rem',
           paddingTop: '0.5rem',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          borderTop: '1px solid rgba(0, 0, 0, 0.08)',
         }}
       >
         <span
           style={{
             fontSize: '0.7rem',
             textTransform: 'uppercase',
-            letterSpacing: '0.08rem',
-            color: 'rgba(255, 255, 255, 0.5)',
-            fontWeight: 500,
+            letterSpacing: '0.1rem',
+            color: '#DC143C',
+            fontWeight: 700,
           }}
         >
-          Context
+          {expanded ? '▼ Context' : '▶ Context'}
         </span>
-        <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.75rem' }}>
-          {expanded ? '▲' : '▼'}
+        <span style={{ fontSize: '0.7rem', color: '#999', fontStyle: 'italic' }}>
+          {editable ? 'tap to edit' : ''}
         </span>
       </div>
     </div>
