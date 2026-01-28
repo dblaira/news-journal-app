@@ -28,7 +28,7 @@ export default function ContextSummaryLine({
   editable = true,
 }: ContextSummaryLineProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null)
-  const [, setDragOverIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Build display items from context items
@@ -39,8 +39,10 @@ export default function ContextSummaryLine({
   }))
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
+    e.stopPropagation() // Prevent onClick from firing
     setDragIndex(index)
     e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', index.toString()) // Required for Firefox
     const target = e.target as HTMLElement
     target.style.opacity = '0.5'
     target.style.transform = 'scale(1.05)'
@@ -129,10 +131,18 @@ export default function ContextSummaryLine({
                   alignItems: 'center',
                   gap: '0.25rem',
                   cursor: editable && onReorder ? 'grab' : 'default',
-                  padding: '0.2rem 0.5rem',
-                  borderRadius: '4px',
-                  transition: 'background 0.15s ease',
-                  background: dragIndex === index ? 'rgba(220, 20, 60, 0.1)' : 'transparent',
+                  padding: '0.25rem 0.6rem',
+                  borderRadius: '6px',
+                  transition: 'all 0.15s ease',
+                  background: dragIndex === index 
+                    ? 'rgba(220, 20, 60, 0.15)' 
+                    : dragOverIndex === index 
+                      ? 'rgba(220, 20, 60, 0.08)'
+                      : 'rgba(0, 0, 0, 0.03)',
+                  border: dragOverIndex === index 
+                    ? '2px dashed #DC143C' 
+                    : '2px solid transparent',
+                  boxShadow: dragIndex === index ? '0 2px 8px rgba(220, 20, 60, 0.2)' : 'none',
                 }}
                 draggable={editable && onReorder !== undefined}
                 onDragStart={(e) => handleDragStart(e, index)}
@@ -140,15 +150,17 @@ export default function ContextSummaryLine({
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDrop={(e) => handleDrop(e, index)}
                 onMouseEnter={(e) => {
-                  if (editable && onReorder) {
-                    e.currentTarget.style.background = 'rgba(220, 20, 60, 0.08)'
+                  if (editable && onReorder && dragIndex === null) {
+                    e.currentTarget.style.background = 'rgba(220, 20, 60, 0.06)'
+                    e.currentTarget.style.cursor = 'grab'
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (dragIndex !== index) {
-                    e.currentTarget.style.background = 'transparent'
+                  if (dragIndex !== index && dragOverIndex !== index) {
+                    e.currentTarget.style.background = 'rgba(0, 0, 0, 0.03)'
                   }
                 }}
+                title={editable && onReorder ? 'Drag to reorder' : undefined}
               >
                 <span>{item.emoji}</span>
                 <span>{item.displayValue}</span>
@@ -215,7 +227,7 @@ export default function ContextSummaryLine({
           {expanded ? '▼ Context' : '▶ Context'}
         </span>
         <span style={{ fontSize: '0.7rem', color: '#999', fontStyle: 'italic' }}>
-          {editable ? 'tap to edit' : ''}
+          {editable && onReorder ? 'drag items to reorder' : editable ? 'tap to edit' : ''}
         </span>
       </div>
     </div>
