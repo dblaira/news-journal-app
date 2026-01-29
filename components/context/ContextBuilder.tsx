@@ -172,9 +172,13 @@ export default function ContextBuilder({
   }
 
   const handleReorder = (newItems: ContextItem[]) => {
+    console.log('🔄 handleReorder called:', newItems)
     if (onContextOrderChange) {
       const newOrder = newItems.map((item) => item.category)
+      console.log('🔄 New order:', newOrder)
       onContextOrderChange(newOrder)
+    } else {
+      console.log('⚠️ onContextOrderChange is not defined!')
     }
   }
 

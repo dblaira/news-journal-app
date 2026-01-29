@@ -29,6 +29,7 @@ export default function ContextSummaryLine({
 }: ContextSummaryLineProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Build display items from context items
@@ -39,21 +40,26 @@ export default function ContextSummaryLine({
   }))
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
-    e.stopPropagation() // Prevent onClick from firing
+    e.stopPropagation()
+    setIsDragging(true)
     setDragIndex(index)
     e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', index.toString()) // Required for Firefox
+    e.dataTransfer.setData('text/plain', index.toString())
     const target = e.target as HTMLElement
     target.style.opacity = '0.5'
     target.style.transform = 'scale(1.05)'
+    console.log('🎯 Drag started:', index)
   }
 
   const handleDragEnd = (e: React.DragEvent) => {
+    console.log('🎯 Drag ended')
     setDragIndex(null)
     setDragOverIndex(null)
     const target = e.target as HTMLElement
     target.style.opacity = '1'
     target.style.transform = 'scale(1)'
+    // Delay resetting isDragging to prevent click from firing
+    setTimeout(() => setIsDragging(false), 100)
   }
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
@@ -65,14 +71,24 @@ export default function ContextSummaryLine({
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault()
+    e.stopPropagation()
+    console.log('🎯 Drop:', { dragIndex, dropIndex })
     if (dragIndex !== null && dragIndex !== dropIndex && onReorder) {
       const newItems = [...items]
       const [draggedItem] = newItems.splice(dragIndex, 1)
       newItems.splice(dropIndex, 0, draggedItem)
+      console.log('🎯 Reordering:', newItems.map(i => i.category))
       onReorder(newItems)
     }
     setDragIndex(null)
     setDragOverIndex(null)
+  }
+
+  // Handle container click - only fire if not dragging
+  const handleContainerClick = () => {
+    if (!isDragging && onClick) {
+      onClick()
+    }
   }
 
   const hasContent = displayItems.length > 0 || location
@@ -89,7 +105,7 @@ export default function ContextSummaryLine({
   return (
     <div
       ref={containerRef}
-      onClick={onClick}
+      onClick={handleContainerClick}
       style={{
         background: '#F5F0E8',
         borderRadius: expanded ? '8px 8px 0 0' : '8px',
@@ -124,7 +140,7 @@ export default function ContextSummaryLine({
             
             {/* Draggable context items */}
             {displayItems.map((item, index) => (
-              <span
+              <div
                 key={`${item.category}-${index}`}
                 style={{
                   display: 'inline-flex',
@@ -143,12 +159,19 @@ export default function ContextSummaryLine({
                     ? '2px dashed #DC143C' 
                     : '2px solid transparent',
                   boxShadow: dragIndex === index ? '0 2px 8px rgba(220, 20, 60, 0.2)' : 'none',
+                  userSelect: 'none',
                 }}
                 draggable={editable && onReorder !== undefined}
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragEnd={handleDragEnd}
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDrop={(e) => handleDrop(e, index)}
+                onMouseDown={(e) => {
+                  // Prevent text selection which interferes with drag
+                  if (editable && onReorder) {
+                    e.preventDefault()
+                  }
+                }}
                 onMouseEnter={(e) => {
                   if (editable && onReorder && dragIndex === null) {
                     e.currentTarget.style.background = 'rgba(220, 20, 60, 0.06)'
@@ -162,8 +185,8 @@ export default function ContextSummaryLine({
                 }}
                 title={editable && onReorder ? 'Drag to reorder' : undefined}
               >
-                <span>{item.emoji}</span>
-                <span>{item.displayValue}</span>
+                <span style={{ pointerEvents: 'none' }}>{item.emoji}</span>
+                <span style={{ pointerEvents: 'none' }}>{item.displayValue}</span>
                 {editable && onRemove && (
                   <button
                     type="button"
@@ -192,9 +215,9 @@ export default function ContextSummaryLine({
                   </button>
                 )}
                 {index < displayItems.length - 1 && (
-                  <span style={{ color: '#999', marginLeft: '0.5rem' }}>•</span>
+                  <span style={{ color: '#999', marginLeft: '0.5rem', pointerEvents: 'none' }}>•</span>
                 )}
-              </span>
+              </div>
             ))}
           </div>
         ) : (
