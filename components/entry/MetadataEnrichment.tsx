@@ -2,11 +2,11 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { EntryMetadata, EntryEnrichment, UserPreference } from '@/types/metadata'
 import ChipSelector from '@/components/ui/ChipSelector'
 import EditableField from '@/components/ui/EditableField'
-import { ContextSummaryDisplay } from '@/components/context'
+import { ContextSummaryLine, ContextItem, ContextCategoryKey, DEFAULT_CATEGORY_ORDER } from '@/components/context'
 
 interface MetadataEnrichmentProps {
   entryId: string
@@ -40,6 +40,46 @@ export default function MetadataEnrichment({
   const [saveStatus, setSaveStatus] = useState<'saved' | 'error' | null>(null)
   const [isInferring, setIsInferring] = useState(false)
   const [hasInferred, setHasInferred] = useState(false)
+  const [contextOrder, setContextOrder] = useState<string[]>(
+    metadata.enrichment?.context_order || DEFAULT_CATEGORY_ORDER
+  )
+  
+  // Convert enrichment to ContextItem[] for the summary line
+  const contextItems = useMemo((): ContextItem[] => {
+    const items: ContextItem[] = []
+    
+    // Build items based on what's set
+    if (enrichment.environment) {
+      items.push({ category: 'environment', value: enrichment.environment })
+    }
+    if (enrichment.activity) {
+      items.push({ category: 'activity', value: enrichment.activity })
+    }
+    if (enrichment.energy) {
+      items.push({ category: 'energy', value: enrichment.energy })
+    }
+    if (enrichment.mood && enrichment.mood.length > 0) {
+      items.push({ category: 'mood', value: enrichment.mood.join(', ') })
+    }
+    if (enrichment.trigger) {
+      items.push({ category: 'trigger', value: enrichment.trigger })
+    }
+    
+    // Sort by context_order
+    return items.sort((a, b) => {
+      const orderA = contextOrder.indexOf(a.category)
+      const orderB = contextOrder.indexOf(b.category)
+      return orderA - orderB
+    })
+  }, [enrichment, contextOrder])
+  
+  // Handle reorder from drag-and-drop
+  const handleContextReorder = (newItems: ContextItem[]) => {
+    const newOrder = newItems.map(item => item.category)
+    setContextOrder(newOrder)
+    // Also update the enrichment with the new order
+    setEnrichment(prev => ({ ...prev, context_order: newOrder }))
+  }
   
   // Load user's custom presets
   useEffect(() => {
@@ -283,59 +323,15 @@ export default function MetadataEnrichment({
   
   return (
     <div style={{ borderTop: '1px solid var(--border-subtle, #374151)', marginTop: '16px', paddingTop: '12px' }}>
-      {/* Collapsed view - always visible */}
-      <div 
+      {/* Context summary with drag-to-reorder */}
+      <ContextSummaryLine
+        items={contextItems}
+        location={metadata.location?.display_name || metadata.location?.raw_name}
+        onReorder={handleContextReorder}
         onClick={() => setIsExpanded(!isExpanded)}
-        style={{ 
-          cursor: 'pointer',
-          padding: '0.75rem',
-          background: 'linear-gradient(135deg, rgba(39, 39, 42, 0.8) 0%, rgba(24, 24, 27, 0.9) 100%)',
-          borderRadius: '10px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          transition: 'all 0.2s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(220, 20, 60, 0.3)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
-        }}
-      >
-        {/* Context summary with emojis */}
-        <ContextSummaryDisplay 
-          metadata={{ ...metadata, enrichment }} 
-          variant="full"
-          showLocation={true}
-          maxItems={5}
-        />
-        
-        {/* Expand indicator */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '0.5rem',
-            paddingTop: '0.5rem',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-          }}
-        >
-          <span
-            style={{
-              fontSize: '0.7rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08rem',
-              color: 'rgba(255, 255, 255, 0.5)',
-              fontWeight: 500,
-            }}
-          >
-            {metadata.day_of_week?.slice(0, 3)} {metadata.captured_at && formatTime(metadata.captured_at)}
-          </span>
-          <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.75rem' }}>
-            {isExpanded ? '▲ Hide' : '▼ Edit Context'}
-          </span>
-        </div>
-      </div>
+        expanded={isExpanded}
+        editable={true}
+      />
       
       {/* Expanded view - enrichment fields */}
       {isExpanded && (

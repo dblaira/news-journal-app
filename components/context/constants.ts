@@ -83,4 +83,5 @@ export const DEFAULT_CATEGORY_ORDER: ContextCategoryKey[] = [
   'activity',
   'energy',
   'mood',
+  'trigger',
 ]
