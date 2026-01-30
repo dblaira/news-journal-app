@@ -655,6 +655,7 @@ export async function addEntryImage(
 
 /**
  * Remove an image from an entry's gallery
+ * Also clears legacy fields (photo_url, image_url) when the last image is removed
  */
 export async function removeEntryImage(entryId: string, imageIndex: number) {
   const supabase = await createClient()
@@ -667,10 +668,10 @@ export async function removeEntryImage(entryId: string, imageIndex: number) {
     return { error: 'Unauthorized' }
   }
 
-  // Fetch current entry
+  // Fetch current entry including legacy fields
   const { data: entry, error: fetchError } = await supabase
     .from('entries')
-    .select('images')
+    .select('images, photo_url, image_url')
     .eq('id', entryId)
     .eq('user_id', user.id)
     .single()
@@ -680,6 +681,30 @@ export async function removeEntryImage(entryId: string, imageIndex: number) {
   }
 
   const currentImages: EntryImage[] = entry.images || []
+
+  // Handle legacy images that are converted to array format by getEntryImages
+  // If images array is empty but legacy fields exist, we're removing a legacy image
+  if (currentImages.length === 0 && (entry.photo_url || entry.image_url)) {
+    // Clear legacy fields
+    const { error: updateError } = await supabase
+      .from('entries')
+      .update({
+        photo_url: null,
+        photo_processed: false,
+        image_url: null,
+        image_extracted_data: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', entryId)
+      .eq('user_id', user.id)
+
+    if (updateError) {
+      return { error: updateError.message }
+    }
+
+    revalidatePath('/')
+    return { success: true, images: [] }
+  }
 
   if (imageIndex < 0 || imageIndex >= currentImages.length) {
     return { error: 'Invalid image index' }
@@ -695,13 +720,24 @@ export async function removeEntryImage(entryId: string, imageIndex: number) {
     updatedImages[0].is_poster = true
   }
 
+  // Build update object - clear legacy fields when last image is removed
+  const updateData: Record<string, unknown> = {
+    images: updatedImages,
+    updated_at: new Date().toISOString(),
+  }
+
+  // If no images remain, also clear legacy fields to prevent ghost images
+  if (updatedImages.length === 0) {
+    updateData.photo_url = null
+    updateData.photo_processed = false
+    updateData.image_url = null
+    updateData.image_extracted_data = null
+  }
+
   // Update entry
   const { error: updateError } = await supabase
     .from('entries')
-    .update({
-      images: updatedImages,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('id', entryId)
     .eq('user_id', user.id)
 
@@ -807,6 +843,79 @@ export async function reorderEntryImages(entryId: string, newOrder: number[]) {
     ...currentImages[oldIndex],
     order: newIndex,
   }))
+
+  // Update entry
+  const { error: updateError } = await supabase
+    .from('entries')
+    .update({
+      images: updatedImages,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (updateError) {
+    return { error: updateError.message }
+  }
+
+  revalidatePath('/')
+  return { success: true, images: updatedImages }
+}
+
+/**
+ * Update the focal point of an image in an entry's gallery
+ * Focal point coordinates are 0-100 where (50, 50) is center
+ */
+export async function updateImageFocalPoint(
+  entryId: string,
+  imageIndex: number,
+  focalX: number,
+  focalY: number
+) {
+  const supabase = await createClient()
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Validate focal point values
+  if (focalX < 0 || focalX > 100 || focalY < 0 || focalY > 100) {
+    return { error: 'Focal point values must be between 0 and 100' }
+  }
+
+  // Fetch current entry
+  const { data: entry, error: fetchError } = await supabase
+    .from('entries')
+    .select('images')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError || !entry) {
+    return { error: 'Entry not found' }
+  }
+
+  const currentImages: EntryImage[] = entry.images || []
+
+  if (imageIndex < 0 || imageIndex >= currentImages.length) {
+    return { error: 'Invalid image index' }
+  }
+
+  // Update focal point for the specified image
+  const updatedImages = currentImages.map((img, i) => {
+    if (i === imageIndex) {
+      return {
+        ...img,
+        focal_x: Math.round(focalX),
+        focal_y: Math.round(focalY),
+      }
+    }
+    return img
+  })
 
   // Update entry
   const { error: updateError } = await supabase

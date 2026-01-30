@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Entry } from '@/types'
 import { formatEntryDateShort } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
+import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 
 interface StoryCarouselProps {
   entries: Entry[]
@@ -101,7 +102,8 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
         }}
       >
         {entries.map((entry) => {
-          const imageUrl = entry.photo_url || getCategoryImage(entry.category)
+          const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
+          const fallbackUrl = imageUrl || getCategoryImage(entry.category)
           const hasImageError = imageErrors.has(entry.id)
 
           return (
@@ -118,9 +120,10 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
                 {!hasImageError && (
                   <div className="w-24 h-24 flex-shrink-0 overflow-hidden bg-neutral-100">
                     <img
-                      src={imageUrl}
+                      src={fallbackUrl}
                       alt={entry.headline}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      style={{ objectPosition }}
                       onError={() => handleImageError(entry.id)}
                     />
                   </div>

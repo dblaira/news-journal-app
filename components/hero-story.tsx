@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Entry } from '@/types'
 import { formatEntryDateLong } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
+import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 
 interface HeroStoryProps {
   entry: Entry | null
@@ -48,8 +49,9 @@ export function HeroStory({
     )
   }
 
-  // Prefer image_url (from multimodal capture), then photo_url, then category image
-  const imageUrl = entry.image_url || entry.photo_url || getCategoryImage(entry.category)
+  // Get poster image with focal point support
+  const { url: posterUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
+  const imageUrl = posterUrl || getCategoryImage(entry.category)
   const formattedDate = formatEntryDateLong(entry.created_at)
 
   return (
@@ -105,6 +107,7 @@ export function HeroStory({
               src={imageUrl} 
               alt={entry.photo_url ? entry.headline : `${entry.category} feature image`}
               loading="lazy"
+              style={{ objectPosition }}
               onError={(e) => {
                 // Only handle errors after component is mounted to avoid hydration issues
                 if (isMounted) {

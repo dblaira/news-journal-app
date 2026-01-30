@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { EntryType } from '@/types'
 
 interface DesktopSidebarProps {
@@ -11,6 +10,8 @@ interface DesktopSidebarProps {
   onCompose: () => void
   onLogout: () => void
   actionCount?: number
+  isExpanded: boolean
+  onExpandedChange: (expanded: boolean) => void
 }
 
 const lifeAreas = [
@@ -38,8 +39,9 @@ export function DesktopSidebar({
   onCompose,
   onLogout,
   actionCount = 0,
+  isExpanded,
+  onExpandedChange,
 }: DesktopSidebarProps) {
-  const [isExpanded, setIsExpanded] = useState(true)
 
   const handleEntryTypeClick = (type: EntryType) => {
     // If clicking the same type, don't deselect - keep the selection
@@ -92,7 +94,7 @@ export function DesktopSidebar({
               Understood.
             </span>
             <button
-              onClick={() => setIsExpanded(false)}
+              onClick={() => onExpandedChange(false)}
               aria-label="Collapse sidebar"
               style={{
                 background: 'transparent',
@@ -112,7 +114,7 @@ export function DesktopSidebar({
           </>
         ) : (
           <button
-            onClick={() => setIsExpanded(true)}
+            onClick={() => onExpandedChange(true)}
             aria-label="Expand sidebar"
             style={{
               background: 'transparent',

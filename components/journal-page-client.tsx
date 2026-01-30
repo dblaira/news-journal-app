@@ -55,6 +55,7 @@ export function JournalPageClient({
   const [weeklyTheme, setWeeklyTheme] = useState<WeeklyTheme | null>(initialWeeklyTheme || null)
   const [isGeneratingTheme, setIsGeneratingTheme] = useState(false)
   const [currentEntryType, setCurrentEntryType] = useState<EntryType | null>('story') // Default to story view
+  const [sidebarExpanded, setSidebarExpanded] = useState(true) // Desktop sidebar expansion state
 
   // Calculate action count for sidebar badge
   const actionCount = entries.filter(e => 
@@ -406,6 +407,8 @@ export function JournalPageClient({
         onCompose={handleCreateEntry}
         onLogout={handleLogout}
         actionCount={actionCount}
+        isExpanded={sidebarExpanded}
+        onExpandedChange={setSidebarExpanded}
       />
 
       {/* Header - hidden on lg+ (desktop uses sidebar) */}
@@ -422,7 +425,9 @@ export function JournalPageClient({
       </div>
 
       {/* Desktop Main Content Area - hidden on mobile, shown on lg+ */}
-      <main className="hidden lg:block lg:ml-[260px] min-h-screen transition-[margin] duration-300">
+      <main className={`hidden lg:block min-h-screen transition-[margin] duration-300 ${
+        sidebarExpanded ? 'lg:ml-[260px]' : 'lg:ml-[64px]'
+      }`}>
         {/* Desktop Content Header with Breadcrumb (notes only - actions has its own hero) */}
         {currentEntryType === 'note' && (
           <ContentHeader

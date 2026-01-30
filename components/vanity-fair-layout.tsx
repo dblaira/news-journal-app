@@ -3,6 +3,7 @@
 import { Entry } from '@/types'
 import { formatEntryDateShort, truncate } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
+import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 import { useState, useEffect } from 'react'
 
 interface VanityFairLayoutProps {
@@ -77,7 +78,8 @@ export function VanityFairLayout({
               </h3>
               <div className="space-y-3">
                 {pinnedStories.map((entry) => {
-                  const imageUrl = entry.photo_url || getCategoryImage(entry.category)
+                  const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
+                  const fallbackUrl = imageUrl || getCategoryImage(entry.category)
                   const hasImageError = imageErrors.has(entry.id)
 
                   return (
@@ -89,9 +91,10 @@ export function VanityFairLayout({
                       {!hasImageError && (
                         <div className="w-20 h-20 flex-shrink-0 overflow-hidden">
                           <img
-                            src={imageUrl}
+                            src={fallbackUrl}
                             alt={entry.headline}
                             className="w-full h-full object-cover"
+                            style={{ objectPosition }}
                             onError={() => handleImageError(entry.id)}
                           />
                         </div>
@@ -190,7 +193,8 @@ export function VanityFairLayout({
               )
             }
 
-            const imageUrl = entry.photo_url || getCategoryImage(entry.category)
+            const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
+            const fallbackUrl = imageUrl || getCategoryImage(entry.category)
             const hasImageError = imageErrors.has(entry.id)
 
             return (
@@ -198,9 +202,10 @@ export function VanityFairLayout({
                 {!hasImageError && (
                   <div className="mb-3 overflow-hidden">
                     <img
-                      src={imageUrl}
+                      src={fallbackUrl}
                       alt={entry.headline}
                       className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                      style={{ objectPosition }}
                       onError={() => handleImageError(entry.id)}
                     />
                   </div>
@@ -232,7 +237,8 @@ export function VanityFairLayout({
             </div>
           ) : (
             latestEntries.map((entry) => {
-              const imageUrl = entry.photo_url || getCategoryImage(entry.category)
+              const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
+              const fallbackUrl = imageUrl || getCategoryImage(entry.category)
               const hasImageError = imageErrors.has(entry.id)
 
               return (
@@ -244,9 +250,10 @@ export function VanityFairLayout({
                   {!hasImageError && (
                     <div className="mb-4 overflow-hidden rounded-lg">
                       <img
-                        src={imageUrl}
+                        src={fallbackUrl}
                         alt={entry.headline}
                         className="w-full h-64 md:h-80 object-cover transition-transform duration-300 group-hover:scale-105"
+                        style={{ objectPosition }}
                         onError={() => handleImageError(entry.id)}
                       />
                     </div>
@@ -292,7 +299,8 @@ export function VanityFairLayout({
               </h3>
               <div className="space-y-4">
                 {pinnedStories.map((entry) => {
-                  const imageUrl = entry.photo_url || getCategoryImage(entry.category)
+                  const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
+                  const fallbackUrl = imageUrl || getCategoryImage(entry.category)
                   const hasImageError = imageErrors.has(entry.id)
 
                   return (
@@ -304,9 +312,10 @@ export function VanityFairLayout({
                       {!hasImageError && (
                         <div className="mb-2 overflow-hidden">
                           <img
-                            src={imageUrl}
+                            src={fallbackUrl}
                             alt={entry.headline}
                             className="w-full h-28 object-cover transition-transform duration-300 group-hover:scale-105"
+                            style={{ objectPosition }}
                             onError={() => handleImageError(entry.id)}
                           />
                         </div>

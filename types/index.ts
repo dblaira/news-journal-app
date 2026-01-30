@@ -13,6 +13,9 @@ export interface EntryImage {
   extracted_data?: import('./multimodal').ImageExtraction
   is_poster: boolean
   order: number
+  // Focal point for image cropping (0-100, where 50,50 is center)
+  focal_x?: number
+  focal_y?: number
 }
 
 // Maximum images allowed per entry

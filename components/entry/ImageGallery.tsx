@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { EntryImage } from '@/types'
-import { setEntryPoster, removeEntryImage } from '@/app/actions/entries'
+import { setEntryPoster, removeEntryImage, updateImageFocalPoint } from '@/app/actions/entries'
 
 interface ImageGalleryProps {
   images: EntryImage[]
@@ -24,6 +24,8 @@ export function ImageGallery({
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [focalPointMode, setFocalPointMode] = useState(false)
+  const imageContainerRef = useRef<HTMLDivElement>(null)
 
   if (images.length === 0) return null
 
@@ -76,8 +78,39 @@ export function ImageGallery({
   }
 
   const openLightbox = (index: number) => {
+    if (focalPointMode) return // Don't open lightbox in focal point mode
     setLightboxIndex(index)
     setLightboxOpen(true)
+  }
+
+  const handleFocalPointClick = async (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!focalPointMode || !editable) return
+    
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width) * 100
+    const y = ((e.clientY - rect.top) / rect.height) * 100
+    
+    setIsUpdating(true)
+    try {
+      const result = await updateImageFocalPoint(entryId, currentIndex, x, y)
+      if (result.success && result.images) {
+        onImagesUpdated?.(result.images)
+        setFocalPointMode(false) // Exit focal point mode after setting
+      } else if (result.error) {
+        alert(result.error)
+      }
+    } catch (err) {
+      console.error('Error setting focal point:', err)
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  // Get object-position style from focal point
+  const getObjectPosition = (img: EntryImage) => {
+    const x = img.focal_x ?? 50
+    const y = img.focal_y ?? 50
+    return `${x}% ${y}%`
   }
 
   return (
@@ -136,6 +169,8 @@ export function ImageGallery({
       {viewMode === 'carousel' && (
         <div style={{ position: 'relative' }}>
           <div
+            ref={imageContainerRef}
+            onClick={focalPointMode ? handleFocalPointClick : undefined}
             style={{
               position: 'relative',
               width: '100%',
@@ -143,12 +178,14 @@ export function ImageGallery({
               background: '#f3f4f6',
               borderRadius: '8px',
               overflow: 'hidden',
+              cursor: focalPointMode ? 'crosshair' : 'default',
+              border: focalPointMode ? '2px solid #2563EB' : 'none',
             }}
           >
             <img
               src={images[currentIndex].url}
               alt={`Image ${currentIndex + 1}`}
-              onClick={() => openLightbox(currentIndex)}
+              onClick={focalPointMode ? undefined : () => openLightbox(currentIndex)}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -156,9 +193,52 @@ export function ImageGallery({
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                cursor: 'pointer',
+                objectPosition: getObjectPosition(images[currentIndex]),
+                cursor: focalPointMode ? 'crosshair' : 'pointer',
+                pointerEvents: focalPointMode ? 'none' : 'auto',
               }}
             />
+            
+            {/* Focal point indicator */}
+            {(focalPointMode || images[currentIndex].focal_x !== undefined) && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: `${images[currentIndex].focal_x ?? 50}%`,
+                  top: `${images[currentIndex].focal_y ?? 50}%`,
+                  transform: 'translate(-50%, -50%)',
+                  width: focalPointMode ? '24px' : '16px',
+                  height: focalPointMode ? '24px' : '16px',
+                  borderRadius: '50%',
+                  background: focalPointMode ? 'rgba(37, 99, 235, 0.8)' : 'rgba(220, 20, 60, 0.8)',
+                  border: '2px solid white',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                  pointerEvents: 'none',
+                  transition: 'all 0.2s ease',
+                }}
+              />
+            )}
+            
+            {/* Focal point mode instruction */}
+            {focalPointMode && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '0.5rem',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'rgba(37, 99, 235, 0.9)',
+                  color: '#fff',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Click to set focal point
+              </div>
+            )}
             
             {/* Poster badge */}
             {images[currentIndex].is_poster && (
@@ -286,6 +366,7 @@ export function ImageGallery({
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
+                      objectPosition: getObjectPosition(img),
                     }}
                   />
                 </button>
@@ -320,6 +401,24 @@ export function ImageGallery({
                   Set as Poster
                 </button>
               )}
+              <button
+                onClick={() => setFocalPointMode(!focalPointMode)}
+                disabled={isUpdating}
+                style={{
+                  padding: '0.4rem 0.8rem',
+                  fontSize: '0.75rem',
+                  background: focalPointMode ? '#2563EB' : 'transparent',
+                  color: focalPointMode ? '#fff' : '#6B7280',
+                  border: focalPointMode ? '1px solid #2563EB' : '1px solid #6B7280',
+                  borderRadius: '4px',
+                  cursor: isUpdating ? 'not-allowed' : 'pointer',
+                  fontWeight: 500,
+                  opacity: isUpdating ? 0.6 : 1,
+                }}
+                title="Set the focal point to control how this image is cropped in different views"
+              >
+                {focalPointMode ? '✕ Cancel' : '⊕ Focal Point'}
+              </button>
               <button
                 onClick={() => handleRemoveImage(currentIndex)}
                 disabled={isUpdating}
@@ -374,6 +473,7 @@ export function ImageGallery({
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
+                  objectPosition: getObjectPosition(img),
                 }}
               />
               

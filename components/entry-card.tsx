@@ -6,15 +6,25 @@ import { formatEntryDateLong, formatEntryDateShort } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
 import { ContextSummaryDisplay } from './context'
 
-// Helper to get poster image URL from entry (handles both new images array and legacy fields)
-function getEntryPosterUrl(entry: Entry): string {
+// Helper to get poster image URL and focal point from entry (handles both new images array and legacy fields)
+function getEntryPosterWithFocalPoint(entry: Entry): { url: string; objectPosition: string } {
   // Check new images array first
   if (entry.images && entry.images.length > 0) {
-    const poster = entry.images.find(img => img.is_poster)
-    return poster?.url || entry.images[0]?.url || getCategoryImage(entry.category)
+    const poster = entry.images.find(img => img.is_poster) || entry.images[0]
+    if (poster) {
+      const x = poster.focal_x ?? 50
+      const y = poster.focal_y ?? 50
+      return {
+        url: poster.url || getCategoryImage(entry.category),
+        objectPosition: `${x}% ${y}%`,
+      }
+    }
   }
-  // Fallback to legacy single image fields
-  return entry.image_url || entry.photo_url || getCategoryImage(entry.category)
+  // Fallback to legacy single image fields (no focal point)
+  return {
+    url: entry.image_url || entry.photo_url || getCategoryImage(entry.category),
+    objectPosition: '50% 50%',
+  }
 }
 
 // Helper to get total image count
@@ -42,8 +52,8 @@ export function EntryCard({
   const [imageError, setImageError] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   
-  // Get poster image URL (handles both new multi-image and legacy single image)
-  const imageUrl = getEntryPosterUrl(entry)
+  // Get poster image URL and focal point (handles both new multi-image and legacy single image)
+  const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
   const imageCount = getImageCount(entry)
   const hasMultipleImages = imageCount > 1
 
@@ -82,6 +92,7 @@ export function EntryCard({
               alt={entry.photo_url || entry.image_url ? entry.headline : `${entry.category} illustration`}
               loading="lazy"
               crossOrigin="anonymous"
+              style={{ objectPosition }}
               onError={(e) => {
                 // Only handle errors after component is mounted to avoid hydration issues
                 if (isMounted) {
