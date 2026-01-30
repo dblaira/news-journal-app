@@ -131,7 +131,7 @@ export function EntryPickerModal({
     return emojiMap[category] || '📝'
   }
   
-  const getTypeIcon = (type?: string) => {
+  const getTypeIcon = (type?: string | null) => {
     switch (type) {
       case 'action': return '☑️'
       case 'note': return '📌'
