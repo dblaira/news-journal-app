@@ -5,6 +5,10 @@ import StarterKit from '@tiptap/starter-kit'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Placeholder from '@tiptap/extension-placeholder'
+import Underline from '@tiptap/extension-underline'
+import { TextStyle } from '@tiptap/extension-text-style'
+import { Color } from '@tiptap/extension-color'
+import Highlight from '@tiptap/extension-highlight'
 import { useEffect, useRef, useCallback } from 'react'
 import { Toolbar } from './Toolbar'
 
@@ -116,6 +120,12 @@ export function TiptapEditor({
       }),
       Placeholder.configure({
         placeholder: placeholder || (entryType === 'action' ? 'Add your tasks...' : 'Write something...'),
+      }),
+      Underline,
+      TextStyle,
+      Color,
+      Highlight.configure({
+        multicolor: true,
       }),
     ],
     content: initialContent,

@@ -59,10 +59,6 @@ export function EntryModal({
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   
-  // Cursor position tracking for textarea
-  const contentTextareaRef = useRef<HTMLTextAreaElement>(null)
-  const [savedCursorPosition, setSavedCursorPosition] = useState<number | null>(null)
-  
   // Track previous entry ID to detect actual entry changes
   const prevEntryIdRef = useRef(entry.id)
   
@@ -175,7 +171,6 @@ export function EntryModal({
       setEditedHeadline(entry.headline)
       setEditedSubheading(entry.subheading || '')
       setIsEditingWithLog(false, 'useEffect-entryIdChanged')
-      setSavedCursorPosition(null)
       prevEntryIdRef.current = currentEntryId
       setTimeout(() => {
         isIntentionallyExitingRef.current = false
@@ -364,38 +359,22 @@ export function EntryModal({
     setEditedHeadline(entry.headline)
     setEditedSubheading(entry.subheading || '')
     setIsEditingWithLog(false, 'handleCancelEdit')
-    setSavedCursorPosition(null)
     // Reset flag after state update
     setTimeout(() => {
       isIntentionallyExitingRef.current = false
     }, 100)
   }
   
-  // Handle entering edit mode - preserve cursor position if available
+  // Handle entering edit mode
   const handleEnterEditMode = () => {
     isIntentionallyExitingRef.current = false
     setIsEditingWithLog(true, 'handleEnterEditMode')
-    // Restore cursor position after a brief delay to ensure textarea is rendered
-    setTimeout(() => {
-      if (contentTextareaRef.current && savedCursorPosition !== null) {
-        contentTextareaRef.current.focus()
-        contentTextareaRef.current.setSelectionRange(savedCursorPosition, savedCursorPosition)
-      } else if (contentTextareaRef.current) {
-        // If no saved position, focus at the end
-        contentTextareaRef.current.focus()
-        const length = contentTextareaRef.current.value.length
-        contentTextareaRef.current.setSelectionRange(length, length)
-      }
-    }, 50)
+    // TipTap handles its own focus management
   }
   
-  // Save cursor position when exiting edit mode
+  // Handle exiting edit mode
   const handleExitEditMode = () => {
     isIntentionallyExitingRef.current = true
-    if (contentTextareaRef.current) {
-      const cursorPos = contentTextareaRef.current.selectionStart
-      setSavedCursorPosition(cursorPos)
-    }
     setIsEditingWithLog(false, 'handleExitEditMode')
     // Reset flag after state update
     setTimeout(() => {
@@ -1315,45 +1294,16 @@ export function EntryModal({
           </div>
           
           {isEditing ? (
-            <textarea
-              ref={contentTextareaRef}
-              value={editedContent}
-              onChange={(e) => {
-                setEditedContent(e.target.value)
-                // Save cursor position on change
-                // Use requestAnimationFrame to ensure selectionStart is accurate
-                requestAnimationFrame(() => {
-                  if (contentTextareaRef.current) {
-                    setSavedCursorPosition(contentTextareaRef.current.selectionStart)
-                  }
-                })
-              }}
-              onBlur={(e) => {
-                // Save cursor position when losing focus
-                // BUT don't exit edit mode on blur - user might just be scrolling on mobile
-                setSavedCursorPosition(e.target.selectionStart)
-                // Keep edit mode active even on blur - this prevents mobile keyboard issues
-              }}
-              onFocus={(e) => {
-                // Restore cursor position when gaining focus
-                if (savedCursorPosition !== null) {
-                  setTimeout(() => {
-                    e.target.setSelectionRange(savedCursorPosition, savedCursorPosition)
-                  }, 0)
-                }
-              }}
-              style={{
-                width: '100%',
-                minHeight: '300px',
-                padding: '1rem',
-                fontSize: '1rem',
-                lineHeight: 1.6,
-                border: '1px solid #374151',
-                borderRadius: '8px',
-                background: '#1a1a2e',
-                color: '#fff',
-                resize: 'vertical',
-              }}
+            <TiptapEditor
+              key={`edit-${entry.id}`}
+              content={editedContent}
+              onChange={(html) => setEditedContent(html)}
+              onSave={handleAutoSaveContent}
+              variant="dark"
+              editable={true}
+              autoSaveDelay={2000}
+              placeholder="Write your entry..."
+              entryType={entry.entry_type}
             />
           ) : (
             <div
