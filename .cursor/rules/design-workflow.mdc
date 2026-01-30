@@ -1,0 +1,262 @@
+# Design Workflow - Adam's Cognitive Profile
+
+## The Core Insight
+
+**Cognitive Profile:**
+- Structural Visualization: 5th percentile — does not naturally see spatial relationships
+- Analytical Reasoning: 13th percentile — sequential organization doesn't come naturally
+
+**Strengths:**
+- Pattern recognition
+- Strategic "why" thinking
+- Numerical reasoning
+- Taste (knows it when he sees it)
+
+## Your Job as an AI
+
+**Translate spatial decisions into strategic questions.**
+
+When Adam hits a design block:
+- DON'T ask "what padding?" or "should this be 16px or 24px?"
+- DO ask "what's most important here?" or "what should the user see first?"
+
+He has taste but not spatial intuition. Help him use references and frameworks instead of trying to visualize.
+
+---
+
+# Design Decision Cheat Sheet
+
+Keep this open while working in Cursor. When you hit a design block, use these frameworks instead of trying to visualize.
+
+---
+
+## The Core Principle
+
+**You have taste. You don't have spatial intuition.**
+
+Use your taste to curate references. Use these frameworks to make decisions. Let Cursor do the spatial translation.
+
+---
+
+## Framework 1: Hierarchy First
+
+Before any layout decision, answer in order:
+
+1. **What does the user need to see FIRST?** → Make it largest/top/most prominent
+2. **What do they need SECOND?** → Make it supporting/smaller/below
+3. **What's optional or advanced?** → Hide it, collapse it, or mute it
+
+This is strategic, not spatial. You're good at this.
+
+### Example: Context Builder
+1. First: Summary line (the calibrated description) → Top, prominent, shaded background
+2. Second: "What triggered this?" → Below summary, visible
+3. Third: Selection chips → Collapsed by default, expandable
+
+---
+
+## Framework 2: Constraint Scales
+
+Never freestyle. Pick from these fixed values:
+
+### Spacing (padding, margins, gaps)
+```
+4px   → Tight (between related items)
+8px   → Compact (chip padding, small gaps)
+12px  → Default small (list items)
+16px  → Default medium (section padding)
+24px  → Comfortable (card padding)
+32px  → Roomy (section gaps)
+48px  → Dramatic (major section breaks)
+```
+
+### Font Sizes
+```
+12px  → Fine print, metadata, timestamps
+14px  → Body text, descriptions
+16px  → Default UI text, buttons
+18px  → Emphasized body, subheadings
+24px  → Section headings
+32px  → Page titles
+48px  → Hero headlines
+```
+
+### Font Weight
+```
+400   → Normal (body text)
+500   → Medium (subtle emphasis)
+600   → Semibold (buttons, labels)
+700   → Bold (headings, strong emphasis)
+```
+
+### Border Radius
+```
+4px   → Subtle softening (inputs, small buttons)
+8px   → Standard rounded (cards, chips)
+12px  → Friendly rounded (modals, large cards)
+9999px → Pill shape (tags, badges)
+```
+
+### Opacity (for muting)
+```
+100%  → Full prominence
+70%   → Slightly muted
+50%   → Secondary info
+30%   → Disabled/hint
+```
+
+### Z-Index
+```
+0     → Default
+10    → Dropdowns, tooltips
+20    → Sticky headers
+30    → Modals, overlays
+40    → Toasts, notifications
+```
+
+---
+
+## Framework 3: The Feel → Reference → Constraints Pattern
+
+When you can't decide, use this prompt template for Cursor:
+
+```
+I want [ELEMENT] to feel [ADJECTIVE].
+
+Reference: [SCREENSHOT OR APP NAME]
+
+Constraints:
+- Spacing: use 8/16/24px scale
+- Colors: [YOUR PALETTE or "match existing"]
+- Match the visual weight of [REFERENCE]
+```
+
+### Feel Vocabulary
+| If you want... | Say it feels... |
+|----------------|-----------------|
+| Easy to scan | Glanceable |
+| Important | Prominent, bold |
+| Secondary | Muted, subtle |
+| Clickable | Tappable, interactive |
+| Organized | Structured, grouped |
+| Calm | Quiet, minimal |
+| Energetic | Punchy, vibrant |
+| Professional | Polished, clean |
+| Friendly | Warm, approachable |
+
+---
+
+## Framework 4: Common Patterns (Pick, Don't Invent)
+
+### Cards
+- Padding: 16px or 24px
+- Border-radius: 8px or 12px
+- Background: slightly lighter/darker than page
+- Shadow: subtle or none for dark mode
+
+### Chips/Tags
+- Padding: 4px 8px or 6px 12px
+- Border-radius: 9999px (pill) or 6px (rounded)
+- Font size: 12px or 14px
+- Selected: filled background
+- Unselected: outline or ghost
+
+### Buttons
+- Primary: filled, brand color, 600 weight text
+- Secondary: outline or ghost, muted color
+- Padding: 8px 16px (small) or 12px 24px (default)
+- Border-radius: match your chips
+
+### Input Fields
+- Height: 40px or 44px
+- Padding: 8px 12px
+- Border: 1px solid muted
+- Border-radius: 6px or 8px
+- Focus: brand color border
+
+### Section Spacing
+- Between related items: 8px or 12px
+- Between groups: 24px
+- Between sections: 32px or 48px
+
+---
+
+## Framework 5: The "What's Wrong?" Diagnostic
+
+When something looks off but you can't say why, run through this checklist:
+
+| Symptom | Likely Fix |
+|---------|------------|
+| Feels cramped | Increase padding/margins by one scale step |
+| Feels floaty | Decrease spacing, add borders or backgrounds |
+| Can't find focus | Make one thing bigger, mute everything else |
+| Looks chaotic | Align things, reduce variation |
+| Feels cheap | Check font weights, add subtle shadows, refine spacing |
+| Feels heavy | Reduce font weights, increase whitespace |
+| Hard to read | Increase contrast, check font size |
+
+---
+
+## Quick Reference: App's Existing Palette
+
+From style.css (Vanity Fair inspired):
+
+```
+Background:      #1A1A1A (dark), #FDFCFA (light)
+Surface:         #27272A (dark panels)
+Text primary:    #FFFFFF (dark), #1A1A1A (light)
+Text muted:      rgba(255,255,255,0.5) or #6B7280
+Brand/accent:    #DC143C (Crimson Red)
+Success:         #22C55E
+Warning:         #F59E0B
+Error:           #EF4444
+Cream highlight: #F5F0E8
+```
+
+---
+
+## Emergency Prompt Templates
+
+### "I don't know what spacing to use"
+```
+Make the spacing feel balanced. Use 8px for tight groupings, 
+16px for standard padding, 24px between distinct sections. 
+Show me the result.
+```
+
+### "I don't know if this should be above or below"
+```
+The user needs to see [X] first, then [Y]. 
+Arrange them in that priority order.
+```
+
+### "This looks wrong but I don't know why"
+```
+Something feels off about [ELEMENT]. Compare it to [REFERENCE APP]. 
+What's different? Fix it to match that feel.
+```
+
+### "I can't decide between two options"
+```
+Show me both versions side by side:
+Option A: [description]
+Option B: [description]
+I'll pick based on what I see.
+```
+
+---
+
+## The Meta-Rule
+
+**When stuck for more than 2 minutes on a design decision:**
+
+1. Find a reference (screenshot something that works)
+2. Point Cursor at it
+3. Say "match this feel"
+4. Move on
+
+Your time is worth more than pixel-perfect decisions. Ship it, then refine based on how it feels in use.
+
+---
+alwaysApply: true
+---

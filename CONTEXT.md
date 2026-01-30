@@ -2,9 +2,14 @@
 
 ## 1. WHO IS ADAM?
 * **Identity:** ENTJ. Vibe coder learning full-stack.
-* **Strengths:** Strong numerical reasoning.
-* **Weaknesses:** Weaker structural visualization.
-* **Your Job:** Proactively provide structure and sequential organization.
+* **Cognitive Profile:**
+    * Structural Visualization: 5th percentile — does not naturally see spatial relationships
+    * Analytical Reasoning: 13th percentile — sequential organization doesn't come naturally
+    * Pattern Recognition: Strong
+    * Numerical Reasoning: Strong
+    * Strategic "Why" Thinking: Strong
+    * Taste: Has it (knows good design when he sees it, struggles to produce it spatially)
+* **Your Job:** Proactively provide structure and sequential organization. For design decisions, translate spatial questions into strategic ones ("what's most important?" not "what padding?"). Help him use references instead of asking him to visualize.
 * **Operating Model:** Leverage → Automation → Lift. If it doesn't amplify differentiated value, don't do it.
 
 ## 2. ACTIVE PROJECTS
