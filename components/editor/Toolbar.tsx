@@ -82,7 +82,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
             type="button"
             onClick={() => editor.chain().focus().toggleTaskList().run()}
             className={buttonClass(editor.isActive('taskList'))}
-            title="Checkbox List"
+            title="Tasks - Convert to checkbox list"
             style={{ fontWeight: 'bold' }}
           >
             ☑ Tasks
@@ -96,7 +96,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
         className={buttonClass(editor.isActive('bold'))}
-        title="Bold"
+        title="Bold - Make text heavier (Cmd/Ctrl+B)"
       >
         <strong>B</strong>
       </button>
@@ -104,7 +104,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
         type="button"
         onClick={() => editor.chain().focus().toggleItalic().run()}
         className={buttonClass(editor.isActive('italic'))}
-        title="Italic"
+        title="Italic - Slant text (Cmd/Ctrl+I)"
       >
         <em>I</em>
       </button>
@@ -112,7 +112,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
         type="button"
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         className={buttonClass(editor.isActive('underline'))}
-        title="Underline"
+        title="Underline - Add line below text (Cmd/Ctrl+U)"
       >
         <span style={{ textDecoration: 'underline' }}>U</span>
       </button>
@@ -120,7 +120,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
         type="button"
         onClick={() => editor.chain().focus().toggleStrike().run()}
         className={buttonClass(editor.isActive('strike'))}
-        title="Strikethrough"
+        title="Strikethrough - Cross out text"
       >
         <s>S</s>
       </button>
@@ -136,7 +136,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
             setShowHighlightPicker(false)
           }}
           className={buttonClass(!!currentColor)}
-          title="Text Color"
+          title="Text Color - Change the color of selected text"
           style={{ display: 'flex', alignItems: 'center', gap: '2px' }}
         >
           <span style={{ color: currentColor || 'inherit' }}>A</span>
@@ -206,7 +206,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
             setShowColorPicker(false)
           }}
           className={buttonClass(editor.isActive('highlight'))}
-          title="Highlight"
+          title="Highlight - Add background color to text like a marker"
           style={{ display: 'flex', alignItems: 'center', gap: '2px' }}
         >
           <span style={{ 
@@ -295,7 +295,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
         type="button"
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         className={buttonClass(editor.isActive('heading', { level: 1 }))}
-        title="Heading 1"
+        title="Heading 1 - Large title text"
       >
         H1
       </button>
@@ -303,7 +303,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
         type="button"
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         className={buttonClass(editor.isActive('heading', { level: 2 }))}
-        title="Heading 2"
+        title="Heading 2 - Section heading"
       >
         H2
       </button>
@@ -315,7 +315,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
         type="button"
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         className={buttonClass(editor.isActive('bulletList'))}
-        title="Bullet List"
+        title="Bullet List - Unordered list with dots"
       >
         •
       </button>
@@ -323,7 +323,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
         type="button"
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         className={buttonClass(editor.isActive('orderedList'))}
-        title="Numbered List"
+        title="Numbered List - Ordered list with numbers"
       >
         1.
       </button>
@@ -333,7 +333,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
           type="button"
           onClick={() => editor.chain().focus().toggleTaskList().run()}
           className={buttonClass(editor.isActive('taskList'))}
-          title="Checkbox List"
+          title="Checklist - Add checkbox items"
         >
           ☑
         </button>
@@ -346,7 +346,7 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
         type="button"
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         className={buttonClass(editor.isActive('blockquote'))}
-        title="Block Quote"
+        title="Block Quote - Indent text as a quotation"
       >
         ❝
       </button>
