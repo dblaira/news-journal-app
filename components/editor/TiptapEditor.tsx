@@ -9,8 +9,11 @@ import Underline from '@tiptap/extension-underline'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
 import Highlight from '@tiptap/extension-highlight'
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { Toolbar } from './Toolbar'
+import { Details, Callout, EntryLink } from './extensions'
+import { EntryPickerModal } from './EntryPickerModal'
+import { Entry } from '@/types'
 
 interface TiptapEditorProps {
   content: string
@@ -21,6 +24,7 @@ interface TiptapEditorProps {
   variant?: 'light' | 'dark'
   placeholder?: string
   entryType?: 'story' | 'action' | 'note'
+  currentEntryId?: string // For excluding current entry from link picker
 }
 
 // Convert plain text lines to task list HTML for Actions
@@ -94,11 +98,13 @@ export function TiptapEditor({
   variant = 'dark',
   placeholder,
   entryType,
+  currentEntryId,
 }: TiptapEditorProps) {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isFirstRenderRef = useRef(true)
   const hasPendingChangesRef = useRef(false)
   const lastContentPropRef = useRef(content)
+  const [showEntryPicker, setShowEntryPicker] = useState(false)
   
   // For Actions, convert content to task list format on initial render
   const initialContent = entryType === 'action' 
@@ -126,6 +132,14 @@ export function TiptapEditor({
       Color,
       Highlight.configure({
         multicolor: true,
+      }),
+      // Phase 2: Collapsible sections
+      Details,
+      // Phase 3: Semantic callouts
+      Callout,
+      // Phase 4: Entry links
+      EntryLink.configure({
+        openOnClick: false, // We handle clicks ourselves
       }),
     ],
     content: initialContent,
@@ -157,6 +171,13 @@ export function TiptapEditor({
       }
     },
   })
+  
+  // Handler for entry link selection
+  const handleEntrySelect = useCallback((entry: Pick<Entry, 'id' | 'headline' | 'category' | 'entry_type'>) => {
+    if (editor) {
+      editor.chain().focus().setEntryLink(entry.id, entry.headline).run()
+    }
+  }, [editor])
 
   // Update content when prop changes (e.g., switching entries)
   // Skip on first render to preserve our task list conversion
@@ -216,8 +237,15 @@ export function TiptapEditor({
   const isLight = variant === 'light'
   
   return (
-    <div className={`tiptap-editor border rounded overflow-hidden ${isLight ? 'border-neutral-300' : 'border-neutral-700'}`}>
-      {editable && <Toolbar editor={editor} variant={variant} entryType={entryType} />}
+    <div className={`tiptap-editor border rounded overflow-hidden ${isLight ? 'border-neutral-300 light-variant' : 'border-neutral-700'}`}>
+      {editable && (
+        <Toolbar 
+          editor={editor} 
+          variant={variant} 
+          entryType={entryType}
+          onOpenEntryPicker={() => setShowEntryPicker(true)}
+        />
+      )}
       <EditorContent
         editor={editor}
         className={`tiptap-content p-4 min-h-[200px] prose prose-sm max-w-none focus:outline-none ${
@@ -226,6 +254,15 @@ export function TiptapEditor({
             : 'bg-neutral-900 text-white prose-invert'
         }`}
         data-placeholder={placeholder}
+      />
+      
+      {/* Entry Picker Modal for internal links */}
+      <EntryPickerModal
+        isOpen={showEntryPicker}
+        onClose={() => setShowEntryPicker(false)}
+        onSelect={handleEntrySelect}
+        variant={variant}
+        excludeEntryId={currentEntryId}
       />
     </div>
   )

@@ -656,3 +656,238 @@ li[data-type="taskItem"]::marker {
     background: rgba(255, 255, 255, 0.3);
   }
 }
+
+/* ============================================
+   Phase 2: Collapsible/Details Sections
+   ============================================ */
+
+/* Details/Collapsible in editor */
+.tiptap-content .ProseMirror details,
+.tiptap-content .ProseMirror .details-wrapper {
+  margin: 12px 0;
+}
+
+/* Details/Collapsible in rendered content */
+.rendered-content details {
+  margin: 12px 0;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #F9FAFB;
+}
+
+.rendered-content details summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: #F3F4F6;
+  font-weight: 500;
+  user-select: none;
+  list-style: none;
+}
+
+.rendered-content details summary::-webkit-details-marker {
+  display: none;
+}
+
+.rendered-content details summary::before {
+  content: '▶';
+  font-size: 10px;
+  transition: transform 0.15s ease;
+}
+
+.rendered-content details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.rendered-content details[open] summary {
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.rendered-content details .details-content {
+  padding: 12px 14px;
+}
+
+/* Dark mode details */
+.tiptap-content.bg-neutral-900 .ProseMirror details,
+.prose-invert details {
+  border-color: #374151;
+  background: #1F2937;
+}
+
+.tiptap-content.bg-neutral-900 .ProseMirror details summary,
+.prose-invert details summary {
+  background: #374151;
+}
+
+.tiptap-content.bg-neutral-900 .ProseMirror details[open] summary,
+.prose-invert details[open] summary {
+  border-bottom-color: #4B5563;
+}
+
+/* ============================================
+   Phase 3: Semantic Callout Blocks
+   ============================================ */
+
+/* Callout blocks in rendered content */
+.rendered-content [data-callout],
+.rendered-content .callout {
+  margin: 16px 0;
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.rendered-content [data-callout="insight"],
+.rendered-content .callout-insight {
+  background: #FEF9C3;
+  border: 1px solid #FDE047;
+  color: #713F12;
+}
+
+.rendered-content [data-callout="question"],
+.rendered-content .callout-question {
+  background: #DBEAFE;
+  border: 1px solid #93C5FD;
+  color: #1E40AF;
+}
+
+.rendered-content [data-callout="warning"],
+.rendered-content .callout-warning {
+  background: #FEE2E2;
+  border: 1px solid #FCA5A5;
+  color: #991B1B;
+}
+
+.rendered-content [data-callout="note"],
+.rendered-content .callout-note {
+  background: #E0E7FF;
+  border: 1px solid #A5B4FC;
+  color: #3730A3;
+}
+
+.rendered-content .callout-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.rendered-content .callout-content {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rendered-content .callout-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Dark mode callouts */
+.tiptap-content.bg-neutral-900 [data-callout="insight"],
+.prose-invert [data-callout="insight"] {
+  background: #422006;
+  border-color: #CA8A04;
+  color: #FEF08A;
+}
+
+.tiptap-content.bg-neutral-900 [data-callout="question"],
+.prose-invert [data-callout="question"] {
+  background: #1E3A5F;
+  border-color: #3B82F6;
+  color: #BFDBFE;
+}
+
+.tiptap-content.bg-neutral-900 [data-callout="warning"],
+.prose-invert [data-callout="warning"] {
+  background: #450A0A;
+  border-color: #DC2626;
+  color: #FECACA;
+}
+
+.tiptap-content.bg-neutral-900 [data-callout="note"],
+.prose-invert [data-callout="note"] {
+  background: #1E1B4B;
+  border-color: #6366F1;
+  color: #C7D2FE;
+}
+
+/* ============================================
+   Phase 4: Entry Links
+   ============================================ */
+
+/* Entry link styling */
+.rendered-content a[data-entry-id],
+.rendered-content .entry-link,
+.tiptap-content a[data-entry-id],
+.tiptap-content .entry-link {
+  color: #8B5CF6;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.1s ease;
+}
+
+.rendered-content a[data-entry-id]:hover,
+.rendered-content .entry-link:hover,
+.tiptap-content a[data-entry-id]:hover,
+.tiptap-content .entry-link:hover {
+  color: #7C3AED;
+}
+
+/* Entry link with tooltip on hover */
+.rendered-content a[data-entry-id]::after {
+  content: ' →';
+  font-size: 0.85em;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.rendered-content a[data-entry-id]:hover::after {
+  opacity: 1;
+}
+
+/* ============================================
+   Phase 5: Outline/Nested List Support
+   ============================================ */
+
+/* Nested list indentation in editor */
+.tiptap-content .ProseMirror ul ul,
+.tiptap-content .ProseMirror ol ol,
+.tiptap-content .ProseMirror ul ol,
+.tiptap-content .ProseMirror ol ul {
+  margin-top: 0.25em;
+  margin-bottom: 0;
+}
+
+/* Nested task list styling */
+.tiptap-content .ProseMirror ul[data-type="taskList"] ul[data-type="taskList"] {
+  margin-left: 1.5rem;
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+/* Rendered nested lists */
+.rendered-content ul ul,
+.rendered-content ol ol,
+.rendered-content ul ol,
+.rendered-content ol ul {
+  margin-top: 0.25em;
+  margin-bottom: 0;
+  padding-left: 1.25em;
+}
+
+/* Different bullet styles for nested lists */
+.rendered-content ul ul {
+  list-style-type: circle;
+}
+
+.rendered-content ul ul ul {
+  list-style-type: square;
+}
+
+/* Nested task lists */
+.rendered-content ul[data-type="taskList"] ul[data-type="taskList"] {
+  margin-left: 1.5rem;
+  padding-left: 0;
+}

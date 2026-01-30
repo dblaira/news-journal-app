@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Editor } from '@tiptap/react'
+import { CALLOUT_TYPES, CalloutType } from './extensions/Callout'
 
 interface ToolbarProps {
   editor: Editor | null
   variant?: 'light' | 'dark'
   entryType?: 'story' | 'action' | 'note'
+  onOpenEntryPicker?: () => void
 }
 
 // Apple Notes-style color palette
@@ -28,11 +30,13 @@ const HIGHLIGHT_COLORS = [
   { name: 'Orange', color: '#FED7AA' },
 ]
 
-export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
+export function Toolbar({ editor, variant = 'dark', entryType, onOpenEntryPicker }: ToolbarProps) {
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [showHighlightPicker, setShowHighlightPicker] = useState(false)
+  const [showCalloutPicker, setShowCalloutPicker] = useState(false)
   const colorPickerRef = useRef<HTMLDivElement>(null)
   const highlightPickerRef = useRef<HTMLDivElement>(null)
+  const calloutPickerRef = useRef<HTMLDivElement>(null)
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -42,6 +46,9 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
       }
       if (highlightPickerRef.current && !highlightPickerRef.current.contains(event.target as Node)) {
         setShowHighlightPicker(false)
+      }
+      if (calloutPickerRef.current && !calloutPickerRef.current.contains(event.target as Node)) {
+        setShowCalloutPicker(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -349,6 +356,181 @@ export function Toolbar({ editor, variant = 'dark', entryType }: ToolbarProps) {
         title="Block Quote - Indent text as a quotation"
       >
         ❝
+      </button>
+
+      <div className={dividerClass} />
+
+      {/* Phase 2: Collapsible/Details Section */}
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleDetails().run()}
+        className={buttonClass(editor.isActive('details'))}
+        title="Collapsible Section - Wrap selected text in an expandable/collapsible block. Click the header to toggle."
+      >
+        ▼
+      </button>
+
+      {/* Phase 3: Callout Blocks */}
+      <div ref={calloutPickerRef} style={{ position: 'relative' }}>
+        <button
+          type="button"
+          onClick={() => {
+            setShowCalloutPicker(!showCalloutPicker)
+            setShowColorPicker(false)
+            setShowHighlightPicker(false)
+          }}
+          className={buttonClass(editor.isActive('callout'))}
+          title="Callout Block - Add a highlighted box for insights 💡, questions ❓, warnings ⚠️, or notes ℹ️"
+        >
+          💡
+        </button>
+        
+        {showCalloutPicker && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              marginTop: '4px',
+              background: isLight ? '#FFFFFF' : '#1F2937',
+              border: `1px solid ${isLight ? '#E5E7EB' : '#374151'}`,
+              borderRadius: '8px',
+              padding: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              zIndex: 100,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              minWidth: '120px',
+            }}
+          >
+            {(Object.keys(CALLOUT_TYPES) as CalloutType[]).map((type) => {
+              const config = CALLOUT_TYPES[type]
+              const tooltips: Record<CalloutType, string> = {
+                insight: 'Insight - Highlight a key realization or important takeaway',
+                question: 'Question - Mark something to explore or follow up on later',
+                warning: 'Warning - Flag a risk, concern, or something to be careful about',
+                note: 'Note - Add supplementary information or context',
+              }
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  title={tooltips[type]}
+                  onClick={() => {
+                    editor.chain().focus().toggleCallout(type).run()
+                    setShowCalloutPicker(false)
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    background: editor.isActive('callout', { type }) 
+                      ? (isLight ? config.lightBg : config.darkBg)
+                      : 'transparent',
+                    color: isLight ? '#374151' : '#D1D5DB',
+                    fontSize: '14px',
+                    transition: 'background 0.1s ease',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = isLight ? '#F3F4F6' : '#374151'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = editor.isActive('callout', { type }) 
+                    ? (isLight ? config.lightBg : config.darkBg)
+                    : 'transparent'
+                  }
+                >
+                  <span>{config.icon}</span>
+                  <span>{config.label}</span>
+                </button>
+              )
+            })}
+            {/* Remove callout button */}
+            {editor.isActive('callout') && (
+              <button
+                type="button"
+                title="Remove Callout - Convert back to regular text"
+                onClick={() => {
+                  editor.chain().focus().unsetCallout().run()
+                  setShowCalloutPicker(false)
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  border: `1px solid ${isLight ? '#E5E7EB' : '#4B5563'}`,
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  background: 'transparent',
+                  color: isLight ? '#6B7280' : '#9CA3AF',
+                  fontSize: '14px',
+                  marginTop: '4px',
+                }}
+              >
+                <span>✕</span>
+                <span>Remove</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className={dividerClass} />
+
+      {/* Phase 4: Entry Link */}
+      <button
+        type="button"
+        onClick={() => onOpenEntryPicker?.()}
+        className={buttonClass(editor.isActive('entryLink'))}
+        title="Link to Entry - Create a clickable link to another journal entry. Opens a search picker."
+      >
+        🔗
+      </button>
+
+      <div className={dividerClass} />
+
+      {/* Phase 5: Indent/Outdent for outline structure */}
+      <button
+        type="button"
+        onClick={() => {
+          // Try to sink list item first, then indent blockquote if not in a list
+          if (editor.can().sinkListItem('listItem')) {
+            editor.chain().focus().sinkListItem('listItem').run()
+          } else if (editor.can().sinkListItem('taskItem')) {
+            editor.chain().focus().sinkListItem('taskItem').run()
+          }
+        }}
+        className={buttonClass(false)}
+        title="Indent - Nest list item deeper to create sub-items (Tab key also works)"
+        disabled={!editor.can().sinkListItem('listItem') && !editor.can().sinkListItem('taskItem')}
+        style={{
+          opacity: (editor.can().sinkListItem('listItem') || editor.can().sinkListItem('taskItem')) ? 1 : 0.5,
+        }}
+      >
+        →
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          if (editor.can().liftListItem('listItem')) {
+            editor.chain().focus().liftListItem('listItem').run()
+          } else if (editor.can().liftListItem('taskItem')) {
+            editor.chain().focus().liftListItem('taskItem').run()
+          }
+        }}
+        className={buttonClass(false)}
+        title="Outdent - Move list item up one level (Shift+Tab also works)"
+        disabled={!editor.can().liftListItem('listItem') && !editor.can().liftListItem('taskItem')}
+        style={{
+          opacity: (editor.can().liftListItem('listItem') || editor.can().liftListItem('taskItem')) ? 1 : 0.5,
+        }}
+      >
+        ←
       </button>
     </div>
   )
