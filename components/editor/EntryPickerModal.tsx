@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client'
 import { Entry } from '@/types'
 
 interface EntryPickerModalProps {
@@ -34,7 +34,6 @@ export function EntryPickerModal({
     const fetchEntries = async () => {
       setIsLoading(true)
       try {
-        const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
         
         if (!user) {
