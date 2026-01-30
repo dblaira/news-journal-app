@@ -13,7 +13,6 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import { Toolbar } from './Toolbar'
 import { Details, Callout, EntryLink } from './extensions'
 import { EntryPickerModal } from './EntryPickerModal'
-import { Entry } from '@/types'
 
 interface TiptapEditorProps {
   content: string
@@ -173,7 +172,7 @@ export function TiptapEditor({
   })
   
   // Handler for entry link selection
-  const handleEntrySelect = useCallback((entry: Pick<Entry, 'id' | 'headline' | 'category' | 'entry_type'>) => {
+  const handleEntrySelect = useCallback((entry: { id: string; headline: string }) => {
     if (editor) {
       editor.chain().focus().setEntryLink(entry.id, entry.headline).run()
     }

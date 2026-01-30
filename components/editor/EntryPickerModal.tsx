@@ -2,12 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Entry } from '@/types'
+
+// Minimal entry type for the picker (only fields we need)
+interface EntryPickerItem {
+  id: string
+  headline: string
+  category: string
+  entry_type: string | null
+  created_at: string
+}
 
 interface EntryPickerModalProps {
   isOpen: boolean
   onClose: () => void
-  onSelect: (entry: Pick<Entry, 'id' | 'headline' | 'category' | 'entry_type'>) => void
+  onSelect: (entry: { id: string; headline: string; category: string; entry_type?: string | null }) => void
   variant?: 'light' | 'dark'
   excludeEntryId?: string // To exclude current entry from the list
 }
@@ -20,8 +28,8 @@ export function EntryPickerModal({
   excludeEntryId,
 }: EntryPickerModalProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [entries, setEntries] = useState<Entry[]>([])
-  const [filteredEntries, setFilteredEntries] = useState<Entry[]>([])
+  const [entries, setEntries] = useState<EntryPickerItem[]>([])
+  const [filteredEntries, setFilteredEntries] = useState<EntryPickerItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
   
