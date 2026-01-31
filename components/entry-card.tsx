@@ -7,6 +7,7 @@ import { getCategoryImage } from '@/lib/mindset'
 import { ContextSummaryDisplay } from './context'
 
 // Helper to get poster image URL and focal point from entry (handles both new images array and legacy fields)
+// Returns the poster image URL and CSS object-position value for proper image cropping
 function getEntryPosterWithFocalPoint(entry: Entry): { url: string; objectPosition: string } {
   // Check new images array first
   if (entry.images && entry.images.length > 0) {
