@@ -1,0 +1,144 @@
+# CodeRabbit Configuration for news-journal-app
+# Documentation: https://docs.coderabbit.ai/guides/configuration-overview
+
+version: 2
+
+# Review settings
+review:
+  # Automatically review PRs when they are opened or updated
+  auto_review: true
+  
+  # Request changes if issues are found
+  request_changes_workflow: true
+  
+  # Comment on PRs with review findings
+  comment_mode: true
+  
+  # Review only changed files (not entire codebase)
+  review_only_changed_files: true
+  
+  # Paths to include/exclude from review
+  paths:
+    include:
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.js"
+      - "**/*.jsx"
+    exclude:
+      - "node_modules/**"
+      - ".next/**"
+      - "out/**"
+      - "dist/**"
+      - "build/**"
+      - "*.config.js"
+      - "*.config.ts"
+      - "**/*.test.ts"
+      - "**/*.test.tsx"
+      - "**/*.spec.ts"
+      - "**/*.spec.tsx"
+
+# Language-specific settings
+language:
+  typescript:
+    # Focus on TypeScript best practices
+    enabled: true
+    # Check for type safety issues
+    type_check: true
+    # Review for common TypeScript pitfalls
+    common_issues: true
+  
+  javascript:
+    enabled: true
+  
+  react:
+    enabled: true
+    # Check for React best practices
+    hooks_rules: true
+    # Review component patterns
+    component_patterns: true
+  
+  nextjs:
+    enabled: true
+    # Check Next.js App Router patterns
+    app_router: true
+    # Review server/client component usage
+    server_client_components: true
+
+# Code quality checks
+quality:
+  # Security checks
+  security:
+    enabled: true
+    # Check for exposed secrets/API keys
+    secrets_detection: true
+    # Review authentication patterns
+    auth_patterns: true
+    # Check Supabase usage for security issues
+    database_security: true
+  
+  # Performance checks
+  performance:
+    enabled: true
+    # Check for unnecessary re-renders
+    react_optimization: true
+    # Review bundle size concerns
+    bundle_size: true
+    # Check for memory leaks
+    memory_leaks: true
+  
+  # Code style
+  style:
+    enabled: true
+    # Align with project conventions
+    conventions: true
+
+# Specific checks for your tech stack
+checks:
+  # Next.js specific
+  - name: "Next.js App Router patterns"
+    enabled: true
+    description: "Check for proper use of Server Components, API routes, and App Router patterns"
+  
+  # Supabase specific
+  - name: "Supabase security"
+    enabled: true
+    description: "Review Supabase queries for RLS policies, SQL injection risks, and proper error handling"
+  
+  # TypeScript specific
+  - name: "TypeScript best practices"
+    enabled: true
+    description: "Check for proper type usage, avoid 'any', prefer interfaces over types"
+  
+  # React specific
+  - name: "React hooks and patterns"
+    enabled: true
+    description: "Review hooks usage, component patterns, and 'use client' directive placement"
+  
+  # Error handling
+  - name: "Error handling"
+    enabled: true
+    description: "Check for proper error handling in API routes and async operations"
+
+# Ignore certain types of suggestions
+ignore:
+  # Don't suggest changes for minor style preferences
+  - "minor_style"
+  # Don't comment on test files (if you add them later)
+  - "test_files"
+  # Don't suggest changes to generated files
+  - "generated_files"
+
+# PR summary settings
+pr_summary:
+  # Generate a summary comment on PRs
+  enabled: true
+  # Include statistics
+  include_stats: true
+  # Highlight critical issues
+  highlight_critical: true
+
+# Chat settings (for asking questions about code)
+chat:
+  enabled: true
+  # Allow asking questions in PR comments
+  pr_comments: true
