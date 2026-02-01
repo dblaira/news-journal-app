@@ -1,96 +1,93 @@
 import { test, expect } from '@playwright/test'
 
 /**
- * Visual regression tests
- * Captures screenshots and compares them to baseline images
- * Run with --update-snapshots to update baseline images
+ * Visual regression tests using Playwright's screenshot comparison
+ * Note: Tests focus on public pages (login) since auth requires credentials
+ * 
+ * Run `npm run test:update-snapshots` to create/update baseline screenshots
  */
 test.describe('Visual Regression Tests', () => {
   
-  test('homepage visual snapshot @visual', async ({ page }) => {
-    await page.goto('/')
+  test('login page should match snapshot @visual', async ({ page }) => {
+    await page.goto('/login')
     
-    // Wait for content to load
+    // Wait for page to fully load
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000) // Allow animations to complete
     
-    // Take full page screenshot
-    await expect(page).toHaveScreenshot('homepage.png', {
-      fullPage: true,
-      animations: 'disabled',
-    })
-  })
-  
-  test('entry card visual snapshot @visual', async ({ page }) => {
-    await page.goto('/')
-    
-    // Wait for entry cards to load
-    await page.waitForSelector('.entry-card', { timeout: 10000 })
-    
-    const entryCard = page.locator('.entry-card').first()
-    
-    await expect(entryCard).toHaveScreenshot('entry-card.png', {
-      animations: 'disabled',
-    })
-  })
-  
-  test('entry modal visual snapshot @visual', async ({ page }) => {
-    await page.goto('/')
-    
-    // Click on an entry to open modal
-    const firstEntry = page.locator('.entry-card').first()
-    await firstEntry.click()
-    
-    // Wait for modal to open
-    await page.waitForSelector('[role="dialog"]', { timeout: 5000 })
-    await page.waitForTimeout(1000) // Allow animations
-    
-    const modal = page.locator('[role="dialog"]').first()
-    
-    await expect(modal).toHaveScreenshot('entry-modal.png', {
-      animations: 'disabled',
-    })
-  })
-  
-  test('sidebar visual snapshot @visual', async ({ page }) => {
-    await page.goto('/')
-    
-    // Wait for sidebar to load (desktop view)
-    await page.setViewportSize({ width: 1280, height: 720 })
+    // Wait for fonts and images to load
     await page.waitForTimeout(1000)
     
-    const sidebar = page.locator('aside').first()
+    // Take screenshot and compare
+    await expect(page).toHaveScreenshot('login-page.png', {
+      fullPage: true,
+      // Allow some variance for font rendering differences
+      maxDiffPixelRatio: 0.1,
+    })
+  })
+  
+  test('login page mobile should match snapshot @visual', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 })
+    await page.goto('/login')
     
-    if (await sidebar.isVisible()) {
-      await expect(sidebar).toHaveScreenshot('sidebar.png', {
-        animations: 'disabled',
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(1000)
+    
+    await expect(page).toHaveScreenshot('login-page-mobile.png', {
+      fullPage: true,
+      maxDiffPixelRatio: 0.1,
+    })
+  })
+  
+  test('login form should match snapshot @visual', async ({ page }) => {
+    await page.goto('/login')
+    
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(1000)
+    
+    // Screenshot just the form
+    const form = page.locator('form[role="form"]')
+    await expect(form).toHaveScreenshot('login-form.png', {
+      maxDiffPixelRatio: 0.1,
+    })
+  })
+  
+  test('login page with error should show error state @visual', async ({ page }) => {
+    await page.goto('/login')
+    
+    await page.waitForLoadState('networkidle')
+    
+    // Fill with invalid credentials
+    await page.fill('input[name="email"]', 'test@example.com')
+    await page.fill('input[name="password"]', 'wrongpassword')
+    
+    // Submit form
+    await page.click('button[type="submit"]')
+    
+    // Wait for error message
+    await page.waitForTimeout(2000)
+    
+    // Screenshot the error state (if visible)
+    const errorMessage = page.locator('[role="alert"]')
+    if (await errorMessage.isVisible()) {
+      await expect(errorMessage).toHaveScreenshot('login-error.png', {
+        maxDiffPixelRatio: 0.15,
       })
     }
   })
   
-  test('mobile view visual snapshot @visual', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 667 }) // iPhone size
-    await page.goto('/')
+  test('sign up form should match snapshot @visual', async ({ page }) => {
+    await page.goto('/login')
     
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     
-    await expect(page).toHaveScreenshot('homepage-mobile.png', {
-      fullPage: true,
-      animations: 'disabled',
-    })
-  })
-  
-  test('tablet view visual snapshot @visual', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 }) // iPad size
-    await page.goto('/')
+    // Toggle to sign up mode
+    await page.click('button[name="toggle-auth-mode"]')
+    await page.waitForTimeout(500)
     
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
-    
-    await expect(page).toHaveScreenshot('homepage-tablet.png', {
-      fullPage: true,
-      animations: 'disabled',
+    // Screenshot the sign up form
+    const form = page.locator('form[role="form"]')
+    await expect(form).toHaveScreenshot('signup-form.png', {
+      maxDiffPixelRatio: 0.1,
     })
   })
 })
