@@ -99,7 +99,7 @@ export function AuthForm() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <main className="min-h-screen flex" role="main" aria-label="Authentication">
       {/* Left Column - Black background with arrows icon */}
       <div 
         className="hidden md:flex md:w-1/2 items-center justify-center p-8 lg:p-12 overflow-hidden"
@@ -140,20 +140,36 @@ export function AuthForm() {
 
             {/* Error Message */}
             {error && (
-              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded text-red-400 text-sm">
+              <div 
+                id="auth-error"
+                role="alert"
+                aria-live="polite"
+                className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded text-red-400 text-sm"
+              >
                 {error}
               </div>
             )}
 
             {/* Success Message */}
             {success && (
-              <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-sm">
+              <div 
+                id="auth-success"
+                role="status"
+                aria-live="polite"
+                className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-sm"
+              >
                 {success}
               </div>
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form 
+              onSubmit={handleSubmit} 
+              className="space-y-6"
+              role="form"
+              aria-label={isSignUp ? 'Sign up form' : 'Sign in form'}
+              aria-describedby={error ? 'auth-error' : undefined}
+            >
               {/* Email Field */}
               <div className="space-y-2">
                 <label 
@@ -165,11 +181,15 @@ export function AuthForm() {
                 <input
                   type="email"
                   id="email"
+                  name="email"
                   required
                   placeholder="your@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
+                  autoComplete="email"
+                  aria-label="Email address"
+                  aria-required="true"
                   className="w-full px-4 py-3 bg-black border border-white/30 rounded text-white placeholder-white/40 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-colors disabled:opacity-50"
                 />
               </div>
@@ -185,12 +205,16 @@ export function AuthForm() {
                 <input
                   type="password"
                   id="password"
+                  name="password"
                   required
                   placeholder="••••••••"
                   minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
+                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                  aria-label="Password"
+                  aria-required="true"
                   className="w-full px-4 py-3 bg-black border border-white/30 rounded text-white placeholder-white/40 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-colors disabled:opacity-50"
                 />
               </div>
@@ -198,7 +222,10 @@ export function AuthForm() {
               {/* Submit Button */}
               <button
                 type="submit"
+                name="submit"
                 disabled={isLoading}
+                aria-label={isSignUp ? 'Create account' : 'Sign in'}
+                aria-busy={isLoading}
                 className="w-full py-3.5 bg-[#DC143C] hover:bg-[#B01030] text-white font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading
@@ -216,7 +243,9 @@ export function AuthForm() {
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
                 type="button"
+                name="toggle-auth-mode"
                 onClick={toggleMode}
+                aria-label={isSignUp ? 'Switch to sign in' : 'Switch to sign up'}
                 className="text-[#DC143C] hover:text-[#ff3355] font-medium transition-colors"
               >
                 {isSignUp ? 'Sign In' : 'Sign Up'}
@@ -225,6 +254,6 @@ export function AuthForm() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
