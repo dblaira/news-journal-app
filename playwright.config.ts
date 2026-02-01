@@ -78,7 +78,6 @@ export default defineConfig({
     // Threshold for pixel comparison (0-1)
     toHaveScreenshot: {
       threshold: 0.2,
-      mode: 'strict',
     },
     // Threshold for visual comparison
     toMatchSnapshot: {

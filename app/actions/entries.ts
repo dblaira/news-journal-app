@@ -317,9 +317,6 @@ export async function getCurrentWeeklyTheme(userId: string): Promise<WeeklyTheme
   if (!data) {
     // No theme found for this week - normal case
     return null
-    }
-    console.error('Error fetching current weekly theme:', error)
-    return null
   }
 
   return data as WeeklyTheme
