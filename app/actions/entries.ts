@@ -306,12 +306,17 @@ export async function getCurrentWeeklyTheme(userId: string): Promise<WeeklyTheme
     .select('*')
     .eq('user_id', userId)
     .eq('week_start_date', weekStartStr)
-    .single()
+    .maybeSingle()
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      // No theme found for this week
-      return null
+    // Log actual errors (not just "no rows found")
+    console.error('Error fetching current weekly theme:', error)
+    return null
+  }
+
+  if (!data) {
+    // No theme found for this week - normal case
+    return null
     }
     console.error('Error fetching current weekly theme:', error)
     return null
