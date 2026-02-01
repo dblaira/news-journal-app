@@ -472,3 +472,13 @@ When a bug is complex:
 - Check the browser console AND Network tab before suggesting fixes
 - Ask the user what they see in console/network if you can't access it
 - Commit debug instrumentation immediately (don't wait)
+
+## Automated Bug Review Rule
+
+After generating or modifying code, always enter REVIEW mode:
+
+1. **Analyze for bugs**: Check logic errors, edge cases, security risks (e.g., SQL injection in Supabase queries), and performance issues.
+2. **Validate against stack**: Ensure compliance with TypeScript types, Zod schemas, Next.js App Router patterns, and Tailwind conventions.
+3. **Reference tools**: Use @linter-errors, @terminal-output if applicable, to surface issues.
+4. **Propose fixes**: If problems are found, suggest minimal, surgical changes without overhauling working code.
+5. **Confirm**: Only proceed if no critical issues remain.
