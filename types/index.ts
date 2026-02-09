@@ -56,6 +56,11 @@ export interface Entry {
   metadata?: import('./metadata').EntryMetadata
 }
 
+export interface VersionHighlight {
+  start: number
+  end: number
+}
+
 export interface Version {
   name: string
   title: string
@@ -63,6 +68,8 @@ export interface Version {
   // Structured content for news style
   headline?: string
   body?: string
+  // User-highlighted passages (persistent bookmarks)
+  highlights?: VersionHighlight[]
 }
 
 export interface WeeklyTheme {

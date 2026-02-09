@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { CreateEntryInput, WeeklyTheme, Entry, EntryImage, MAX_IMAGES_PER_ENTRY } from '@/types'
+import { CreateEntryInput, WeeklyTheme, Entry, EntryImage, MAX_IMAGES_PER_ENTRY, Version, VersionHighlight } from '@/types'
 import { ImageExtraction } from '@/types/multimodal'
 
 export async function createEntry(input: CreateEntryInput) {
@@ -107,6 +107,54 @@ export async function updateEntryVersions(id: string, versions: any[], generatin
 
   revalidatePath('/')
   return { success: true }
+}
+
+export async function updateVersionHighlights(
+  entryId: string,
+  versionName: string,
+  highlights: VersionHighlight[]
+) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Fetch current versions
+  const { data: entry, error: fetchError } = await supabase
+    .from('entries')
+    .select('versions')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError || !entry) {
+    return { error: 'Entry not found' }
+  }
+
+  const versions: Version[] = entry.versions || []
+  const updatedVersions = versions.map((v) => {
+    if (v.name === versionName) {
+      return { ...v, highlights }
+    }
+    return v
+  })
+
+  const { error: updateError } = await supabase
+    .from('entries')
+    .update({ versions: updatedVersions })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (updateError) {
+    return { error: updateError.message }
+  }
+
+  return { success: true, versions: updatedVersions }
 }
 
 export async function toggleActionComplete(entryId: string) {
@@ -395,6 +443,56 @@ export async function getTrendingEntries(userId: string, limit: number = 10): Pr
   }
   
   return (data as Entry[]) || []
+}
+
+export async function getEntriesPaginated(
+  userId: string,
+  page: number = 0,
+  limit: number = 20,
+  entryType?: Entry['entry_type'],
+  category?: string,
+  searchQuery?: string
+): Promise<{ entries: Entry[]; hasMore: boolean; total: number }> {
+  const supabase = await createClient()
+  const offset = page * limit
+
+  let query = supabase
+    .from('entries')
+    .select('*', { count: 'exact' })
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (entryType) {
+    query = query.eq('entry_type', entryType)
+  }
+
+  if (category && category !== 'all') {
+    query = query.ilike('category', category)
+  }
+
+  if (searchQuery) {
+    // Search across headline, subheading, content, mood, category
+    query = query.or(
+      `headline.ilike.%${searchQuery}%,subheading.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%,mood.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`
+    )
+  }
+
+  const { data, error, count } = await query
+
+  if (error) {
+    console.error('Error fetching paginated entries:', error)
+    return { entries: [], hasMore: false, total: 0 }
+  }
+
+  const entries = (data as Entry[]) || []
+  const total = count || 0
+
+  return {
+    entries,
+    hasMore: offset + limit < total,
+    total,
+  }
 }
 
 export async function getLatestEntries(userId: string, limit: number = 20): Promise<Entry[]> {

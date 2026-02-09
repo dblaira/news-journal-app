@@ -891,3 +891,58 @@ li[data-type="taskItem"]::marker {
   margin-left: 1.5rem;
   padding-left: 0;
 }
+
+/* Versions nudge — subtle pulse to draw attention to the subtitle on first view */
+@keyframes nudge-pulse {
+  0%, 100% {
+    opacity: 1;
+    color: #6B7280;
+  }
+  25% {
+    opacity: 1;
+    color: #DC143C;
+  }
+  50% {
+    opacity: 1;
+    color: #6B7280;
+  }
+  75% {
+    opacity: 1;
+    color: #DC143C;
+  }
+}
+
+/* Selection toolbar animation */
+@keyframes toolbar-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Tooltip animations */
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tooltip-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}

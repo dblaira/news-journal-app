@@ -2,15 +2,18 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import dynamic from 'next/dynamic'
-import { Entry, Version, MindMap, ReactFlowNode, ReactFlowEdge, EntryMetadata, EntryImage } from '@/types'
+import { Entry, Version, VersionHighlight, MindMap, ReactFlowNode, ReactFlowEdge, EntryMetadata, EntryImage } from '@/types'
 import { formatEntryDateLong, stripHtml } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
-import { incrementViewCount, removeEntryPhoto, togglePin, updateEntryContent, updateEntryDetails } from '@/app/actions/entries'
+import { incrementViewCount, removeEntryPhoto, togglePin, updateEntryContent, updateEntryDetails, updateVersionHighlights } from '@/app/actions/entries'
 import { getEntryImages } from '@/lib/utils/entry-images'
 import { TiptapEditor } from './editor/TiptapEditor'
 import { generateMindMap, toReactFlowFormat } from '@/lib/mindmap/utils'
 import MetadataEnrichment from './entry/MetadataEnrichment'
 import { ImageGallery } from './entry/ImageGallery'
+import { CopyButton } from './ui/copy-button'
+import { SelectionToolbar } from './ui/selection-toolbar'
+import { renderWithHighlights, addHighlight, removeHighlightAt } from '@/lib/utils/highlights'
 
 // Dynamic import for MindMapCanvas to avoid SSR issues with ReactFlow
 const MindMapCanvas = dynamic(() => import('./mindmap/MindMapCanvas'), { ssr: false })
@@ -103,6 +106,20 @@ export function EntryModal({
   
   // Metadata state (for enrichment updates)
   const [currentMetadata, setCurrentMetadata] = useState(entry.metadata as EntryMetadata | undefined)
+
+  // Version highlights state — local mirror of entry.versions[].highlights
+  const [versionHighlights, setVersionHighlights] = useState<Record<string, VersionHighlight[]>>(() => {
+    const map: Record<string, VersionHighlight[]> = {}
+    if (entry.versions) {
+      for (const v of entry.versions) {
+        map[v.name] = v.highlights || []
+      }
+    }
+    return map
+  })
+
+  // First-time nudge animation
+  const [showNudgeAnimation, setShowNudgeAnimation] = useState(false)
 
   // Export state
   const [showExportMenu, setShowExportMenu] = useState(false)
@@ -197,6 +214,49 @@ export function EntryModal({
       }
     }
   }, [entry.id, entry.content, entry.headline, entry.subheading])
+
+  // Sync version highlights when entry changes
+  useEffect(() => {
+    if (entry.versions) {
+      const map: Record<string, VersionHighlight[]> = {}
+      for (const v of entry.versions) {
+        map[v.name] = v.highlights || []
+      }
+      setVersionHighlights(map)
+    }
+  }, [entry.versions])
+
+  // First-time nudge — pulse the subtitle when versions appear for the first time
+  useEffect(() => {
+    if (hasVersions) {
+      const key = 'understood-versions-nudge-seen'
+      if (!localStorage.getItem(key)) {
+        setShowNudgeAnimation(true)
+        localStorage.setItem(key, 'true')
+        // Remove animation class after it plays
+        const timer = setTimeout(() => setShowNudgeAnimation(false), 3000)
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [hasVersions])
+
+  // Handle adding a highlight to a version
+  const handleAddHighlight = useCallback(async (versionName: string, start: number, end: number) => {
+    const existing = versionHighlights[versionName] || []
+    const updated = addHighlight(existing, { start, end })
+    setVersionHighlights((prev) => ({ ...prev, [versionName]: updated }))
+    // Persist to database (fire and forget — optimistic update)
+    await updateVersionHighlights(entry.id, versionName, updated)
+  }, [versionHighlights, entry.id])
+
+  // Handle removing a highlight from a version
+  const handleRemoveHighlight = useCallback(async (versionName: string, charOffset: number) => {
+    const existing = versionHighlights[versionName] || []
+    const updated = removeHighlightAt(existing, charOffset)
+    setVersionHighlights((prev) => ({ ...prev, [versionName]: updated }))
+    // Persist to database
+    await updateVersionHighlights(entry.id, versionName, updated)
+  }, [versionHighlights, entry.id])
 
   // Close export menu when clicking outside
   useEffect(() => {
@@ -1342,20 +1402,37 @@ export function EntryModal({
           </div>
         ) : hasVersions ? (
           <div style={{ marginTop: '2rem' }}>
-            <h3
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                marginBottom: '2rem',
-                textAlign: 'center',
-                textTransform: 'uppercase',
-                letterSpacing: '2px',
-              }}
-            >
-              ✨ AI Generated Versions ✨
-            </h3>
+            {/* Rewrite Workshop Header */}
+            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+              <h3
+                style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                  marginBottom: '0.75rem',
+                  color: '#1c1f2e',
+                }}
+              >
+                Your Words, Reimagined
+              </h3>
+              <p
+                style={{
+                  fontSize: '0.85rem',
+                  color: '#6B7280',
+                  fontStyle: 'italic',
+                  margin: 0,
+                  lineHeight: 1.6,
+                  animation: showNudgeAnimation ? 'nudge-pulse 2s ease-in-out' : undefined,
+                }}
+              >
+                Highlight phrases that resonate. Copy them when you&apos;re ready to weave them in.
+              </p>
+            </div>
 
             {entry.versions!.map((version: Version) => {
+              const highlights = versionHighlights[version.name] || []
+
               // Literary/Personal Essay Style
               if (version.name === 'literary') {
                 return (
@@ -1368,6 +1445,7 @@ export function EntryModal({
                       background: '#FAF9F6',
                       boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)',
                       minHeight: isMobile ? '300px' : '400px',
+                      position: 'relative',
                     }}
                   >
                     <h4
@@ -1383,33 +1461,49 @@ export function EntryModal({
                     >
                       {version.title}
                     </h4>
-                    <div
-                      style={{
-                        fontFamily: "'Georgia', serif",
-                        fontSize: '1.25rem',
-                        lineHeight: 1.8,
-                        color: '#2c2c2c',
-                        textAlign: 'justify',
-                      }}
+                    <SelectionToolbar
+                      onHighlight={(start, end) => handleAddHighlight(version.name, start, end)}
                     >
-                      {/* Drop cap for first letter */}
-                      <span
+                      <div
                         style={{
-                          float: 'left',
-                          fontSize: '3.5em',
-                          fontWeight: 'bold',
-                          lineHeight: 0.8,
-                          paddingRight: '8px',
-                          color: '#8b0000',
+                          fontFamily: "'Georgia', serif",
+                          fontSize: '1.25rem',
+                          lineHeight: 1.8,
+                          color: '#2c2c2c',
+                          textAlign: 'justify',
                         }}
                       >
-                        {version.content.charAt(0)}
-                      </span>
-                      <span style={{ whiteSpace: 'pre-wrap' }}>
-                        {version.content.slice(1)}
-                      </span>
-                    </div>
-                    {/* Decorative separator */}
+                        {highlights.length > 0 ? (
+                          <span style={{ whiteSpace: 'pre-wrap' }}>
+                            {renderWithHighlights(
+                              version.content,
+                              highlights,
+                              (offset) => handleRemoveHighlight(version.name, offset)
+                            )}
+                          </span>
+                        ) : (
+                          <>
+                            {/* Drop cap for first letter */}
+                            <span
+                              style={{
+                                float: 'left',
+                                fontSize: '3.5em',
+                                fontWeight: 'bold',
+                                lineHeight: 0.8,
+                                paddingRight: '8px',
+                                color: '#8b0000',
+                              }}
+                            >
+                              {version.content.charAt(0)}
+                            </span>
+                            <span style={{ whiteSpace: 'pre-wrap' }}>
+                              {version.content.slice(1)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </SelectionToolbar>
+                    {/* Decorative separator + copy full version */}
                     <div
                       style={{
                         marginTop: '3rem',
@@ -1420,6 +1514,9 @@ export function EntryModal({
                     >
                       ❦
                     </div>
+                    <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
+                      <CopyButton value={version.content} label="Copy full version" iconSize={12} className="h-6 w-auto px-1.5 gap-1 text-neutral-400 hover:text-neutral-600" />
+                    </div>
                   </div>
                 )
               }
@@ -1427,7 +1524,6 @@ export function EntryModal({
               // News Feature Style
               if (version.name === 'news') {
                 // Use structured headline/body if available
-                // Fallback to splitting only if content looks like prose (not JSON/error)
                 const contentLooksLikeJson = version.content.trim().startsWith('{') || version.content.trim().startsWith('[')
                 const newsHeadline = version.headline || (contentLooksLikeJson ? 'News Feature' : version.content.split('\n')[0])
                 const newsBody = version.body || (contentLooksLikeJson ? version.content : version.content.split('\n').slice(1).join('\n'))
@@ -1444,6 +1540,7 @@ export function EntryModal({
                       overflow: 'hidden',
                       minHeight: isMobile ? '300px' : '400px',
                       border: '1px solid #D1D5DB',
+                      position: 'relative',
                     }}
                   >
                     <div style={{ padding: isMobile ? '1.5rem 1rem' : '2rem 3rem' }}>
@@ -1484,31 +1581,46 @@ export function EntryModal({
                       </div>
 
                       {/* Article body with dateline */}
-                      <div
-                        style={{
-                          fontFamily: "'Georgia', 'Times New Roman', serif",
-                          textAlign: isMobile ? 'left' : 'justify',
-                          lineHeight: 1.6,
-                          columnCount: isMobile ? 1 : 2,
-                          columnGap: '2rem',
-                        }}
+                      <SelectionToolbar
+                        onHighlight={(start, end) => handleAddHighlight(version.name, start, end)}
                       >
-                        <p style={{ marginBottom: '1rem' }}>
-                          <span
-                            style={{
-                              fontFamily: "'Helvetica Neue', Arial, sans-serif",
-                              fontWeight: 700,
-                              fontSize: '0.7rem',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.1em',
-                              marginRight: '0.5rem',
-                              color: '#4B5563',
-                            }}
-                          >
-                            SPECIAL REPORT —
-                          </span>
-                          <span style={{ whiteSpace: 'pre-wrap' }}>{newsBody}</span>
-                        </p>
+                        <div
+                          style={{
+                            fontFamily: "'Georgia', 'Times New Roman', serif",
+                            textAlign: isMobile ? 'left' : 'justify',
+                            lineHeight: 1.6,
+                            columnCount: isMobile ? 1 : 2,
+                            columnGap: '2rem',
+                          }}
+                        >
+                          <p style={{ marginBottom: '1rem' }}>
+                            <span
+                              style={{
+                                fontFamily: "'Helvetica Neue', Arial, sans-serif",
+                                fontWeight: 700,
+                                fontSize: '0.7rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.1em',
+                                marginRight: '0.5rem',
+                                color: '#4B5563',
+                              }}
+                            >
+                              SPECIAL REPORT —
+                            </span>
+                            <span style={{ whiteSpace: 'pre-wrap' }}>
+                              {highlights.length > 0
+                                ? renderWithHighlights(
+                                    newsBody,
+                                    highlights,
+                                    (offset) => handleRemoveHighlight(version.name, offset)
+                                  )
+                                : newsBody}
+                            </span>
+                          </p>
+                        </div>
+                      </SelectionToolbar>
+                      <div style={{ textAlign: 'right', marginTop: '1rem' }}>
+                        <CopyButton value={newsBody} label="Copy full version" iconSize={12} className="h-6 w-auto px-1.5 gap-1 text-neutral-400 hover:text-neutral-600" />
                       </div>
                     </div>
                   </div>
@@ -1532,6 +1644,7 @@ export function EntryModal({
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      position: 'relative',
                     }}
                   >
                     <h4
@@ -1546,19 +1659,32 @@ export function EntryModal({
                     >
                       {version.title}
                     </h4>
-                    <div
-                      style={{
-                        fontFamily: "'Georgia', 'Times New Roman', serif",
-                        fontStyle: 'italic',
-                        fontSize: '1.25rem',
-                        color: '#5c4b37',
-                        textAlign: 'center',
-                        whiteSpace: 'pre-wrap',
-                        lineHeight: 2,
-                        letterSpacing: '0.03em',
-                      }}
+                    <SelectionToolbar
+                      onHighlight={(start, end) => handleAddHighlight(version.name, start, end)}
                     >
-                      {version.content}
+                      <div
+                        style={{
+                          fontFamily: "'Georgia', 'Times New Roman', serif",
+                          fontStyle: 'italic',
+                          fontSize: '1.25rem',
+                          color: '#5c4b37',
+                          textAlign: 'center',
+                          whiteSpace: 'pre-wrap',
+                          lineHeight: 2,
+                          letterSpacing: '0.03em',
+                        }}
+                      >
+                        {highlights.length > 0
+                          ? renderWithHighlights(
+                              version.content,
+                              highlights,
+                              (offset) => handleRemoveHighlight(version.name, offset)
+                            )
+                          : version.content}
+                      </div>
+                    </SelectionToolbar>
+                    <div style={{ textAlign: 'right', marginTop: '1.5rem', width: '100%' }}>
+                      <CopyButton value={version.content} label="Copy full version" iconSize={12} className="h-6 w-auto px-1.5 gap-1 text-neutral-400 hover:text-neutral-600" />
                     </div>
                   </div>
                 )
