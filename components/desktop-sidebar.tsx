@@ -1,6 +1,8 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import { EntryType } from '@/types'
+import { AiSearchIcon } from './ai-search-icon'
 
 interface DesktopSidebarProps {
   currentLifeArea: string
@@ -12,6 +14,11 @@ interface DesktopSidebarProps {
   actionCount?: number
   isExpanded: boolean
   onExpandedChange: (expanded: boolean) => void
+  searchQuery?: string
+  onSearchChange?: (query: string) => void
+  showTimeline?: boolean
+  onToggleTimeline?: () => void
+  onOpenChat?: () => void
 }
 
 const lifeAreas = [
@@ -26,9 +33,9 @@ const lifeAreas = [
 ]
 
 const entryTypes: { value: EntryType; label: string; icon: string }[] = [
-  { value: 'action', label: 'Actions', icon: '☑' },
+  { value: 'story', label: 'Stories', icon: '📰' },
   { value: 'note', label: 'Notes', icon: '📝' },
-  { value: 'story', label: 'Story', icon: '📰' },
+  { value: 'action', label: 'Actions', icon: '☑' },
 ]
 
 export function DesktopSidebar({
@@ -41,10 +48,42 @@ export function DesktopSidebar({
   actionCount = 0,
   isExpanded,
   onExpandedChange,
+  searchQuery = '',
+  onSearchChange,
+  showTimeline = false,
+  onToggleTimeline,
+  onOpenChat,
 }: DesktopSidebarProps) {
+  const [localSearch, setLocalSearch] = useState(searchQuery)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Sync local search with parent
+  useEffect(() => {
+    setLocalSearch(searchQuery)
+  }, [searchQuery])
+
+  const handleSearchInput = (value: string) => {
+    setLocalSearch(value)
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current)
+    }
+    searchDebounceRef.current = setTimeout(() => {
+      onSearchChange?.(value)
+    }, 300)
+  }
+
+  const handleClearSearch = () => {
+    setLocalSearch('')
+    onSearchChange?.('')
+    searchInputRef.current?.focus()
+  }
 
   const handleEntryTypeClick = (type: EntryType) => {
     // If clicking the same type, don't deselect - keep the selection
+    if (showTimeline) {
+      onToggleTimeline?.() // Exit timeline when switching entry types
+    }
     onEntryTypeChange(type)
   }
 
@@ -169,6 +208,129 @@ export function DesktopSidebar({
       >
         {isExpanded ? (
           <>
+            {/* Search Input with inline AI trigger */}
+            <div style={{ padding: '0 1rem', marginBottom: '1.25rem' }}>
+              <div
+                style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <span
+                  style={{
+                    position: 'absolute',
+                    left: '0.75rem',
+                    color: 'rgba(255, 255, 255, 0.4)',
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={localSearch}
+                  onChange={(e) => handleSearchInput(e.target.value)}
+                  placeholder="Search entries..."
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 4.5rem 0.6rem 2rem',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '6px',
+                    color: '#FFFFFF',
+                    fontSize: '0.8rem',
+                    outline: 'none',
+                    transition: 'border-color 0.15s ease, background 0.15s ease',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(220, 20, 60, 0.5)'
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)'
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                  }}
+                />
+                {/* Right side: clear button + AI trigger */}
+                <div style={{ position: 'absolute', right: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                  {localSearch && (
+                    <button
+                      onClick={handleClearSearch}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'rgba(255, 255, 255, 0.4)',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        padding: '0.2rem',
+                        lineHeight: 1,
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                  <button
+                    onClick={onOpenChat}
+                    title="AI Search"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.15)',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      padding: '0.3rem',
+                      lineHeight: 1,
+                      transition: 'all 0.15s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+                    }}
+                  >
+                    <AiSearchIcon size={20} glassColor="#FFFFFF" sparkleColor="#DC143C" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Archive / Timeline — All Entries */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                <li>
+                  <button
+                    onClick={onToggleTimeline}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      width: '100%',
+                      padding: '0.65rem 1.5rem',
+                      background: showTimeline ? 'rgba(220, 20, 60, 0.15)' : 'transparent',
+                      border: 'none',
+                      borderLeft: showTimeline ? '3px solid #DC143C' : '3px solid transparent',
+                      color: showTimeline ? '#FFFFFF' : 'rgba(255, 255, 255, 0.75)',
+                      fontSize: '0.9rem',
+                      fontWeight: 500,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span style={{ fontSize: '1rem' }}>📅</span>
+                    <span>All Entries</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
             {/* Entries Section */}
             <div style={{ marginBottom: '1.5rem' }}>
               <div
@@ -312,6 +474,51 @@ export function DesktopSidebar({
               gap: '0.25rem',
             }}
           >
+            {/* Collapsed AI Search button */}
+            {/* Collapsed AI Search button */}
+            <button
+              onClick={onOpenChat}
+              title="AI Search"
+              style={{
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#FFFFFF',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <AiSearchIcon size={24} />
+            </button>
+
+            {/* Collapsed All Entries button */}
+            <button
+              onClick={onToggleTimeline}
+              title="All Entries"
+              style={{
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: showTimeline ? 'rgba(220, 20, 60, 0.15)' : 'transparent',
+                border: 'none',
+                borderRadius: '8px',
+                color: showTimeline ? '#FFFFFF' : 'rgba(255, 255, 255, 0.6)',
+                fontSize: '1.2rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              📅
+            </button>
+
+            {/* Collapsed entry type buttons: Stories, Notes, Actions */}
             {entryTypes.map((type) => (
               <button
                 key={type.value}

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { MobileMenu } from './mobile-menu'
+import { AiSearchIcon } from './ai-search-icon'
 
 interface HeaderProps {
   issueTagline: string
@@ -12,6 +13,9 @@ interface HeaderProps {
   currentEntryType?: string | null
   onEntryTypeChange?: (type: string | null) => void
   onLogout?: () => void
+  searchQuery?: string
+  onSearchChange?: (query: string) => void
+  onOpenChat?: () => void
 }
 
 export function Header({ 
@@ -22,10 +26,15 @@ export function Header({
   currentEntryType = null,
   onEntryTypeChange,
   onLogout,
+  searchQuery: externalSearchQuery = '',
+  onSearchChange,
+  onOpenChat,
 }: HeaderProps) {
-  const [searchQuery, setSearchQuery] = useState('')
+  const [localSearchQuery, setLocalSearchQuery] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -39,8 +48,20 @@ export function Header({
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    router.push(`/?search=${encodeURIComponent(searchQuery)}`)
+    if (onSearchChange) {
+      onSearchChange(localSearchQuery)
+    } else {
+      router.push(`/?search=${encodeURIComponent(localSearchQuery)}`)
+    }
+    setIsSearchOpen(false)
   }
+
+  // Focus search input when opened on mobile
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [isSearchOpen])
 
   const handleFilterChange = (category: string) => {
     onFilterChange?.(category)
@@ -70,51 +91,162 @@ export function Header({
           className="site-header mobile-header"
           style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0.75rem 1rem',
-            paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))',
+            flexDirection: 'column',
+            padding: '0',
+            paddingTop: 'env(safe-area-inset-top, 0px)',
             background: '#000000',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           }}
         >
-          {/* Logo */}
-          <div className="brand-block" style={{ flex: 'none' }}>
-            <span 
-              className="brand-title" 
-              style={{ 
-                fontSize: '1.15rem',
-                fontWeight: 400,
-                fontFamily: "'Playfair Display', 'Times New Roman', serif",
-                letterSpacing: '0.02rem',
-              }}
-            >
-              Understood.
-            </span>
-          </div>
-
-          {/* Menu button only */}
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            aria-label="Open menu"
+          {/* Top row: Logo, Search, Menu */}
+          <div
             style={{
               display: 'flex',
-              alignItems: 'baseline',
-              gap: '0.35rem',
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-hero)',
-              padding: '0.5rem',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              letterSpacing: '0.05rem',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.75rem 1rem',
             }}
           >
-            <span style={{ position: 'relative', top: '0.05rem' }}>Menu</span>
-            <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>☰</span>
-          </button>
+            {/* Logo */}
+            <div className="brand-block" style={{ flex: 'none' }}>
+              <span 
+                className="brand-title" 
+                style={{ 
+                  fontSize: '1.15rem',
+                  fontWeight: 400,
+                  fontFamily: "'Playfair Display', 'Times New Roman', serif",
+                  letterSpacing: '0.02rem',
+                }}
+              >
+                Understood.
+              </span>
+            </div>
+
+            {/* Right buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              {/* Search toggle */}
+              <button
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                aria-label="Toggle search"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: isSearchOpen ? 'rgba(220, 20, 60, 0.15)' : 'transparent',
+                  border: 'none',
+                  color: isSearchOpen ? '#DC143C' : 'var(--text-hero)',
+                  padding: '0.5rem',
+                  fontSize: '1.1rem',
+                  cursor: 'pointer',
+                  borderRadius: '6px',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
+
+              {/* Menu button */}
+              <button
+                onClick={() => setIsMenuOpen(true)}
+                aria-label="Open menu"
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '0.35rem',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-hero)',
+                  padding: '0.5rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.05rem',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ position: 'relative', top: '0.05rem' }}>Menu</span>
+                <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>☰</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Expandable search bar with inline AI trigger */}
+          {isSearchOpen && (
+            <div
+              style={{
+                padding: '0 1rem 0.75rem',
+              }}
+            >
+              <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.5rem', position: 'relative' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <input
+                    ref={searchInputRef}
+                    type="search"
+                    value={localSearchQuery}
+                    onChange={(e) => setLocalSearchQuery(e.target.value)}
+                    placeholder="Search entries..."
+                    style={{
+                      width: '100%',
+                      padding: '0.6rem 4rem 0.6rem 0.75rem',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '6px',
+                      color: '#FFFFFF',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(220, 20, 60, 0.5)'
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      onOpenChat?.()
+                    }}
+                    aria-label="AI Search"
+                    style={{
+                      position: 'absolute',
+                      right: '0.5rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'rgba(255, 255, 255, 0.15)',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      padding: '0.25rem',
+                      lineHeight: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <AiSearchIcon size={20} glassColor="#FFFFFF" sparkleColor="#DC143C" />
+                  </button>
+                </div>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '0.6rem 1rem',
+                    background: '#DC143C',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: '#FFFFFF',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  Search
+                </button>
+              </form>
+            </div>
+          )}
         </header>
 
         {/* Mobile Menu Overlay */}
@@ -132,7 +264,7 @@ export function Header({
     )
   }
 
-  // Desktop header (unchanged)
+  // Tablet / non-sidebar header
   return (
     <header className="site-header">
       <div className="brand-block">
@@ -142,18 +274,50 @@ export function Header({
         </span>
       </div>
       <div className="header-controls">
-        <form id="searchForm" className="search-bar" onSubmit={handleSearch}>
+        <form id="searchForm" className="search-bar" onSubmit={handleSearch} style={{ position: 'relative' }}>
           <input
             id="searchInput"
             type="search"
             placeholder="Search your headlines…"
             aria-label="Search your headlines"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={localSearchQuery}
+            onChange={(e) => setLocalSearchQuery(e.target.value)}
+            style={{ paddingRight: '5rem' }}
           />
-          <button type="submit" aria-label="Submit search">
-            <span>Search</span>
-          </button>
+          <div style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                onOpenChat?.()
+              }}
+              aria-label="AI Search"
+              title="AI Search"
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                padding: '0.3rem',
+                lineHeight: 1,
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+              }}
+            >
+              <AiSearchIcon size={24} />
+            </button>
+            <button type="submit" aria-label="Submit search">
+              <span>Search</span>
+            </button>
+          </div>
         </form>
         <button 
           id="newEntryBtn" 

@@ -1,7 +1,7 @@
 'use client'
 
 import { Entry } from '@/types'
-import { formatEntryDateShort, truncate } from '@/lib/utils'
+import { formatEntryDateShort, truncateHtml } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
 
 interface FeatureGridProps {
@@ -40,7 +40,7 @@ export function FeatureGrid({ entries, onViewEntry }: FeatureGridProps) {
               <span>{formatEntryDateShort(entry.created_at)}</span>
             </div>
             <h3>{entry.headline}</h3>
-            <p>{truncate(entry.content, 140)}</p>
+            <p>{truncateHtml(entry.content, 140)}</p>
             <button
               type="button"
               className="btn-secondary"

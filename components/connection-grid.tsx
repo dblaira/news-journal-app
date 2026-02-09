@@ -1,7 +1,7 @@
 'use client'
 
 import { Entry } from '@/types'
-import { truncate } from '@/lib/utils'
+import { truncateHtml } from '@/lib/utils'
 
 interface ConnectionGridProps {
   entries: Entry[]
@@ -47,7 +47,7 @@ export function ConnectionGrid({ entries, onViewEntry }: ConnectionGridProps) {
         <article key={entry.id} className="connection-card">
           <span className="badge">{entry.category}</span>
           <h3>{entry.headline}</h3>
-          <p>{truncate(entry.content, 160)}</p>
+          <p>{truncateHtml(entry.content, 160)}</p>
           <button
             type="button"
             className="btn-secondary"

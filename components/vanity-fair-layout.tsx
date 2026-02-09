@@ -1,7 +1,7 @@
 'use client'
 
 import { Entry } from '@/types'
-import { formatEntryDateShort, truncate } from '@/lib/utils'
+import { formatEntryDateShort, truncateHtml } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
 import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 import { useState, useEffect } from 'react'
@@ -272,7 +272,7 @@ export function VanityFairLayout({
                     </p>
                   )}
                   <p className="text-neutral-600 leading-relaxed mb-3">
-                    {truncate(entry.content, 200)}
+                    {truncateHtml(entry.content, 200)}
                   </p>
                   <div className="flex items-center gap-4 text-sm text-neutral-500">
                     <span>{formatEntryDateShort(entry.created_at)}</span>
@@ -360,7 +360,7 @@ export function VanityFairLayout({
                       {entry.headline}
                     </h4>
                     <p className="text-xs text-neutral-500 mt-1 line-clamp-2">
-                      {truncate(entry.content, 80)}
+                      {truncateHtml(entry.content, 80)}
                     </p>
                     <p className="text-xs text-neutral-400 mt-2 uppercase tracking-wide">
                       {formatEntryDateShort(entry.created_at)}
