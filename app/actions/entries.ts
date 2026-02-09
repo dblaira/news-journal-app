@@ -628,9 +628,9 @@ export async function togglePin(entryId: string) {
     return { error: countError.message }
   }
 
-  // Maximum 2 pinned items per entry type
-  if (count !== null && count >= 2) {
-    return { error: `Maximum 2 pinned ${entryType}s allowed. Unpin one first.` }
+  // Maximum 10 pinned items per entry type
+  if (count !== null && count >= 10) {
+    return { error: `Maximum 10 pinned ${entryType}s allowed. Unpin one first.` }
   }
 
   // Pin the entry

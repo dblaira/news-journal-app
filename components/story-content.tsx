@@ -23,6 +23,7 @@ interface StoryContentProps {
   pinnedStories: Entry[]
   pinnedNotes: Entry[]
   pinnedActions: Entry[]
+  onNavigateToSection?: (entryType: 'story' | 'note' | 'action') => void
 }
 
 export function StoryContent({
@@ -40,6 +41,7 @@ export function StoryContent({
   pinnedStories,
   pinnedNotes,
   pinnedActions,
+  onNavigateToSection,
 }: StoryContentProps) {
   // Filter stories by life area
   let filtered = entries.filter(e => (e.entry_type || 'story') === 'story')
@@ -160,6 +162,7 @@ export function StoryContent({
           pinnedNotes={lifeArea === 'all' ? pinnedNotes : pinnedNotes.filter(e => e.category.toLowerCase() === lifeArea.toLowerCase())}
           pinnedActions={lifeArea === 'all' ? pinnedActions : pinnedActions.filter(e => e.category.toLowerCase() === lifeArea.toLowerCase())}
           onViewEntry={onViewEntry}
+          onNavigateToSection={onNavigateToSection}
         />
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import dynamic from 'next/dynamic'
-import { Entry, Version, VersionHighlight, MindMap, ReactFlowNode, ReactFlowEdge, EntryMetadata, EntryImage } from '@/types'
+import { Entry, EntryType, Version, VersionHighlight, MindMap, ReactFlowNode, ReactFlowEdge, EntryMetadata, EntryImage } from '@/types'
 import { formatEntryDateLong, stripHtml } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
 import { incrementViewCount, removeEntryPhoto, togglePin, updateEntryContent, updateEntryDetails, updateVersionHighlights } from '@/app/actions/entries'
@@ -54,6 +54,10 @@ export function EntryModal({
   // Multi-image gallery state
   const [entryImages, setEntryImages] = useState<EntryImage[]>(() => getEntryImages(entry))
   
+  // Entry type state
+  const [currentEntryType, setCurrentEntryType] = useState<EntryType>(entry.entry_type || 'story')
+  const [isChangingType, setIsChangingType] = useState(false)
+
   // Edit mode state
   const [isEditing, setIsEditingInternal] = useState(false)
   const [editedContent, setEditedContent] = useState(entry.content)
@@ -167,6 +171,11 @@ export function EntryModal({
   useEffect(() => {
     setIsPinned(!!entry.pinned_at)
   }, [entry.pinned_at])
+
+  // Update entry type when entry changes
+  useEffect(() => {
+    setCurrentEntryType(entry.entry_type || 'story')
+  }, [entry.entry_type])
 
   // Update images when entry changes
   useEffect(() => {
@@ -496,6 +505,38 @@ export function EntryModal({
     }
   }
 
+  const handleEntryTypeChange = async (newType: EntryType) => {
+    if (newType === currentEntryType) return
+
+    // If switching away from action, confirm clearing due_date / completed_at
+    if (currentEntryType === 'action' && (entry.due_date || entry.completed_at)) {
+      const confirmed = confirm(
+        `Changing from Action to ${newType === 'story' ? 'Story' : 'Note'} will clear the due date and completion status. Continue?`
+      )
+      if (!confirmed) return
+    }
+
+    setIsChangingType(true)
+    const previousType = currentEntryType
+    setCurrentEntryType(newType) // optimistic
+
+    try {
+      const result = await updateEntryDetails(entry.id, { entry_type: newType })
+      if (result.error) {
+        setCurrentEntryType(previousType)
+        alert(result.error)
+      } else {
+        onEntryUpdated?.(entry.id, { entry_type: newType })
+      }
+    } catch (error) {
+      setCurrentEntryType(previousType)
+      console.error('Failed to change entry type:', error)
+      alert('Failed to change entry type. Please try again.')
+    } finally {
+      setIsChangingType(false)
+    }
+  }
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -665,47 +706,16 @@ export function EntryModal({
             </div>
           </div>
         )}
-        {/* Close button - separate on mobile for cleaner UX */}
-        <button
-          onClick={onClose}
-          aria-label="Close"
-          style={{
-            position: 'absolute',
-            top: isMobile ? '0.75rem' : '1.5rem',
-            right: isMobile ? '0.75rem' : '1.5rem',
-            background: 'transparent',
-            color: '#666666',
-            border: 'none',
-            padding: isMobile ? '0.5rem' : '0.5rem 1rem',
-            cursor: 'pointer',
-            fontSize: isMobile ? '1.5rem' : '0.85rem',
-            borderRadius: isMobile ? '50%' : 0,
-            fontWeight: 600,
-            letterSpacing: '0.05rem',
-            textTransform: 'uppercase',
-            transition: 'all 0.2s ease',
-            zIndex: 20,
-            lineHeight: 1,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#DC143C'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#666666'
-          }}
-        >
-          {isMobile ? '✕' : 'Close'}
-        </button>
-
-        {/* Action buttons */}
+        {/* Action buttons — single row with Close at the end */}
         <div style={{
           position: 'absolute',
           top: isMobile ? '0.75rem' : '1.5rem',
+          right: isMobile ? '0.75rem' : '1.5rem',
           left: isMobile ? '0.75rem' : 'auto',
-          right: isMobile ? 'auto' : '6rem',
           display: 'flex',
-          gap: isMobile ? '0.25rem' : '0.5rem',
-          zIndex: 10,
+          alignItems: 'center',
+          gap: isMobile ? '0.25rem' : '0.75rem',
+          zIndex: 20,
         }}>
           {isEditing ? (
             <>
@@ -776,7 +786,7 @@ export function EntryModal({
               </button>
             </>
           ) : (
-            /* Edit button */
+            /* Edit button — ghost style, no border */
             <button
               onClick={handleEnterEditMode}
               aria-label="Edit"
@@ -784,10 +794,10 @@ export function EntryModal({
               style={{
                 background: 'transparent',
                 color: '#2563EB',
-                border: '1px solid #2563EB',
-                padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
+                border: 'none',
+                padding: isMobile ? '0.4rem 0.6rem' : '0.35rem 0.5rem',
                 cursor: 'pointer',
-                fontSize: isMobile ? '1rem' : '0.85rem',
+                fontSize: isMobile ? '1rem' : '0.8rem',
                 borderRadius: 0,
                 fontWeight: 600,
                 letterSpacing: '0.05rem',
@@ -796,11 +806,9 @@ export function EntryModal({
                 minWidth: isMobile ? '36px' : 'auto',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#2563EB'
-                e.currentTarget.style.color = '#FFFFFF'
+                e.currentTarget.style.color = '#1D4ED8'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
                 e.currentTarget.style.color = '#2563EB'
               }}
             >
@@ -813,19 +821,19 @@ export function EntryModal({
             <div style={{ width: '1px', background: 'rgba(0,0,0,0.15)', margin: '0 0.25rem' }} />
           )}
           
-          {/* Pin button */}
+          {/* Pin button — ghost style, no border */}
           <button
             onClick={handleTogglePin}
             disabled={isTogglingPin}
             aria-label={isPinned ? 'Unpin' : 'Pin'}
             title={isPinned ? 'Unpin' : 'Pin'}
             style={{
-              background: isPinned ? '#228B22' : 'transparent',
-              color: isPinned ? '#FFFFFF' : '#228B22',
-              border: '1px solid #228B22',
-              padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
+              background: 'transparent',
+              color: isPinned ? '#228B22' : '#666666',
+              border: 'none',
+              padding: isMobile ? '0.4rem 0.6rem' : '0.35rem 0.5rem',
               cursor: isTogglingPin ? 'not-allowed' : 'pointer',
-              fontSize: isMobile ? '1rem' : '0.85rem',
+              fontSize: isMobile ? '1rem' : '0.8rem',
               borderRadius: 0,
               fontWeight: 600,
               letterSpacing: '0.05rem',
@@ -836,21 +844,19 @@ export function EntryModal({
             }}
             onMouseEnter={(e) => {
               if (!isTogglingPin) {
-                e.currentTarget.style.background = '#228B22'
-                e.currentTarget.style.color = '#FFFFFF'
+                e.currentTarget.style.color = '#228B22'
               }
             }}
             onMouseLeave={(e) => {
               if (!isTogglingPin) {
-                e.currentTarget.style.background = isPinned ? '#228B22' : 'transparent'
-                e.currentTarget.style.color = isPinned ? '#FFFFFF' : '#228B22'
+                e.currentTarget.style.color = isPinned ? '#228B22' : '#666666'
               }
             }}
           >
             {isMobile ? (isTogglingPin ? '…' : (isPinned ? '◉' : '○')) : (isTogglingPin ? '...' : isPinned ? 'Unpin' : 'Pin')}
           </button>
           
-          {/* Export button with dropdown */}
+          {/* Export button with dropdown — ghost style, no border */}
           <div ref={exportMenuRef} style={{ position: 'relative' }}>
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
@@ -859,11 +865,11 @@ export function EntryModal({
               title="Export entry"
               style={{
                 background: 'transparent',
-                color: '#6366F1',
-                border: '1px solid #6366F1',
-                padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
+                color: '#666666',
+                border: 'none',
+                padding: isMobile ? '0.4rem 0.6rem' : '0.35rem 0.5rem',
                 cursor: isExporting ? 'not-allowed' : 'pointer',
-                fontSize: isMobile ? '1rem' : '0.85rem',
+                fontSize: isMobile ? '1rem' : '0.8rem',
                 borderRadius: 0,
                 fontWeight: 600,
                 letterSpacing: '0.05rem',
@@ -874,14 +880,12 @@ export function EntryModal({
               }}
               onMouseEnter={(e) => {
                 if (!isExporting) {
-                  e.currentTarget.style.background = '#6366F1'
-                  e.currentTarget.style.color = '#FFFFFF'
+                  e.currentTarget.style.color = '#6366F1'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isExporting) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = '#6366F1'
+                  e.currentTarget.style.color = '#666666'
                 }
               }}
             >
@@ -1011,7 +1015,7 @@ export function EntryModal({
             )}
           </div>
           
-          {/* Delete button */}
+          {/* Delete button — ghost style, no border */}
           <button
             onClick={() => onDeleteEntry(entry.id)}
             aria-label="Delete"
@@ -1019,10 +1023,10 @@ export function EntryModal({
             style={{
               background: 'transparent',
               color: '#DC143C',
-              border: '1px solid #DC143C',
-              padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
+              border: 'none',
+              padding: isMobile ? '0.4rem 0.6rem' : '0.35rem 0.5rem',
               cursor: 'pointer',
-              fontSize: isMobile ? '1rem' : '0.85rem',
+              fontSize: isMobile ? '1rem' : '0.8rem',
               borderRadius: 0,
               fontWeight: 600,
               letterSpacing: '0.05rem',
@@ -1031,19 +1035,51 @@ export function EntryModal({
               minWidth: isMobile ? '36px' : 'auto',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#DC143C'
-              e.currentTarget.style.color = '#FFFFFF'
+              e.currentTarget.style.color = '#a00f2e'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
               e.currentTarget.style.color = '#DC143C'
             }}
           >
             {isMobile ? '🗑' : 'Delete'}
           </button>
+
+          {/* Separator before Close */}
+          {!isMobile && (
+            <div style={{ width: '1px', height: '14px', background: '#D1D5DB' }} />
+          )}
+
+          {/* Close button — aligned in the same row */}
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            title="Close"
+            style={{
+              background: 'transparent',
+              color: '#666666',
+              border: 'none',
+              padding: isMobile ? '0.4rem 0.6rem' : '0.35rem 0.5rem',
+              cursor: 'pointer',
+              fontSize: isMobile ? '1.5rem' : '0.8rem',
+              borderRadius: 0,
+              fontWeight: 600,
+              letterSpacing: '0.05rem',
+              textTransform: 'uppercase',
+              transition: 'all 0.2s ease',
+              lineHeight: 1,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#DC143C'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#666666'
+            }}
+          >
+            {isMobile ? '✕' : 'Close'}
+          </button>
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={{ marginBottom: '1rem', marginTop: isMobile ? '2.5rem' : '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <span
             style={{
               fontSize: '0.7rem',
@@ -1055,6 +1091,60 @@ export function EntryModal({
           >
             {entry.category}
           </span>
+
+          {/* Entry Type Selector */}
+          <div
+            style={{
+              display: 'inline-flex',
+              border: '1px solid #E5E7EB',
+              borderRadius: '4px',
+              overflow: 'hidden',
+              opacity: isChangingType ? 0.6 : 1,
+              transition: 'opacity 0.2s ease',
+            }}
+          >
+            {([
+              { type: 'story' as EntryType, label: 'Story', color: '#DC143C' },
+              { type: 'note' as EntryType, label: 'Note', color: '#2563EB' },
+              { type: 'action' as EntryType, label: 'Action', color: '#D97706' },
+            ]).map(({ type, label, color }) => {
+              const isActive = currentEntryType === type
+              return (
+                <button
+                  key={type}
+                  onClick={() => handleEntryTypeChange(type)}
+                  disabled={isChangingType}
+                  style={{
+                    padding: '0.2rem 0.6rem',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08rem',
+                    border: 'none',
+                    cursor: isChangingType ? 'not-allowed' : 'pointer',
+                    background: isActive ? color : 'transparent',
+                    color: isActive ? '#FFFFFF' : '#9CA3AF',
+                    transition: 'all 0.15s ease',
+                    borderRight: type !== 'action' ? '1px solid #E5E7EB' : 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive && !isChangingType) {
+                      e.currentTarget.style.color = color
+                      e.currentTarget.style.background = `${color}10`
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.color = '#9CA3AF'
+                      e.currentTarget.style.background = 'transparent'
+                    }
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {isEditing ? (
@@ -1731,130 +1821,156 @@ export function EntryModal({
         ) : (
           <div
             style={{
-              background: '#e3f2fd',
-              border: '1px solid #2196F3',
-              padding: isMobile ? '1rem' : '2rem',
-              borderRadius: '8px',
+              background: '#f8f9fb',
+              border: '1px solid #dfe3ef',
+              padding: isMobile ? '1.5rem 1rem' : '2.5rem 3rem',
+              borderRadius: '12px',
               textAlign: 'center',
-              color: '#0d47a1',
+              color: '#1c1f2e',
               margin: '2rem 0',
             }}
           >
-            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>✨</div>
-            <h3 style={{ margin: '0 0 1rem 0' }}>Generate AI Versions</h3>
-            <p style={{ margin: '0 0 1.5rem 0' }}>
-              See your journal entry rewritten in 3 different styles by AI.
+            <div style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>✨</div>
+            <h3 style={{
+              margin: '0 0 0.5rem 0',
+              fontSize: '1.1rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+            }}>
+              Rewrite This Entry
+            </h3>
+            <p style={{
+              margin: '0 0 2rem 0',
+              fontSize: '0.85rem',
+              color: '#6B7280',
+              fontStyle: 'italic',
+              lineHeight: 1.6,
+            }}>
+              See your words reimagined in 3 distinct styles — literary, news, and poetic.
             </p>
-            <button
-              onClick={() => {
-                onClose()
-                onGenerateVersions(entry.id)
-              }}
-              style={{
-                background: '#DC143C',
-                color: '#FFFFFF',
-                border: 'none',
-                padding: '0.8rem 1.8rem',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                letterSpacing: '0.08rem',
-                textTransform: 'uppercase',
-                borderRadius: 0,
-                cursor: 'pointer',
-                marginRight: '1rem',
-                transition: 'background 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#B01030'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#DC143C'
-              }}
-            >
-              ✨ Generate Versions Now
-            </button>
-            <button
-              onClick={async () => {
-                try {
-                  const response = await fetch('/api/export-pdf', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'entry', entryIds: [entry.id] }),
-                  })
-                  if (response.ok) {
-                    const blob = await response.blob()
-                    const url = window.URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = `entry-${entry.id}.pdf`
-                    document.body.appendChild(a)
-                    a.click()
-                    window.URL.revokeObjectURL(url)
-                    document.body.removeChild(a)
-                  } else {
+            <div style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: '0.75rem',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <button
+                onClick={() => {
+                  onClose()
+                  onGenerateVersions(entry.id)
+                }}
+                style={{
+                  background: '#DC143C',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '0.75rem 1.8rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.08rem',
+                  textTransform: 'uppercase',
+                  borderRadius: 0,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s ease',
+                  width: isMobile ? '100%' : 'auto',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#B01030'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#DC143C'
+                }}
+              >
+                ✨ Create Rewrites
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/export-pdf', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ type: 'entry', entryIds: [entry.id] }),
+                    })
+                    if (response.ok) {
+                      const blob = await response.blob()
+                      const url = window.URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `entry-${entry.id}.pdf`
+                      document.body.appendChild(a)
+                      a.click()
+                      window.URL.revokeObjectURL(url)
+                      document.body.removeChild(a)
+                    } else {
+                      alert('Failed to export PDF')
+                    }
+                  } catch (error) {
+                    console.error('Error exporting PDF:', error)
                     alert('Failed to export PDF')
                   }
-                } catch (error) {
-                  console.error('Error exporting PDF:', error)
-                  alert('Failed to export PDF')
-                }
-              }}
-              style={{
-                background: 'transparent',
-                color: '#000000',
-                border: '1px solid rgba(0,0,0,0.2)',
-                padding: '0.8rem 1.8rem',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                letterSpacing: '0.08rem',
-                textTransform: 'uppercase',
-                borderRadius: 0,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#DC143C'
-                e.currentTarget.style.color = '#FFFFFF'
-                e.currentTarget.style.borderColor = '#DC143C'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = '#000000'
-                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)'
-              }}
-            >
-              📄 Export PDF
-            </button>
-            <button
-              onClick={handleGenerateMindMap}
-              disabled={isGeneratingMindMap}
-              style={{
-                background: 'transparent',
-                color: '#6B21A8',
-                border: '1px solid #6B21A8',
-                padding: '0.8rem 1.8rem',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                letterSpacing: '0.08rem',
-                textTransform: 'uppercase',
-                borderRadius: 0,
-                cursor: isGeneratingMindMap ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                opacity: isGeneratingMindMap ? 0.6 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!isGeneratingMindMap) {
-                  e.currentTarget.style.background = '#6B21A8'
+                }}
+                style={{
+                  background: 'transparent',
+                  color: '#374151',
+                  border: '1px solid #D1D5DB',
+                  padding: '0.75rem 1.8rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.08rem',
+                  textTransform: 'uppercase',
+                  borderRadius: 0,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  width: isMobile ? '100%' : 'auto',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#374151'
                   e.currentTarget.style.color = '#FFFFFF'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = '#6B21A8'
-              }}
-            >
-              {isGeneratingMindMap ? '🧠 Generating...' : '🧠 Mind Map'}
-            </button>
+                  e.currentTarget.style.borderColor = '#374151'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = '#374151'
+                  e.currentTarget.style.borderColor = '#D1D5DB'
+                }}
+              >
+                📄 Export PDF
+              </button>
+              <button
+                onClick={handleGenerateMindMap}
+                disabled={isGeneratingMindMap}
+                style={{
+                  background: 'transparent',
+                  color: '#374151',
+                  border: '1px solid #D1D5DB',
+                  padding: '0.75rem 1.8rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.08rem',
+                  textTransform: 'uppercase',
+                  borderRadius: 0,
+                  cursor: isGeneratingMindMap ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  opacity: isGeneratingMindMap ? 0.6 : 1,
+                  width: isMobile ? '100%' : 'auto',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isGeneratingMindMap) {
+                    e.currentTarget.style.background = '#6B21A8'
+                    e.currentTarget.style.color = '#FFFFFF'
+                    e.currentTarget.style.borderColor = '#6B21A8'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = '#374151'
+                  e.currentTarget.style.borderColor = '#D1D5DB'
+                }}
+              >
+                {isGeneratingMindMap ? '🧠 Generating...' : '🧠 Mind Map'}
+              </button>
+            </div>
           </div>
         )}
       </div>

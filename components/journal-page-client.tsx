@@ -15,6 +15,8 @@ import { CategoryNav } from './category-nav'
 import { HeroStory } from './hero-story'
 import { VanityFairLayout } from './vanity-fair-layout'
 import { StoryCarousel } from './story-carousel'
+import { TimelineView } from './timeline-view'
+import { SearchChat } from './search-chat'
 import { EntryFormModal } from './entry-form-modal'
 import { EntryModal } from './entry-modal'
 import { CaptureFAB } from './capture-fab'
@@ -56,6 +58,8 @@ export function JournalPageClient({
   const [isGeneratingTheme, setIsGeneratingTheme] = useState(false)
   const [currentEntryType, setCurrentEntryType] = useState<EntryType | null>('story') // Default to story view
   const [sidebarExpanded, setSidebarExpanded] = useState(true) // Desktop sidebar expansion state
+  const [showTimeline, setShowTimeline] = useState(false) // Timeline/archive view
+  const [showChatSearch, setShowChatSearch] = useState(false) // AI chat search panel
 
   // Calculate action count for sidebar badge
   const actionCount = entries.filter(e => 
@@ -353,8 +357,33 @@ export function JournalPageClient({
     router.refresh()
   }
 
+  const handleToggleTimeline = () => {
+    setShowTimeline((prev) => !prev)
+  }
+
+  const handleOpenChat = () => {
+    setShowChatSearch(true)
+  }
+
+  const handleCloseChat = () => {
+    setShowChatSearch(false)
+  }
+
   // Render desktop content based on entry type selection
   const renderDesktopContent = () => {
+    // Timeline view takes priority when active
+    if (showTimeline) {
+      return (
+        <TimelineView
+          entries={entries}
+          lifeArea={currentFilter}
+          entryType={currentEntryType}
+          searchQuery={searchQuery}
+          onViewEntry={handleViewEntry}
+        />
+      )
+    }
+
     switch (currentEntryType) {
       case 'action':
         return (
@@ -391,6 +420,7 @@ export function JournalPageClient({
             pinnedStories={pinnedStories}
             pinnedNotes={pinnedNotes}
             pinnedActions={pinnedActions}
+            onNavigateToSection={(type) => setCurrentEntryType(type)}
           />
         )
     }
@@ -409,6 +439,11 @@ export function JournalPageClient({
         actionCount={actionCount}
         isExpanded={sidebarExpanded}
         onExpandedChange={setSidebarExpanded}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        showTimeline={showTimeline}
+        onToggleTimeline={handleToggleTimeline}
+        onOpenChat={handleOpenChat}
       />
 
       {/* Header - hidden on lg+ (desktop uses sidebar) */}
@@ -421,6 +456,9 @@ export function JournalPageClient({
           currentEntryType={currentEntryType}
           onEntryTypeChange={(type) => setCurrentEntryType(type as EntryType | null)}
           onLogout={handleLogout}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onOpenChat={handleOpenChat}
         />
       </div>
 
@@ -520,6 +558,7 @@ export function JournalPageClient({
             pinnedNotes={pinnedNotes}
             pinnedActions={pinnedActions}
             onViewEntry={handleViewEntry}
+            onNavigateToSection={(type) => setCurrentEntryType(type)}
           />
 
           <footer>
@@ -547,6 +586,19 @@ export function JournalPageClient({
           onPinToggled={handlePinToggled}
           onContentUpdated={handleContentUpdated}
           onEntryUpdated={handleEntryUpdated}
+        />
+      )}
+
+      {/* AI Chat Search Panel */}
+      {showChatSearch && (
+        <SearchChat
+          userId={userId}
+          entries={entries}
+          onClose={handleCloseChat}
+          onViewEntry={(id: string) => {
+            handleViewEntry(id)
+            setShowChatSearch(false)
+          }}
         />
       )}
     </div>

@@ -13,7 +13,10 @@ interface VanityFairLayoutProps {
   pinnedNotes: Entry[]
   pinnedActions: Entry[]
   onViewEntry: (id: string) => void
+  onNavigateToSection?: (entryType: 'story' | 'note' | 'action') => void
 }
+
+const PINNED_DISPLAY_LIMIT = 3
 
 const categories: Entry['category'][] = ['Business', 'Finance', 'Health', 'Spiritual', 'Fun', 'Social', 'Romance']
 
@@ -24,6 +27,7 @@ export function VanityFairLayout({
   pinnedNotes,
   pinnedActions,
   onViewEntry,
+  onNavigateToSection,
 }: VanityFairLayoutProps) {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const [isMounted, setIsMounted] = useState(false)
@@ -77,7 +81,7 @@ export function VanityFairLayout({
                 Pinned Stories
               </h3>
               <div className="space-y-3">
-                {pinnedStories.map((entry) => {
+                {pinnedStories.slice(0, PINNED_DISPLAY_LIMIT).map((entry) => {
                   const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
                   const fallbackUrl = imageUrl || getCategoryImage(entry.category)
                   const hasImageError = imageErrors.has(entry.id)
@@ -113,6 +117,14 @@ export function VanityFairLayout({
                     </div>
                   )
                 })}
+                {pinnedStories.length > PINNED_DISPLAY_LIMIT && (
+                  <button
+                    onClick={() => onNavigateToSection?.('story')}
+                    className="text-xs text-red-600 font-semibold uppercase tracking-wider hover:underline mt-2"
+                  >
+                    See all {pinnedStories.length} pinned stories &rarr;
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -124,23 +136,49 @@ export function VanityFairLayout({
                 Pinned Notes
               </h3>
               <div className="space-y-3">
-                {pinnedNotes.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="cursor-pointer p-3 bg-neutral-50"
-                    onClick={() => onViewEntry(entry.id)}
+                {pinnedNotes.slice(0, PINNED_DISPLAY_LIMIT).map((entry) => {
+                  const { url: noteImageUrl, objectPosition: noteObjPos } = getEntryPosterWithFocalPoint(entry)
+                  const hasNoteImage = !!noteImageUrl && !imageErrors.has(entry.id)
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className="cursor-pointer group flex gap-3"
+                      onClick={() => onViewEntry(entry.id)}
+                    >
+                      {hasNoteImage && (
+                        <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-sm">
+                          <img
+                            src={noteImageUrl}
+                            alt={entry.headline}
+                            className="w-full h-full object-cover"
+                            style={{ objectPosition: noteObjPos }}
+                            onError={() => handleImageError(entry.id)}
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="uppercase text-xs text-blue-600 tracking-wider font-bold">
+                          Note
+                        </span>
+                        <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1">
+                          {entry.headline}
+                        </h4>
+                        <p className="text-xs text-neutral-400 mt-1 uppercase">
+                          {formatEntryDateShort(entry.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+                {pinnedNotes.length > PINNED_DISPLAY_LIMIT && (
+                  <button
+                    onClick={() => onNavigateToSection?.('note')}
+                    className="text-xs text-blue-600 font-semibold uppercase tracking-wider hover:underline mt-2"
                   >
-                    <span className="uppercase text-xs text-blue-600 tracking-wider font-bold">
-                      Note
-                    </span>
-                    <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1">
-                      {entry.headline}
-                    </h4>
-                    <p className="text-xs text-neutral-400 mt-1 uppercase">
-                      {formatEntryDateShort(entry.created_at)}
-                    </p>
-                  </div>
-                ))}
+                    See all {pinnedNotes.length} pinned notes &rarr;
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -152,25 +190,54 @@ export function VanityFairLayout({
                 Pinned Actions
               </h3>
               <div className="space-y-3">
-                {pinnedActions.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="cursor-pointer p-3 bg-amber-50 border-l-2 border-amber-400"
-                    onClick={() => onViewEntry(entry.id)}
+                {pinnedActions.slice(0, PINNED_DISPLAY_LIMIT).map((entry) => {
+                  const { url: actionImageUrl, objectPosition: actionObjPos } = getEntryPosterWithFocalPoint(entry)
+                  const hasActionImage = !!actionImageUrl && !imageErrors.has(entry.id)
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className="cursor-pointer group flex gap-3"
+                      onClick={() => onViewEntry(entry.id)}
+                    >
+                      {hasActionImage && (
+                        <div className="w-16 h-16 flex-shrink-0 overflow-hidden rounded-sm">
+                          <img
+                            src={actionImageUrl}
+                            alt={entry.headline}
+                            className="w-full h-full object-cover"
+                            style={{ objectPosition: actionObjPos }}
+                            onError={() => handleImageError(entry.id)}
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="uppercase text-xs text-amber-600 tracking-wider font-bold">
+                          Action
+                        </span>
+                        <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1">
+                          {entry.headline}
+                        </h4>
+                        {entry.due_date && (
+                          <p className="text-xs text-amber-600 mt-1 font-medium">
+                            Due: {formatEntryDateShort(entry.due_date)}
+                          </p>
+                        )}
+                        <p className="text-xs text-neutral-400 mt-1 uppercase">
+                          {formatEntryDateShort(entry.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+                {pinnedActions.length > PINNED_DISPLAY_LIMIT && (
+                  <button
+                    onClick={() => onNavigateToSection?.('action')}
+                    className="text-xs text-amber-600 font-semibold uppercase tracking-wider hover:underline mt-2"
                   >
-                    <span className="uppercase text-xs text-amber-600 tracking-wider font-bold">
-                      Action
-                    </span>
-                    <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1">
-                      {entry.headline}
-                    </h4>
-                    {entry.due_date && (
-                      <p className="text-xs text-amber-600 mt-1 font-medium">
-                        Due: {formatEntryDateShort(entry.due_date)}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                    See all {pinnedActions.length} pinned actions &rarr;
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -298,7 +365,7 @@ export function VanityFairLayout({
                 Stories
               </h3>
               <div className="space-y-4">
-                {pinnedStories.map((entry) => {
+                {pinnedStories.slice(0, PINNED_DISPLAY_LIMIT).map((entry) => {
                   const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
                   const fallbackUrl = imageUrl || getCategoryImage(entry.category)
                   const hasImageError = imageErrors.has(entry.id)
@@ -334,74 +401,130 @@ export function VanityFairLayout({
                     </div>
                   )
                 })}
+                {pinnedStories.length > PINNED_DISPLAY_LIMIT && (
+                  <button
+                    onClick={() => onNavigateToSection?.('story')}
+                    className="text-xs text-red-600 font-semibold uppercase tracking-wider hover:underline"
+                  >
+                    See all {pinnedStories.length} pinned &rarr;
+                  </button>
+                )}
               </div>
             </div>
           )}
 
-          {/* Pinned Notes */}
+          {/* Pinned Notes — with thumbnail images */}
           {pinnedNotes.length > 0 && (
             <div>
               <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-4 pb-2 border-b border-neutral-200">
                 Notes
               </h3>
               <div className="space-y-4">
-                {pinnedNotes.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="cursor-pointer group p-3 bg-neutral-50 hover:bg-neutral-100 transition-colors"
-                    onClick={() => onViewEntry(entry.id)}
-                  >
-                    <div className="mb-1">
-                      <span className="uppercase text-xs text-blue-600 tracking-wider font-bold">
-                        Note
-                      </span>
+                {pinnedNotes.slice(0, PINNED_DISPLAY_LIMIT).map((entry) => {
+                  const { url: noteImageUrl, objectPosition: noteObjPos } = getEntryPosterWithFocalPoint(entry)
+                  const hasNoteImage = !!noteImageUrl && !imageErrors.has(entry.id)
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className="cursor-pointer group hover:bg-neutral-100 transition-colors"
+                      onClick={() => onViewEntry(entry.id)}
+                    >
+                      {hasNoteImage && (
+                        <div className="mb-2 overflow-hidden">
+                          <img
+                            src={noteImageUrl}
+                            alt={entry.headline}
+                            className="w-full h-24 object-cover transition-transform duration-300 group-hover:scale-105"
+                            style={{ objectPosition: noteObjPos }}
+                            onError={() => handleImageError(entry.id)}
+                          />
+                        </div>
+                      )}
+                      <div className="mb-1">
+                        <span className="uppercase text-xs text-blue-600 tracking-wider font-bold">
+                          Note
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-semibold leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
+                        {entry.headline}
+                      </h4>
+                      <p className="text-xs text-neutral-500 mt-1 line-clamp-2">
+                        {truncateHtml(entry.content, 80)}
+                      </p>
+                      <p className="text-xs text-neutral-400 mt-2 uppercase tracking-wide">
+                        {formatEntryDateShort(entry.created_at)}
+                      </p>
                     </div>
-                    <h4 className="text-sm font-semibold leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
-                      {entry.headline}
-                    </h4>
-                    <p className="text-xs text-neutral-500 mt-1 line-clamp-2">
-                      {truncateHtml(entry.content, 80)}
-                    </p>
-                    <p className="text-xs text-neutral-400 mt-2 uppercase tracking-wide">
-                      {formatEntryDateShort(entry.created_at)}
-                    </p>
-                  </div>
-                ))}
+                  )
+                })}
+                {pinnedNotes.length > PINNED_DISPLAY_LIMIT && (
+                  <button
+                    onClick={() => onNavigateToSection?.('note')}
+                    className="text-xs text-blue-600 font-semibold uppercase tracking-wider hover:underline"
+                  >
+                    See all {pinnedNotes.length} pinned &rarr;
+                  </button>
+                )}
               </div>
             </div>
           )}
 
-          {/* Pinned Actions */}
+          {/* Pinned Actions — with thumbnail images */}
           {pinnedActions.length > 0 && (
             <div>
               <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-4 pb-2 border-b border-neutral-200">
                 Actions
               </h3>
               <div className="space-y-4">
-                {pinnedActions.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="cursor-pointer group p-3 bg-amber-50 hover:bg-amber-100 transition-colors border-l-2 border-amber-400"
-                    onClick={() => onViewEntry(entry.id)}
-                  >
-                    <div className="mb-1">
-                      <span className="uppercase text-xs text-amber-600 tracking-wider font-bold">
-                        Action
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-semibold leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
-                      {entry.headline}
-                    </h4>
-                    {entry.due_date && (
-                      <p className="text-xs text-amber-600 mt-1 font-medium">
-                        Due: {formatEntryDateShort(entry.due_date)}
+                {pinnedActions.slice(0, PINNED_DISPLAY_LIMIT).map((entry) => {
+                  const { url: actionImageUrl, objectPosition: actionObjPos } = getEntryPosterWithFocalPoint(entry)
+                  const hasActionImage = !!actionImageUrl && !imageErrors.has(entry.id)
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className="cursor-pointer group hover:bg-amber-100/50 transition-colors"
+                      onClick={() => onViewEntry(entry.id)}
+                    >
+                      {hasActionImage && (
+                        <div className="mb-2 overflow-hidden">
+                          <img
+                            src={actionImageUrl}
+                            alt={entry.headline}
+                            className="w-full h-24 object-cover transition-transform duration-300 group-hover:scale-105"
+                            style={{ objectPosition: actionObjPos }}
+                            onError={() => handleImageError(entry.id)}
+                          />
+                        </div>
+                      )}
+                      <div className="mb-1 flex items-center gap-2">
+                        <span className="uppercase text-xs text-amber-600 tracking-wider font-bold">
+                          Action
+                        </span>
+                        {entry.due_date && (
+                          <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                            Due {formatEntryDateShort(entry.due_date)}
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-sm font-semibold leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
+                        {entry.headline}
+                      </h4>
+                      <p className="text-xs text-neutral-400 mt-1 uppercase tracking-wide">
+                        {formatEntryDateShort(entry.created_at)}
                       </p>
-                    )}
-                    <p className="text-xs text-neutral-400 mt-1 uppercase tracking-wide">
-                      {formatEntryDateShort(entry.created_at)}
-                    </p>
-                  </div>
-                ))}
+                    </div>
+                  )
+                })}
+                {pinnedActions.length > PINNED_DISPLAY_LIMIT && (
+                  <button
+                    onClick={() => onNavigateToSection?.('action')}
+                    className="text-xs text-amber-600 font-semibold uppercase tracking-wider hover:underline"
+                  >
+                    See all {pinnedActions.length} pinned &rarr;
+                  </button>
+                )}
               </div>
             </div>
           )}
