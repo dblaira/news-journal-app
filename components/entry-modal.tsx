@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { Entry, EntryType, Version, VersionHighlight, MindMap, ReactFlowNode, ReactFlowEdge, EntryMetadata, EntryImage } from '@/types'
 import { formatEntryDateLong, stripHtml } from '@/lib/utils'
 import { getCategoryImage } from '@/lib/mindset'
-import { incrementViewCount, removeEntryPhoto, togglePin, updateEntryContent, updateEntryDetails, updateVersionHighlights } from '@/app/actions/entries'
+import { incrementViewCount, removeEntryPhoto, togglePin, updateEntryContent, updateEntryDetails, updateVersionHighlights, createLinkedEntry, getEntryLineage } from '@/app/actions/entries'
 import { getEntryImages } from '@/lib/utils/entry-images'
 import { TiptapEditor } from './editor/TiptapEditor'
 import { generateMindMap, toReactFlowFormat } from '@/lib/mindmap/utils'
@@ -18,6 +18,12 @@ import { renderWithHighlights, addHighlight, removeHighlightAt } from '@/lib/uti
 // Dynamic import for MindMapCanvas to avoid SSR issues with ReactFlow
 const MindMapCanvas = dynamic(() => import('./mindmap/MindMapCanvas'), { ssr: false })
 
+interface LineageItem {
+  id: string
+  headline: string
+  entry_type: string
+}
+
 interface EntryModalProps {
   entry: Entry
   onClose: () => void
@@ -27,6 +33,8 @@ interface EntryModalProps {
   onPinToggled?: (entryId: string, isPinned: boolean) => void
   onContentUpdated?: (entryId: string, content: string) => void
   onEntryUpdated?: (entryId: string, updates: Partial<Entry>) => void
+  onViewEntry?: (entryId: string) => void
+  onEntryCreated?: (entry: Entry) => void
 }
 
 export function EntryModal({
@@ -38,6 +46,8 @@ export function EntryModal({
   onPinToggled,
   onContentUpdated,
   onEntryUpdated,
+  onViewEntry,
+  onEntryCreated,
 }: EntryModalProps) {
   const formattedDate = formatEntryDateLong(entry.created_at)
   const hasVersions = Array.isArray(entry.versions) && entry.versions.length > 0
@@ -124,6 +134,11 @@ export function EntryModal({
 
   // First-time nudge animation
   const [showNudgeAnimation, setShowNudgeAnimation] = useState(false)
+
+  // Lineage state (water cycle)
+  const [lineageParent, setLineageParent] = useState<LineageItem | null>(null)
+  const [lineageChildren, setLineageChildren] = useState<(LineageItem & { created_at: string })[]>([])
+  const [isSpawning, setIsSpawning] = useState(false)
 
   // Export state
   const [showExportMenu, setShowExportMenu] = useState(false)
@@ -234,6 +249,59 @@ export function EntryModal({
       setVersionHighlights(map)
     }
   }, [entry.versions])
+
+  // Fetch entry lineage on mount and when entry changes
+  useEffect(() => {
+    let cancelled = false
+    getEntryLineage(entry.id).then((result) => {
+      if (cancelled) return
+      if (!result.error) {
+        setLineageParent(result.parent || null)
+        setLineageChildren(result.children || [])
+      }
+    })
+    return () => { cancelled = true }
+  }, [entry.id])
+
+  // Spawn a linked entry (water cycle flow)
+  const handleSpawnEntry = async (
+    targetType: EntryType,
+    defaultHeadline: string,
+    defaultContent: string
+  ) => {
+    const headline = prompt('Headline for the new entry:', defaultHeadline)
+    if (!headline) return
+
+    setIsSpawning(true)
+    try {
+      const result = await createLinkedEntry(entry.id, {
+        headline,
+        content: defaultContent,
+        entry_type: targetType,
+        category: entry.category,
+        due_date: targetType === 'action' ? null : undefined,
+      })
+
+      if (result.error) {
+        alert(result.error)
+      } else if (result.data) {
+        onEntryCreated?.(result.data as Entry)
+        // Refresh lineage to show the new child
+        const lineageResult = await getEntryLineage(entry.id)
+        if (!lineageResult.error) {
+          setLineageParent(lineageResult.parent || null)
+          setLineageChildren(lineageResult.children || [])
+        }
+        // Navigate to the new entry
+        onViewEntry?.(result.data.id)
+      }
+    } catch (error) {
+      console.error('Failed to spawn entry:', error)
+      alert('Failed to create linked entry. Please try again.')
+    } finally {
+      setIsSpawning(false)
+    }
+  }
 
   // First-time nudge — pulse the subtitle when versions appear for the first time
   useEffect(() => {
@@ -1469,6 +1537,281 @@ export function EntryModal({
               dangerouslySetInnerHTML={{ __html: entry.content }}
             />
           )}
+        </div>
+
+        {/* Entry Lineage & Spawn Actions (Water Cycle) */}
+        <div style={{
+          margin: '1.5rem 0',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+        }}>
+          {/* Lineage breadcrumb — show parent and children */}
+          {(lineageParent || lineageChildren.length > 0) && (
+            <div style={{
+              padding: '0.75rem 1rem',
+              background: '#f8f9fb',
+              border: '1px solid #E5E7EB',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              color: '#6B7280',
+            }}>
+              {lineageParent && (
+                <div style={{ marginBottom: lineageChildren.length > 0 ? '0.5rem' : 0 }}>
+                  <span style={{ color: '#9CA3AF', marginRight: '0.5rem' }}>↑ From:</span>
+                  <button
+                    onClick={() => onViewEntry?.(lineageParent.id)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#2563EB',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      padding: 0,
+                      textDecoration: 'underline',
+                      textDecorationColor: 'transparent',
+                      transition: 'text-decoration-color 0.15s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.textDecorationColor = '#2563EB' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.textDecorationColor = 'transparent' }}
+                  >
+                    {lineageParent.headline}
+                  </button>
+                  <span style={{
+                    marginLeft: '0.5rem',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05rem',
+                    color: lineageParent.entry_type === 'story' ? '#DC143C' : lineageParent.entry_type === 'note' ? '#2563EB' : '#D97706',
+                  }}>
+                    {lineageParent.entry_type}
+                  </span>
+                </div>
+              )}
+              {lineageChildren.length > 0 && (
+                <div>
+                  <span style={{ color: '#9CA3AF', marginRight: '0.5rem' }}>↓ Spawned:</span>
+                  {lineageChildren.map((child, i) => (
+                    <span key={child.id}>
+                      {i > 0 && <span style={{ color: '#D1D5DB', margin: '0 0.25rem' }}> · </span>}
+                      <button
+                        onClick={() => onViewEntry?.(child.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#2563EB',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem',
+                          fontWeight: 500,
+                          padding: 0,
+                          textDecoration: 'underline',
+                          textDecorationColor: 'transparent',
+                          transition: 'text-decoration-color 0.15s',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.textDecorationColor = '#2563EB' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.textDecorationColor = 'transparent' }}
+                      >
+                        {child.headline}
+                      </button>
+                      <span style={{
+                        marginLeft: '0.25rem',
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        color: child.entry_type === 'story' ? '#DC143C' : child.entry_type === 'note' ? '#2563EB' : '#D97706',
+                      }}>
+                        {child.entry_type}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Spawn buttons — contextual based on current entry type */}
+          <div style={{
+            display: 'flex',
+            gap: '0.5rem',
+            flexWrap: 'wrap',
+          }}>
+            {/* Story → "Collect notes on this" */}
+            {(currentEntryType === 'story') && (
+              <button
+                onClick={() => handleSpawnEntry(
+                  'note',
+                  `Notes on: ${entry.headline}`,
+                  `Notes collected from "${entry.headline}"\n\n`
+                )}
+                disabled={isSpawning}
+                style={{
+                  background: 'transparent',
+                  color: '#2563EB',
+                  border: '1px solid #DBEAFE',
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.03rem',
+                  borderRadius: '6px',
+                  cursor: isSpawning ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                  opacity: isSpawning ? 0.6 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#EFF6FF'
+                  e.currentTarget.style.borderColor = '#93C5FD'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.borderColor = '#DBEAFE'
+                }}
+              >
+                📝 Collect Notes on This
+              </button>
+            )}
+
+            {/* Story or Note → "Act on this" */}
+            {(currentEntryType === 'story' || currentEntryType === 'note') && (
+              <button
+                onClick={() => handleSpawnEntry(
+                  'action',
+                  `Action: ${entry.headline}`,
+                  `Action item from "${entry.headline}"\n\n`
+                )}
+                disabled={isSpawning}
+                style={{
+                  background: 'transparent',
+                  color: '#D97706',
+                  border: '1px solid #FEF3C7',
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.03rem',
+                  borderRadius: '6px',
+                  cursor: isSpawning ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                  opacity: isSpawning ? 0.6 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#FFFBEB'
+                  e.currentTarget.style.borderColor = '#FCD34D'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.borderColor = '#FEF3C7'
+                }}
+              >
+                ⚡ Act on This
+              </button>
+            )}
+
+            {/* Completed Action → "What changed? Write the new story" */}
+            {(currentEntryType === 'action' && entry.completed_at) && (
+              <button
+                onClick={() => handleSpawnEntry(
+                  'story',
+                  `After: ${entry.headline}`,
+                  `Completing "${entry.headline}" changed things.\n\n`
+                )}
+                disabled={isSpawning}
+                style={{
+                  background: 'transparent',
+                  color: '#DC143C',
+                  border: '1px solid #FEE2E2',
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.03rem',
+                  borderRadius: '6px',
+                  cursor: isSpawning ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                  opacity: isSpawning ? 0.6 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#FEF2F2'
+                  e.currentTarget.style.borderColor = '#FCA5A5'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.borderColor = '#FEE2E2'
+                }}
+              >
+                🏔️ What Changed? Write the New Story
+              </button>
+            )}
+
+            {/* Note → "Elevate to story" */}
+            {(currentEntryType === 'note') && (
+              <button
+                onClick={() => handleSpawnEntry(
+                  'story',
+                  entry.headline,
+                  `Developed from notes: "${entry.headline}"\n\n${stripHtml(entry.content)}`
+                )}
+                disabled={isSpawning}
+                style={{
+                  background: 'transparent',
+                  color: '#DC143C',
+                  border: '1px solid #FEE2E2',
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.03rem',
+                  borderRadius: '6px',
+                  cursor: isSpawning ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                  opacity: isSpawning ? 0.6 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#FEF2F2'
+                  e.currentTarget.style.borderColor = '#FCA5A5'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.borderColor = '#FEE2E2'
+                }}
+              >
+                🏔️ Elevate to Story
+              </button>
+            )}
+
+            {/* Incomplete Action → "Collect notes" */}
+            {(currentEntryType === 'action' && !entry.completed_at) && (
+              <button
+                onClick={() => handleSpawnEntry(
+                  'note',
+                  `Notes on: ${entry.headline}`,
+                  `Research and notes for "${entry.headline}"\n\n`
+                )}
+                disabled={isSpawning}
+                style={{
+                  background: 'transparent',
+                  color: '#2563EB',
+                  border: '1px solid #DBEAFE',
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.03rem',
+                  borderRadius: '6px',
+                  cursor: isSpawning ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                  opacity: isSpawning ? 0.6 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#EFF6FF'
+                  e.currentTarget.style.borderColor = '#93C5FD'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.borderColor = '#DBEAFE'
+                }}
+              >
+                📝 Collect Notes
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Versions Section */}

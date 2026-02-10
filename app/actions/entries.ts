@@ -1034,3 +1034,134 @@ export async function updateImageFocalPoint(
   revalidatePath('/')
   return { success: true, images: updatedImages }
 }
+
+// =============================================================================
+// ENTRY LINEAGE (Water Cycle) — spawn linked entries and query lineage
+// =============================================================================
+
+/**
+ * Create a new entry linked to a source (parent) entry.
+ * Used for the water cycle flow: Story → Note → Action → Story
+ */
+export async function createLinkedEntry(
+  sourceEntryId: string,
+  input: {
+    headline: string
+    content: string
+    entry_type: Entry['entry_type']
+    category: Entry['category']
+    due_date?: string | null
+  }
+) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Verify the source entry exists and belongs to the user
+  const { data: sourceEntry, error: sourceError } = await supabase
+    .from('entries')
+    .select('id, headline, entry_type')
+    .eq('id', sourceEntryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (sourceError || !sourceEntry) {
+    return { error: 'Source entry not found' }
+  }
+
+  const { data, error } = await supabase
+    .from('entries')
+    .insert([
+      {
+        headline: input.headline,
+        content: input.content,
+        entry_type: input.entry_type,
+        category: input.category,
+        due_date: input.due_date || null,
+        source_entry_id: sourceEntryId,
+        user_id: user.id,
+        versions: null,
+        generating_versions: false,
+      },
+    ])
+    .select()
+    .single()
+
+  if (error) {
+    console.error('createLinkedEntry error:', error.message)
+    return { error: error.message }
+  }
+
+  revalidatePath('/')
+  return { data }
+}
+
+/**
+ * Get the lineage for an entry: its parent (source) and its children.
+ * Returns a lightweight summary — not full entry objects.
+ */
+export async function getEntryLineage(entryId: string) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Fetch the entry itself to get its source_entry_id
+  const { data: entry, error: entryError } = await supabase
+    .from('entries')
+    .select('id, source_entry_id')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (entryError || !entry) {
+    return { error: 'Entry not found' }
+  }
+
+  // Fetch parent entry (if this entry has a source)
+  let parent: { id: string; headline: string; entry_type: string } | null = null
+  if (entry.source_entry_id) {
+    const { data: parentData } = await supabase
+      .from('entries')
+      .select('id, headline, entry_type')
+      .eq('id', entry.source_entry_id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (parentData) {
+      parent = {
+        id: parentData.id,
+        headline: parentData.headline,
+        entry_type: parentData.entry_type || 'story',
+      }
+    }
+  }
+
+  // Fetch children (entries that have this entry as their source)
+  const { data: childrenData } = await supabase
+    .from('entries')
+    .select('id, headline, entry_type, created_at')
+    .eq('source_entry_id', entryId)
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: true })
+
+  const children = (childrenData || []).map((c) => ({
+    id: c.id,
+    headline: c.headline,
+    entry_type: c.entry_type || 'story',
+    created_at: c.created_at,
+  }))
+
+  return { parent, children }
+}

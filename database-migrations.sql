@@ -126,3 +126,16 @@ ALTER TABLE entries
 CREATE INDEX IF NOT EXISTS idx_entries_pinned ON entries(user_id, entry_type, pinned_at DESC) 
   WHERE pinned_at IS NOT NULL;
 
+-- =============================================================================
+-- V6 ENTRY LINEAGE MIGRATIONS (Water Cycle)
+-- Links entries in a parent→child chain: Story→Note→Action→Story
+-- =============================================================================
+
+-- 17. Add source_entry_id column for entry lineage
+ALTER TABLE entries 
+  ADD COLUMN IF NOT EXISTS source_entry_id UUID REFERENCES entries(id) ON DELETE SET NULL;
+
+-- 18. Create index for efficient lineage queries (find children of an entry)
+CREATE INDEX IF NOT EXISTS idx_entries_source ON entries(source_entry_id) 
+  WHERE source_entry_id IS NOT NULL;
+

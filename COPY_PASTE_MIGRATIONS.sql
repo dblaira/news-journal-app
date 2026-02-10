@@ -61,6 +61,19 @@ CREATE POLICY "Users can delete own weekly themes"
   USING (auth.uid() = user_id);
 
 -- ============================================
+-- V6: ENTRY LINEAGE (Water Cycle)
+-- Links entries in a parent→child chain
+-- ============================================
+
+-- Add source_entry_id column for entry lineage
+ALTER TABLE entries 
+  ADD COLUMN IF NOT EXISTS source_entry_id UUID REFERENCES entries(id) ON DELETE SET NULL;
+
+-- Index for efficient lineage queries (find children of an entry)
+CREATE INDEX IF NOT EXISTS idx_entries_source ON entries(source_entry_id) 
+  WHERE source_entry_id IS NOT NULL;
+
+-- ============================================
 -- DONE! You should see "Success. No rows returned"
 -- ============================================
 

@@ -47,6 +47,8 @@ export interface Entry {
   completed_at?: string | null
   // Pin feature
   pinned_at?: string | null
+  // Entry lineage — links to the parent entry that spawned this one (water cycle)
+  source_entry_id?: string | null
   // Multimodal capture fields (legacy single-image support)
   image_url?: string
   image_extracted_data?: import('./multimodal').ImageExtraction
@@ -95,6 +97,8 @@ export interface CreateEntryInput {
   entry_type?: EntryType
   due_date?: string | null
   recurrence_rule?: string | null
+  // Entry lineage
+  source_entry_id?: string | null
   // Multimodal capture fields (legacy single-image support)
   image_url?: string
   image_extracted_data?: import('./multimodal').ImageExtraction

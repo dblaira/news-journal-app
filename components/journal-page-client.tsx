@@ -586,6 +586,15 @@ export function JournalPageClient({
           onPinToggled={handlePinToggled}
           onContentUpdated={handleContentUpdated}
           onEntryUpdated={handleEntryUpdated}
+          onViewEntry={(entryId) => {
+            const target = entries.find((e) => e.id === entryId)
+            if (target) {
+              setSelectedEntry(target)
+            }
+          }}
+          onEntryCreated={(newEntry) => {
+            setEntries((prev) => [newEntry, ...prev])
+          }}
         />
       )}
 
