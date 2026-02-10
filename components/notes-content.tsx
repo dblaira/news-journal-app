@@ -134,8 +134,8 @@ function groupByCategory(notes: Entry[]): { category: string; notes: Entry[] }[]
 
 // ── Card components ──────────────────────────────────────────────────
 
-// LEFT COLUMN: Developing notes — blend into white background
-function DevelopingCard({ entry, onViewEntry, onImageError }: {
+// LEFT COLUMN: Trending notes — blend into white background
+function TrendingCard({ entry, onViewEntry, onImageError }: {
   entry: Entry
   onViewEntry: (id: string) => void
   onImageError: (id: string) => void
@@ -227,8 +227,8 @@ function DevelopingCard({ entry, onViewEntry, onImageError }: {
   )
 }
 
-// CENTER COLUMN: Pinned notes — float on uniform black
-function PinnedCard({ entry, onViewEntry, onImageError }: {
+// CENTER COLUMN: Headline notes — float on uniform black
+function HeadlineCard({ entry, onViewEntry, onImageError }: {
   entry: Entry
   onViewEntry: (id: string) => void
   onImageError: (id: string) => void
@@ -258,7 +258,7 @@ function PinnedCard({ entry, onViewEntry, onImageError }: {
             textTransform: 'uppercase', letterSpacing: '0.06rem',
             padding: '0.2rem 0.5rem', borderRadius: 0,
           }}>
-            Pinned
+            Headline
           </span>
         </div>
       )}
@@ -270,7 +270,7 @@ function PinnedCard({ entry, onViewEntry, onImageError }: {
             textTransform: 'uppercase', letterSpacing: '0.06rem',
             padding: '0.2rem 0.5rem', borderRadius: 0,
           }}>
-            Pinned
+            Headline
           </span>
         </div>
       )}
@@ -326,8 +326,8 @@ function PinnedCard({ entry, onViewEntry, onImageError }: {
   )
 }
 
-// RIGHT COLUMN: Compact note cards
-function CompactNoteCard({ entry, onViewEntry, onImageError }: {
+// RIGHT COLUMN: Opinion — compact note cards
+function OpinionCard({ entry, onViewEntry, onImageError }: {
   entry: Entry
   onViewEntry: (id: string) => void
   onImageError: (id: string) => void
@@ -406,26 +406,27 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
     return notes
   }, [entries, lifeArea])
 
-  // Classify: pinned (center), developing (left), all others (right)
-  const { pinned, developing, allNotes } = useMemo(() => {
-    const pinned = filtered.filter(e => e.pinned_at)
+  // Classify: headline (center/pinned), trending (left/substantial), opinion (right/lighter)
+  const { headline, trending, opinion } = useMemo(() => {
+    const headline = filtered.filter(e => e.pinned_at)
     const unpinned = filtered.filter(e => !e.pinned_at)
 
-    // "Developing" = substantial notes (long content)
-    const developing = unpinned.filter(e => {
+    // "Trending" = substantial notes still building momentum (long content)
+    const trending = unpinned.filter(e => {
       const plainText = stripHtml(e.content)
       return plainText.split(/\s+/).length > DEVELOPING_WORD_THRESHOLD
     })
-    const developingIds = new Set(developing.map(e => e.id))
-    const allNotes = unpinned.filter(e => !developingIds.has(e.id))
+    const trendingIds = new Set(trending.map(e => e.id))
+    // "Opinion" = lighter captures, perspectives, quick references
+    const opinion = unpinned.filter(e => !trendingIds.has(e.id))
 
-    return { pinned, developing, allNotes }
+    return { headline, trending, opinion }
   }, [filtered])
 
-  const groupedDeveloping = useMemo(() => groupByCategory(developing), [developing])
-  const groupedAll = useMemo(() => groupByCategory(allNotes), [allNotes])
+  const groupedTrending = useMemo(() => groupByCategory(trending), [trending])
+  const groupedOpinion = useMemo(() => groupByCategory(opinion), [opinion])
 
-  const hasAny = pinned.length > 0 || developing.length > 0 || allNotes.length > 0
+  const hasAny = headline.length > 0 || trending.length > 0 || opinion.length > 0
 
   if (!hasAny) {
     return (
@@ -492,7 +493,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
           position: 'relative', zIndex: 1,
         }}>
 
-          {/* LEFT COLUMN: Developing */}
+          {/* LEFT COLUMN: Trending */}
           <div style={{ padding: '1.25rem 1.25rem 2rem', overflow: 'hidden', minWidth: 0, overflowWrap: 'break-word' as const }}>
             <h2 style={{
               margin: '0 0 0.75rem', fontSize: '0.6rem', fontWeight: 700,
@@ -500,22 +501,22 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
               paddingBottom: '0.5rem', borderBottom: '1px solid #E5E2DD',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
-              <span>Developing</span>
+              <span>Trending</span>
               <span style={{
                 background: 'rgba(220,20,60,0.08)', color: RED,
                 fontSize: '0.55rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: 0,
               }}>
-                {developing.length}
+                {trending.length}
               </span>
             </h2>
 
-            {developing.length === 0 && (
+            {trending.length === 0 && (
               <p style={{ fontSize: '0.75rem', color: '#9A9590', fontStyle: 'italic' }}>
-                No developing notes yet.
+                No trending notes yet.
               </p>
             )}
 
-            {groupedDeveloping.map(group => {
+            {groupedTrending.map(group => {
               const typo = getCategoryTypography(group.category)
               return (
                 <div key={group.category} style={{ marginBottom: '1rem' }}>
@@ -530,14 +531,14 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
                     {group.category}
                   </div>
                   {group.notes.map(entry => (
-                    <DevelopingCard key={entry.id} entry={entry} onViewEntry={onViewEntry} onImageError={handleImageError} />
+                    <TrendingCard key={entry.id} entry={entry} onViewEntry={onViewEntry} onImageError={handleImageError} />
                   ))}
                 </div>
               )
             })}
           </div>
 
-          {/* CENTER COLUMN: Pinned */}
+          {/* CENTER COLUMN: Headline */}
           <div style={{ padding: '1.25rem 1.5rem 2rem', overflow: 'hidden', minWidth: 0, overflowWrap: 'break-word' as const }}>
             <h2 style={{
               margin: '0 0 0.75rem', fontSize: '0.6rem', fontWeight: 700,
@@ -545,27 +546,27 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
               paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
-              <span>Pinned</span>
+              <span>Headline</span>
               <span style={{
                 background: 'rgba(220,20,60,0.15)', color: RED,
                 fontSize: '0.55rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: 0,
               }}>
-                {pinned.length}
+                {headline.length}
               </span>
             </h2>
 
-            {pinned.length === 0 && (
+            {headline.length === 0 && (
               <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic' }}>
-                Pin your most important notes to keep them here.
+                Pin your most important notes to make them headlines.
               </p>
             )}
 
-            {pinned.map(entry => (
-              <PinnedCard key={entry.id} entry={entry} onViewEntry={onViewEntry} onImageError={handleImageError} />
+            {headline.map(entry => (
+              <HeadlineCard key={entry.id} entry={entry} onViewEntry={onViewEntry} onImageError={handleImageError} />
             ))}
           </div>
 
-          {/* RIGHT COLUMN: All Notes */}
+          {/* RIGHT COLUMN: Opinion */}
           <div style={{ padding: '1.25rem 1.25rem 2rem', overflow: 'hidden', minWidth: 0, overflowWrap: 'break-word' as const }}>
             <h2 style={{
               margin: '0 0 0.75rem', fontSize: '0.6rem', fontWeight: 700,
@@ -573,22 +574,22 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
               paddingBottom: '0.5rem', borderBottom: '1px solid #E0DBD3',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
-              <span>All Notes</span>
+              <span>Opinion</span>
               <span style={{
                 background: 'rgba(220,20,60,0.08)', color: RED,
                 fontSize: '0.55rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: 0,
               }}>
-                {allNotes.length}
+                {opinion.length}
               </span>
             </h2>
 
-            {allNotes.length === 0 && (
+            {opinion.length === 0 && (
               <p style={{ fontSize: '0.75rem', color: '#9A9590', fontStyle: 'italic' }}>
-                No other notes yet.
+                No opinion notes yet.
               </p>
             )}
 
-            {groupedAll.map(group => {
+            {groupedOpinion.map(group => {
               const typo = getCategoryTypography(group.category)
               return (
                 <div key={group.category} style={{ marginBottom: '1rem' }}>
@@ -606,7 +607,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
                     </span>
                   </div>
                   {group.notes.map(entry => (
-                    <CompactNoteCard key={entry.id} entry={entry} onViewEntry={onViewEntry} onImageError={handleImageError} />
+                    <OpinionCard key={entry.id} entry={entry} onViewEntry={onViewEntry} onImageError={handleImageError} />
                   ))}
                 </div>
               )
