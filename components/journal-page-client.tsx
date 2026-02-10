@@ -476,8 +476,8 @@ export function JournalPageClient({
       <main className={`hidden lg:block min-h-screen transition-[margin] duration-300 ${
         sidebarExpanded ? 'lg:ml-[260px]' : 'lg:ml-[64px]'
       }`}>
-        {/* Desktop Content Header with Breadcrumb (notes only - actions has its own hero) */}
-        {currentEntryType === 'note' && (
+        {/* Desktop Content Header with Breadcrumb (actions only - notes & stories have their own hero) */}
+        {currentEntryType === 'action' && (
           <ContentHeader
             entryType={currentEntryType}
             lifeArea={currentFilter}
@@ -487,13 +487,13 @@ export function JournalPageClient({
 
         {/* Desktop Content */}
         <div
-          className={currentEntryType !== 'story' ? 'desktop-content-padded' : ''}
+          className={currentEntryType !== 'story' && currentEntryType !== 'note' ? 'desktop-content-padded' : ''}
         >
           {renderDesktopContent()}
         </div>
 
-        {/* Footer for desktop non-story views */}
-        {currentEntryType !== 'story' && (
+        {/* Footer for desktop non-story/non-note views */}
+        {currentEntryType !== 'story' && currentEntryType !== 'note' && (
           <footer className="desktop-footer">
             <p>&copy; 2025 Understood.</p>
           </footer>

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Entry } from '@/types'
 import { formatEntryDateShort, truncate } from '@/lib/utils'
+import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 
 interface ActionsContentProps {
   entries: Entry[]
@@ -127,14 +128,17 @@ function ActionItem({
   entry, 
   onViewEntry,
   onToggleComplete,
+  onImageError,
 }: { 
   entry: Entry
   onViewEntry: (id: string) => void
   onToggleComplete: (id: string) => void
+  onImageError?: (id: string) => void
 }) {
   const [isToggling, setIsToggling] = useState(false)
   const isCompleted = !!entry.completed_at
   const isOverdue = entry.due_date && new Date(entry.due_date) < new Date() && !isCompleted
+  const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
 
   // Extract plain text from HTML content for preview
   const plainText = entry.content.replace(/<[^>]*>/g, '').trim()
@@ -155,9 +159,8 @@ function ActionItem({
     <div
       onClick={() => onViewEntry(entry.id)}
       style={{
-        display: 'block',
+        display: 'flex',
         width: '100%',
-        padding: '1rem 1.25rem',
         background: '#FFFFFF',
         border: '1px solid #E5E7EB',
         borderRadius: '8px',
@@ -165,6 +168,7 @@ function ActionItem({
         cursor: 'pointer',
         transition: 'all 0.15s ease',
         marginBottom: '0.5rem',
+        overflow: 'hidden',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = '#DC143C'
@@ -175,7 +179,31 @@ function ActionItem({
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+      {/* Thumbnail */}
+      {imageUrl && (
+        <div style={{
+          flexShrink: 0,
+          width: '72px',
+          minHeight: '72px',
+          background: '#F3F4F6',
+        }}>
+          <img
+            src={imageUrl}
+            alt=""
+            onError={() => onImageError?.(entry.id)}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition,
+              display: 'block',
+              opacity: isCompleted ? 0.5 : 1,
+            }}
+          />
+        </div>
+      )}
+
+      <div style={{ flex: 1, padding: '1rem 1.25rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
         {/* Clickable Checkbox */}
         <button
           onClick={handleCheckboxClick}
@@ -289,6 +317,7 @@ function ActionSection({
   entries, 
   onViewEntry,
   onToggleComplete,
+  onImageError,
   variant = 'default',
   collapsible = false,
   defaultCollapsed = false,
@@ -297,6 +326,7 @@ function ActionSection({
   entries: Entry[]
   onViewEntry: (id: string) => void
   onToggleComplete: (id: string) => void
+  onImageError?: (id: string) => void
   variant?: 'default' | 'overdue' | 'completed' | 'today'
   collapsible?: boolean
   defaultCollapsed?: boolean
@@ -375,6 +405,7 @@ function ActionSection({
               entry={entry} 
               onViewEntry={onViewEntry}
               onToggleComplete={onToggleComplete}
+              onImageError={onImageError}
             />
           ))}
         </div>
@@ -384,6 +415,9 @@ function ActionSection({
 }
 
 export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplete }: ActionsContentProps) {
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
+  const handleImageError = (id: string) => setImageErrors(prev => new Set(prev).add(id))
+
   const grouped = groupActions(entries, lifeArea)
   const hasAnyActions = 
     grouped.pinned.length > 0 || 
@@ -502,6 +536,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
         entries={grouped.pinned}
         onViewEntry={onViewEntry}
         onToggleComplete={onToggleComplete}
+        onImageError={handleImageError}
       />
       
       <ActionSection
@@ -509,6 +544,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
         entries={grouped.overdue}
         onViewEntry={onViewEntry}
         onToggleComplete={onToggleComplete}
+        onImageError={handleImageError}
         variant="overdue"
       />
       
@@ -517,6 +553,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
         entries={grouped.today}
         onViewEntry={onViewEntry}
         onToggleComplete={onToggleComplete}
+        onImageError={handleImageError}
         variant="today"
       />
       
@@ -525,6 +562,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
         entries={grouped.upcoming}
         onViewEntry={onViewEntry}
         onToggleComplete={onToggleComplete}
+        onImageError={handleImageError}
       />
       
       <ActionSection
@@ -532,6 +570,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
         entries={grouped.recentlyCompleted}
         onViewEntry={onViewEntry}
         onToggleComplete={onToggleComplete}
+        onImageError={handleImageError}
         variant="completed"
         collapsible
         defaultCollapsed
