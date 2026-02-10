@@ -123,7 +123,7 @@ export function DesktopSidebar({
             <span
               style={{
                 color: '#FFFFFF',
-                fontSize: '1.15rem',
+                fontSize: '1.35rem',
                 fontWeight: 400,
                 fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                 letterSpacing: '0.02rem',
@@ -166,7 +166,7 @@ export function DesktopSidebar({
           >
             <span
               style={{
-                fontSize: '1.25rem',
+                fontSize: '1.45rem',
                 fontWeight: 800,
                 fontFamily: 'var(--font-bodoni-moda)',
               }}
@@ -317,7 +317,7 @@ export function DesktopSidebar({
                       border: 'none',
                       borderLeft: showTimeline ? '3px solid #DC143C' : '3px solid transparent',
                       color: showTimeline ? '#FFFFFF' : 'rgba(255, 255, 255, 0.75)',
-                      fontSize: '0.9rem',
+                      fontSize: '1.05rem',
                       fontWeight: 500,
                       fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                       textAlign: 'left',
@@ -325,7 +325,7 @@ export function DesktopSidebar({
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <span style={{ fontSize: '1rem' }}>📅</span>
+                    <span style={{ fontSize: '1.1rem' }}>📅</span>
                     <span>All Entries</span>
                   </button>
                 </li>
@@ -363,7 +363,7 @@ export function DesktopSidebar({
                         border: 'none',
                         borderLeft: currentEntryType === type.value ? '3px solid #DC143C' : '3px solid transparent',
                         color: currentEntryType === type.value ? '#FFFFFF' : 'rgba(255, 255, 255, 0.75)',
-                        fontSize: '0.9rem',
+                        fontSize: '1.05rem',
                         fontWeight: 500,
                         fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                         textAlign: 'left',
@@ -371,7 +371,7 @@ export function DesktopSidebar({
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      <span style={{ fontSize: '1rem' }}>{type.icon}</span>
+                      <span style={{ fontSize: '1.1rem' }}>{type.icon}</span>
                       <span>{type.label}</span>
                       {type.value === 'action' && actionCount > 0 && (
                         <span
@@ -423,7 +423,7 @@ export function DesktopSidebar({
                         background: currentLifeArea === area.value ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
                         border: 'none',
                         color: currentLifeArea === area.value ? '#FFFFFF' : 'rgba(255, 255, 255, 0.6)',
-                        fontSize: '0.85rem',
+                        fontSize: '1rem',
                         fontWeight: currentLifeArea === area.value ? 600 : 400,
                         fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                         textAlign: 'left',

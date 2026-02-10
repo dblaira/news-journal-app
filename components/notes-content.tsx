@@ -454,7 +454,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h1 style={{
             fontFamily: BODONI,
-            fontSize: 'clamp(2.3rem, 4.5vw, 3.4rem)', fontWeight: 400,
+            fontSize: 'clamp(2.8rem, 5.5vw, 4rem)', fontWeight: 400,
             color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.1,
             margin: '0 0 0.25rem',
           }}>
@@ -462,7 +462,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
           </h1>
           <span style={{
             fontFamily: BODONI,
-            fontSize: 'clamp(1rem, 2vw, 1.3rem)', fontWeight: 400,
+            fontSize: 'clamp(1.15rem, 2.3vw, 1.5rem)', fontWeight: 400,
             color: '#FFFFFF', letterSpacing: '-0.01em',
             fontStyle: 'italic',
           }}>
