@@ -448,7 +448,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
   }
 
   return (
-    <div style={{ background: '#FFFFFF', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' } as React.CSSProperties}>
+    <div style={{ background: '#FFFFFF' }}>
       {/* ── BLACK HEADER ──────────────────────────────────────── */}
       <header style={{ background: '#111111', padding: '2rem 1.5rem 1.5rem' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
