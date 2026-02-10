@@ -1163,5 +1163,138 @@ export async function getEntryLineage(entryId: string) {
     created_at: c.created_at,
   }))
 
-  return { parent, children }
+  // Compounding metrics — walk up the chain to find cycle depth (ancestors)
+  let cycleDepth = 0
+  let walkId = entry.source_entry_id
+  const visited = new Set<string>([entryId])
+  while (walkId && cycleDepth < 50) {
+    if (visited.has(walkId)) break // prevent infinite loops
+    visited.add(walkId)
+    const { data: ancestor } = await supabase
+      .from('entries')
+      .select('id, source_entry_id')
+      .eq('id', walkId)
+      .eq('user_id', user.id)
+      .single()
+    if (!ancestor) break
+    cycleDepth++
+    walkId = ancestor.source_entry_id
+  }
+
+  // Count total descendants (BFS down the tree)
+  let totalDescendants = 0
+  const queue = [entryId]
+  const descendantVisited = new Set<string>([entryId])
+  while (queue.length > 0 && totalDescendants < 200) {
+    const currentId = queue.shift()!
+    const { data: kids } = await supabase
+      .from('entries')
+      .select('id')
+      .eq('source_entry_id', currentId)
+      .eq('user_id', user.id)
+    if (kids) {
+      for (const kid of kids) {
+        if (!descendantVisited.has(kid.id)) {
+          descendantVisited.add(kid.id)
+          totalDescendants++
+          queue.push(kid.id)
+        }
+      }
+    }
+  }
+
+  return { parent, children, cycleDepth, totalDescendants }
+}
+
+/**
+ * Get the full lineage tree for an entry — walks up to the root, then collects
+ * all descendants. Returns a flat list of nodes and edges for visualization.
+ */
+export async function getLineageTree(entryId: string) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Walk up to find the root of this lineage chain
+  let rootId = entryId
+  const visited = new Set<string>()
+  while (true) {
+    if (visited.has(rootId)) break
+    visited.add(rootId)
+    const { data: entry } = await supabase
+      .from('entries')
+      .select('id, source_entry_id')
+      .eq('id', rootId)
+      .eq('user_id', user.id)
+      .single()
+    if (!entry || !entry.source_entry_id) break
+    rootId = entry.source_entry_id
+  }
+
+  // BFS from root to collect the entire tree
+  interface TreeNode {
+    id: string
+    headline: string
+    entry_type: string
+    created_at: string
+    source_entry_id: string | null
+  }
+  const nodes: TreeNode[] = []
+  const queue = [rootId]
+  const treeVisited = new Set<string>()
+
+  while (queue.length > 0 && nodes.length < 100) {
+    const currentId = queue.shift()!
+    if (treeVisited.has(currentId)) continue
+    treeVisited.add(currentId)
+
+    const { data: nodeData } = await supabase
+      .from('entries')
+      .select('id, headline, entry_type, created_at, source_entry_id')
+      .eq('id', currentId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (nodeData) {
+      nodes.push({
+        id: nodeData.id,
+        headline: nodeData.headline,
+        entry_type: nodeData.entry_type || 'story',
+        created_at: nodeData.created_at,
+        source_entry_id: nodeData.source_entry_id,
+      })
+
+      // Find children
+      const { data: children } = await supabase
+        .from('entries')
+        .select('id')
+        .eq('source_entry_id', currentId)
+        .eq('user_id', user.id)
+
+      if (children) {
+        for (const child of children) {
+          if (!treeVisited.has(child.id)) {
+            queue.push(child.id)
+          }
+        }
+      }
+    }
+  }
+
+  // Build edges from source_entry_id relationships
+  const edges = nodes
+    .filter((n) => n.source_entry_id)
+    .map((n) => ({
+      id: `${n.source_entry_id}-${n.id}`,
+      source: n.source_entry_id!,
+      target: n.id,
+    }))
+
+  return { nodes, edges, rootId, focusId: entryId }
 }

@@ -21,7 +21,7 @@ import { EntryFormModal } from './entry-form-modal'
 import { EntryModal } from './entry-modal'
 import { CaptureFAB } from './capture-fab'
 import { deriveMindsetPreset } from '@/lib/mindset'
-import { deleteEntry, updateEntryVersions, generateWeeklyTheme, toggleActionComplete } from '@/app/actions/entries'
+import { deleteEntry, updateEntryVersions, generateWeeklyTheme, toggleActionComplete, createLinkedEntry } from '@/app/actions/entries'
 import { supabase } from '@/lib/supabase/client'
 
 interface JournalPageClientProps {
@@ -60,6 +60,7 @@ export function JournalPageClient({
   const [sidebarExpanded, setSidebarExpanded] = useState(true) // Desktop sidebar expansion state
   const [showTimeline, setShowTimeline] = useState(false) // Timeline/archive view
   const [showChatSearch, setShowChatSearch] = useState(false) // AI chat search panel
+  const [whatChangedPrompt, setWhatChangedPrompt] = useState<{ entryId: string; headline: string; category: Entry['category'] } | null>(null)
 
   // Calculate action count for sidebar badge
   const actionCount = entries.filter(e => 
@@ -353,6 +354,15 @@ export function JournalPageClient({
       return
     }
 
+    // "What changed?" prompt — only when completing (not un-completing)
+    if (newCompletedAt && entry.entry_type === 'action') {
+      setWhatChangedPrompt({
+        entryId: entry.id,
+        headline: entry.headline,
+        category: entry.category,
+      })
+    }
+
     // Refresh to ensure server state is synced
     router.refresh()
   }
@@ -596,6 +606,139 @@ export function JournalPageClient({
             setEntries((prev) => [newEntry, ...prev])
           }}
         />
+      )}
+
+      {/* "What changed?" prompt after completing an Action */}
+      {whatChangedPrompt && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={() => setWhatChangedPrompt(null)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: '12px',
+              padding: '2rem',
+              maxWidth: '480px',
+              width: '90%',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+              animation: 'toolbar-pop-in 0.2s ease-out',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: '1.5rem' }}>🏔️</span>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#111' }}>
+                What Changed?
+              </h3>
+            </div>
+            <p style={{ color: '#6B7280', fontSize: '0.85rem', margin: '0.5rem 0 1.25rem', lineHeight: 1.5 }}>
+              You completed <strong>&ldquo;{whatChangedPrompt.headline}&rdquo;</strong>.
+              <br />Write the new story — what&rsquo;s different now?
+            </p>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault()
+                const form = e.currentTarget
+                const headline = (form.elements.namedItem('headline') as HTMLInputElement).value.trim()
+                const content = (form.elements.namedItem('content') as HTMLTextAreaElement).value.trim()
+                if (!headline) return
+
+                const result = await createLinkedEntry(whatChangedPrompt.entryId, {
+                  headline,
+                  content: content || `Completing "${whatChangedPrompt.headline}" changed things.\n\n`,
+                  entry_type: 'story',
+                  category: whatChangedPrompt.category,
+                })
+
+                if (result.data) {
+                  setEntries((prev) => [result.data as Entry, ...prev])
+                  setSelectedEntry(result.data as Entry)
+                }
+                setWhatChangedPrompt(null)
+              }}
+            >
+              <input
+                name="headline"
+                type="text"
+                placeholder="Headline for the new story..."
+                defaultValue={`After: ${whatChangedPrompt.headline}`}
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.75rem',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  marginBottom: '0.75rem',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <textarea
+                name="content"
+                placeholder="What's different now? (optional — you can flesh it out later)"
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.75rem',
+                  fontSize: '0.85rem',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  resize: 'vertical',
+                  marginBottom: '1rem',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setWhatChangedPrompt(null)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    background: 'transparent',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    color: '#6B7280',
+                  }}
+                >
+                  Skip for Now
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '0.5rem 1.25rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    background: '#DC143C',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    letterSpacing: '0.03rem',
+                  }}
+                >
+                  Write the Story
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* AI Chat Search Panel */}

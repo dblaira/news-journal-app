@@ -15,8 +15,9 @@ import { CopyButton } from './ui/copy-button'
 import { SelectionToolbar } from './ui/selection-toolbar'
 import { renderWithHighlights, addHighlight, removeHighlightAt } from '@/lib/utils/highlights'
 
-// Dynamic import for MindMapCanvas to avoid SSR issues with ReactFlow
+// Dynamic imports for ReactFlow-based components to avoid SSR issues
 const MindMapCanvas = dynamic(() => import('./mindmap/MindMapCanvas'), { ssr: false })
+const WatershedView = dynamic(() => import('./watershed-view').then(m => ({ default: m.WatershedView })), { ssr: false })
 
 interface LineageItem {
   id: string
@@ -138,7 +139,10 @@ export function EntryModal({
   // Lineage state (water cycle)
   const [lineageParent, setLineageParent] = useState<LineageItem | null>(null)
   const [lineageChildren, setLineageChildren] = useState<(LineageItem & { created_at: string })[]>([])
+  const [cycleDepth, setCycleDepth] = useState(0)
+  const [totalDescendants, setTotalDescendants] = useState(0)
   const [isSpawning, setIsSpawning] = useState(false)
+  const [showWatershed, setShowWatershed] = useState(false)
 
   // Export state
   const [showExportMenu, setShowExportMenu] = useState(false)
@@ -258,6 +262,8 @@ export function EntryModal({
       if (!result.error) {
         setLineageParent(result.parent || null)
         setLineageChildren(result.children || [])
+        setCycleDepth(result.cycleDepth ?? 0)
+        setTotalDescendants(result.totalDescendants ?? 0)
       }
     })
     return () => { cancelled = true }
@@ -291,6 +297,8 @@ export function EntryModal({
         if (!lineageResult.error) {
           setLineageParent(lineageResult.parent || null)
           setLineageChildren(lineageResult.children || [])
+          setCycleDepth(lineageResult.cycleDepth ?? 0)
+          setTotalDescendants(lineageResult.totalDescendants ?? 0)
         }
         // Navigate to the new entry
         onViewEntry?.(result.data.id)
@@ -1546,6 +1554,80 @@ export function EntryModal({
           flexDirection: 'column',
           gap: '1rem',
         }}>
+          {/* Compounding metrics */}
+          {(cycleDepth > 0 || totalDescendants > 0) && (
+            <div style={{
+              display: 'flex',
+              gap: '0.75rem',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}>
+              {cycleDepth > 0 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.4rem 0.75rem',
+                  background: 'linear-gradient(135deg, #EFF6FF, #F0FDF4)',
+                  border: '1px solid #DBEAFE',
+                  borderRadius: '20px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  color: '#2563EB',
+                  letterSpacing: '0.03rem',
+                }}>
+                  <span style={{ fontSize: '0.85rem' }}>🏔️</span>
+                  <span>Cycle {cycleDepth} deep</span>
+                </div>
+              )}
+              {totalDescendants > 0 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.4rem 0.75rem',
+                  background: 'linear-gradient(135deg, #FEF3C7, #FFF7ED)',
+                  border: '1px solid #FDE68A',
+                  borderRadius: '20px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  color: '#D97706',
+                  letterSpacing: '0.03rem',
+                }}>
+                  <span style={{ fontSize: '0.85rem' }}>🌊</span>
+                  <span>{totalDescendants} {totalDescendants === 1 ? 'entry' : 'entries'} spawned</span>
+                </div>
+              )}
+              <button
+                onClick={() => setShowWatershed(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.4rem 0.75rem',
+                  background: 'transparent',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '20px',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  color: '#6B7280',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#F3F4F6'
+                  e.currentTarget.style.color = '#111'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = '#6B7280'
+                }}
+              >
+                🗺️ View Watershed
+              </button>
+            </div>
+          )}
+
           {/* Lineage breadcrumb — show parent and children */}
           {(lineageParent || lineageChildren.length > 0) && (
             <div style={{
@@ -2325,6 +2407,18 @@ export function EntryModal({
           initialEdges={mindMapData.edges}
           title={mindMapData.title}
           onClose={() => setShowMindMap(false)}
+        />
+      )}
+
+      {/* Watershed View — full lineage tree visualization */}
+      {showWatershed && (
+        <WatershedView
+          entryId={entry.id}
+          onViewEntry={(id) => {
+            setShowWatershed(false)
+            onViewEntry?.(id)
+          }}
+          onClose={() => setShowWatershed(false)}
         />
       )}
     </div>
