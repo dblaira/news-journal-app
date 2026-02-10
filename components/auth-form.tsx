@@ -120,7 +120,7 @@ export function AuthForm() {
         {/* Understood. Branding */}
         <header className="px-6 py-8 md:px-12 lg:px-16 text-center">
           <h1 
-            className="text-xl md:text-2xl tracking-[0.2em] text-white uppercase"
+            className="text-2xl md:text-3xl tracking-[0.2em] text-white uppercase"
             style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}
           >
             Understood.
@@ -132,7 +132,7 @@ export function AuthForm() {
           <div className="w-full max-w-md">
             {/* Headline */}
             <h2 
-              className="text-3xl md:text-4xl lg:text-5xl text-white leading-tight mb-10 text-center"
+              className="text-4xl md:text-5xl lg:text-6xl text-white leading-tight mb-10 text-center"
               style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}
             >
               {isSignUp ? 'Create your account' : 'Welcome back to your news journal'}

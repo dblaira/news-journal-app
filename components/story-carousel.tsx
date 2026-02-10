@@ -137,7 +137,7 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
                   </span>
 
                   {/* Headline */}
-                  <h3 className="text-neutral-900 text-sm font-semibold leading-tight mt-1 line-clamp-3 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
+                  <h3 className="text-neutral-900 text-base font-semibold leading-tight mt-1 line-clamp-3 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                     {entry.headline}
                   </h3>
 

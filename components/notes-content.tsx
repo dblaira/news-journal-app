@@ -170,7 +170,7 @@ function TrendingCard({ entry, onViewEntry, onImageError }: {
       <div style={{ padding: '0.85rem 1rem 1rem' }}>
         <div style={{
           fontFamily: BODONI,
-          fontSize: '0.95rem',
+          fontSize: '1.1rem',
           fontWeight: 400,
           color: '#1A1A1A',
           lineHeight: 1.3,
@@ -278,7 +278,7 @@ function HeadlineCard({ entry, onViewEntry, onImageError }: {
 
       <div style={{
         fontFamily: BODONI,
-        fontSize: '1.1rem', fontWeight: 400, color: '#FFFFFF',
+        fontSize: '1.25rem', fontWeight: 400, color: '#FFFFFF',
         lineHeight: 1.3, marginBottom: '0.45rem', letterSpacing: '-0.01em',
       }}>
         {entry.headline}
@@ -373,7 +373,7 @@ function OpinionCard({ entry, onViewEntry, onImageError }: {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontFamily: BODONI,
-          fontSize: '0.78rem', fontWeight: 600, color: '#1F2937', lineHeight: 1.3,
+          fontSize: '0.88rem', fontWeight: 600, color: '#1F2937', lineHeight: 1.3,
           marginBottom: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {entry.headline}
@@ -437,7 +437,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
         justifyContent: 'center', padding: '4rem 2rem', textAlign: 'center',
       }}>
         <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.3 }}>📝</div>
-        <h3 style={{ fontFamily: BODONI, margin: '0 0 0.5rem', color: '#1F2937', fontSize: '1.1rem', fontWeight: 600 }}>
+        <h3 style={{ fontFamily: BODONI, margin: '0 0 0.5rem', color: '#1F2937', fontSize: '1.25rem', fontWeight: 600 }}>
           No notes yet
         </h3>
         <p style={{ margin: 0, color: '#6B7280', fontSize: '0.9rem' }}>
@@ -454,7 +454,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h1 style={{
             fontFamily: BODONI,
-            fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 400,
+            fontSize: 'clamp(2.3rem, 4.5vw, 3.4rem)', fontWeight: 400,
             color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.1,
             margin: '0 0 0.25rem',
           }}>
@@ -462,7 +462,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
           </h1>
           <span style={{
             fontFamily: BODONI,
-            fontSize: 'clamp(0.9rem, 1.8vw, 1.15rem)', fontWeight: 400,
+            fontSize: 'clamp(1rem, 2vw, 1.3rem)', fontWeight: 400,
             color: '#FFFFFF', letterSpacing: '-0.01em',
             fontStyle: 'italic',
           }}>
@@ -500,7 +500,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
           <div style={{ padding: '1.25rem 1.25rem 2rem', overflow: 'hidden', minWidth: 0, overflowWrap: 'break-word' as const }}>
             <h2 style={{
               fontFamily: BODONI,
-              margin: '0 0 0.75rem', fontSize: '0.6rem', fontWeight: 700,
+              margin: '0 0 0.75rem', fontSize: '0.7rem', fontWeight: 700,
               color: RED, textTransform: 'uppercase', letterSpacing: '0.1rem',
               paddingBottom: '0.5rem', borderBottom: '1px solid #E5E2DD',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -546,7 +546,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
           <div style={{ padding: '1.25rem 1.5rem 2rem', overflow: 'hidden', minWidth: 0, overflowWrap: 'break-word' as const }}>
             <h2 style={{
               fontFamily: BODONI,
-              margin: '0 0 0.75rem', fontSize: '0.75rem', fontWeight: 700,
+              margin: '0 0 0.75rem', fontSize: '0.85rem', fontWeight: 700,
               color: RED, textTransform: 'uppercase', letterSpacing: '0.14rem',
               paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)',
               textAlign: 'center',
@@ -576,7 +576,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
           <div style={{ padding: '1.25rem 1.25rem 2rem', overflow: 'hidden', minWidth: 0, overflowWrap: 'break-word' as const }}>
             <h2 style={{
               fontFamily: BODONI,
-              margin: '0 0 0.75rem', fontSize: '0.6rem', fontWeight: 700,
+              margin: '0 0 0.75rem', fontSize: '0.7rem', fontWeight: 700,
               color: RED, textTransform: 'uppercase', letterSpacing: '0.1rem',
               paddingBottom: '0.5rem', borderBottom: '1px solid #E0DBD3',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',

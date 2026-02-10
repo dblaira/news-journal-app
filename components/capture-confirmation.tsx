@@ -233,7 +233,7 @@ export function CaptureConfirmation({
             onBlur={() => setEditingField(null)}
             style={{
               ...fieldStyle,
-              fontSize: '2rem',
+              fontSize: '2.3rem',
               fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
               fontWeight: 400,
               lineHeight: 1.2,

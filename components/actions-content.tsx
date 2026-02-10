@@ -456,7 +456,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
       <h1
         style={{
           fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
-          fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+          fontSize: 'clamp(2.8rem, 5.5vw, 4rem)',
           fontWeight: 400,
           color: '#1A1A1A',
           letterSpacing: '-0.02em',
@@ -471,7 +471,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
       <p
         style={{
           fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
-          fontSize: '1.15rem',
+          fontSize: '1.3rem',
           fontStyle: 'italic',
           color: '#6B7280',
           margin: 0,
@@ -513,7 +513,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
               margin: '0 0 0.5rem', 
               fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
               color: '#1F2937', 
-              fontSize: '1.25rem', 
+              fontSize: '1.4rem', 
               fontWeight: 400,
             }}
           >

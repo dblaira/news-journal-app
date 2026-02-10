@@ -85,7 +85,7 @@ export function EntryFormModal({ onSuccess, onCancel }: EntryFormModalProps) {
           <div style={{ marginBottom: '2rem', textAlign: 'left' }}>
             <h1
               style={{
-                fontSize: '2.5rem',
+                fontSize: '2.8rem',
                 fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                 color: '#000000',
                 marginBottom: '0.5rem',

@@ -1231,7 +1231,7 @@ export function EntryModal({
             placeholder="Enter headline..."
             style={{
               width: '100%',
-              fontSize: '2.8rem',
+              fontSize: '3.2rem',
               fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
               fontWeight: 400,
               lineHeight: 1.15,
@@ -1248,7 +1248,7 @@ export function EntryModal({
         ) : (
           <h2
             style={{
-              fontSize: '2.8rem',
+              fontSize: '3.2rem',
               fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
               fontWeight: 400,
               lineHeight: 1.15,
@@ -2083,7 +2083,7 @@ export function EntryModal({
                         <h1
                           style={{
                             fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
-                            fontSize: '2.5rem',
+                            fontSize: '2.8rem',
                             fontWeight: 900,
                             textTransform: 'uppercase',
                             lineHeight: 1.1,

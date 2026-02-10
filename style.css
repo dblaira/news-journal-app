@@ -93,7 +93,7 @@ body {
 
 .brand-title {
     font-family: var(--font-bodoni-moda), Georgia, 'Times New Roman', serif;
-    font-size: 2.5rem;
+    font-size: 2.8rem;
     letter-spacing: 0.15rem;
     text-transform: uppercase;
     color: var(--text-hero);
@@ -163,7 +163,7 @@ body {
     padding: 0.78rem 1.4rem;
     font-family: var(--font-bodoni-moda), Georgia, 'Times New Roman', serif;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     display: inline-flex;
@@ -229,7 +229,7 @@ body {
 .mindset-title {
     margin-top: 0.5rem;
     font-family: var(--font-bodoni-moda), Georgia, 'Times New Roman', serif;
-    font-size: clamp(2.2rem, 4vw, 3.2rem);
+    font-size: clamp(2.5rem, 4.5vw, 3.6rem);
     color: #1A1A1A;
     letter-spacing: -0.02em;
     font-weight: 400;
@@ -277,7 +277,7 @@ body {
 
 .weekly-theme-banner__headline {
     font-family: var(--font-bodoni-moda), Georgia, 'Times New Roman', serif;
-    font-size: clamp(2.2rem, 4vw, 3.2rem);
+    font-size: clamp(2.5rem, 4.5vw, 3.6rem);
     color: #1A1A1A;
     letter-spacing: -0.02em;
     margin: 0;
@@ -484,7 +484,7 @@ body {
 
 .hero-card h1 {
     font-family: var(--font-bodoni-moda), Georgia, 'Times New Roman', serif;
-    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-size: clamp(2.8rem, 5.5vw, 4.5rem);
     color: var(--text-hero);
     line-height: 1.15;
     font-weight: 400;
@@ -581,7 +581,7 @@ body {
 
 .feature-card h3 {
     font-family: var(--font-bodoni-moda), Georgia, 'Times New Roman', serif;
-    font-size: 1.5rem;
+    font-size: 1.7rem;
     color: var(--text-primary);
     font-weight: 400;
     line-height: 1.3;
@@ -754,7 +754,7 @@ body {
 }
 
 .section-header h2 {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-family: var(--font-bodoni-moda), Georgia, 'Times New Roman', serif;
     color: var(--text-primary);
     letter-spacing: -0.02em;
@@ -798,7 +798,7 @@ body {
 }
 
 .connection-card h3 {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     color: var(--text-primary);
     font-family: var(--font-bodoni-moda), Georgia, 'Times New Roman', serif;
 }
@@ -889,7 +889,7 @@ body {
 }
 
 .entry-headline {
-    font-size: 1.4rem;
+    font-size: 1.6rem;
     font-family: var(--font-bodoni-moda), Georgia, 'Times New Roman', serif;
     color: var(--text-primary);
     line-height: 1.3;
