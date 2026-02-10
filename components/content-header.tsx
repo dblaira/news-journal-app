@@ -38,7 +38,7 @@ export function ContentHeader({ entryType, lifeArea, issueTagline }: ContentHead
             fontSize: '1.25rem',
             fontWeight: 700,
             color: '#1F2937',
-            fontFamily: 'var(--font-playfair), Georgia, serif',
+            fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
           }}
         >
           {entryTypeLabel}

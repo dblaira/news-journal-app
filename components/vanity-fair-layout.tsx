@@ -58,12 +58,12 @@ export function VanityFairLayout({
         <div className="border-t border-b border-neutral-200 py-3">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
             <div className="md:col-span-9">
-              <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase">
+              <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                 All Stories
               </h2>
             </div>
             <div className="md:col-span-3">
-              <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase">
+              <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                 Pinned
               </h2>
             </div>
@@ -77,7 +77,7 @@ export function VanityFairLayout({
           {/* Pinned Stories - Mobile */}
           {pinnedStories.length > 0 && (
             <div className="mb-6">
-              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-3 pb-2 border-b border-neutral-200">
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-3 pb-2 border-b border-neutral-200" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                 Pinned Stories
               </h3>
               <div className="space-y-3">
@@ -107,7 +107,7 @@ export function VanityFairLayout({
                         <span className="uppercase text-xs text-red-600 tracking-wider font-bold">
                           {entry.category}
                         </span>
-                        <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1">
+                        <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                           {entry.headline}
                         </h4>
                         <p className="text-xs text-neutral-400 mt-1 uppercase">
@@ -132,7 +132,7 @@ export function VanityFairLayout({
           {/* Pinned Notes - Mobile */}
           {pinnedNotes.length > 0 && (
             <div className="mb-6">
-              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-3 pb-2 border-b border-neutral-200">
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-3 pb-2 border-b border-neutral-200" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                 Pinned Notes
               </h3>
               <div className="space-y-3">
@@ -161,7 +161,7 @@ export function VanityFairLayout({
                         <span className="uppercase text-xs text-blue-600 tracking-wider font-bold">
                           Note
                         </span>
-                        <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1">
+                        <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                           {entry.headline}
                         </h4>
                         <p className="text-xs text-neutral-400 mt-1 uppercase">
@@ -186,7 +186,7 @@ export function VanityFairLayout({
           {/* Pinned Actions - Mobile */}
           {pinnedActions.length > 0 && (
             <div className="mb-6">
-              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-3 pb-2 border-b border-neutral-200">
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-3 pb-2 border-b border-neutral-200" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                 Pinned Actions
               </h3>
               <div className="space-y-3">
@@ -215,7 +215,7 @@ export function VanityFairLayout({
                         <span className="uppercase text-xs text-amber-600 tracking-wider font-bold">
                           Action
                         </span>
-                        <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1">
+                        <h4 className="text-sm font-semibold leading-tight text-neutral-900 mt-1" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                           {entry.headline}
                         </h4>
                         {entry.due_date && (
@@ -280,7 +280,7 @@ export function VanityFairLayout({
                 <h2 className="uppercase text-xs text-red-600 tracking-wider mb-1 font-bold">
                   {entry.category}
                 </h2>
-                <h3 className="text-lg font-semibold mt-1 hover:underline leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
+                <h3 className="text-lg font-semibold mt-1 hover:underline leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                   {entry.headline}
                 </h3>
                 {entry.subheading && (
@@ -330,7 +330,7 @@ export function VanityFairLayout({
                       {entry.category}
                     </span>
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-bold leading-tight mb-2 hover:underline text-neutral-900 group-hover:text-neutral-600 transition-colors">
+                  <h2 className="text-2xl md:text-3xl font-bold leading-tight mb-2 hover:underline text-neutral-900 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                     {entry.headline}
                   </h2>
                   {entry.subheading && (
@@ -361,7 +361,7 @@ export function VanityFairLayout({
           {/* Pinned Stories */}
           {pinnedStories.length > 0 && (
             <div>
-              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-4 pb-2 border-b border-neutral-200">
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-4 pb-2 border-b border-neutral-200" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                 Stories
               </h3>
               <div className="space-y-4">
@@ -392,7 +392,7 @@ export function VanityFairLayout({
                           {entry.category}
                         </span>
                       </div>
-                      <h4 className="text-sm font-semibold hover:underline leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
+                      <h4 className="text-sm font-semibold hover:underline leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                         {entry.headline}
                       </h4>
                       <p className="text-xs text-neutral-400 mt-1 uppercase tracking-wide">
@@ -416,7 +416,7 @@ export function VanityFairLayout({
           {/* Pinned Notes — with thumbnail images */}
           {pinnedNotes.length > 0 && (
             <div>
-              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-4 pb-2 border-b border-neutral-200">
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-4 pb-2 border-b border-neutral-200" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                 Notes
               </h3>
               <div className="space-y-4">
@@ -446,7 +446,7 @@ export function VanityFairLayout({
                           Note
                         </span>
                       </div>
-                      <h4 className="text-sm font-semibold leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
+                      <h4 className="text-sm font-semibold leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                         {entry.headline}
                       </h4>
                       <p className="text-xs text-neutral-500 mt-1 line-clamp-2">
@@ -473,7 +473,7 @@ export function VanityFairLayout({
           {/* Pinned Actions — with thumbnail images */}
           {pinnedActions.length > 0 && (
             <div>
-              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-4 pb-2 border-b border-neutral-200">
+              <h3 className="uppercase text-xs text-neutral-500 font-semibold tracking-wider mb-4 pb-2 border-b border-neutral-200" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                 Actions
               </h3>
               <div className="space-y-4">
@@ -508,7 +508,7 @@ export function VanityFairLayout({
                           </span>
                         )}
                       </div>
-                      <h4 className="text-sm font-semibold leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors">
+                      <h4 className="text-sm font-semibold leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                         {entry.headline}
                       </h4>
                       <p className="text-xs text-neutral-400 mt-1 uppercase tracking-wide">

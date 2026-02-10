@@ -455,7 +455,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
       {/* Hero title - "Today" */}
       <h1
         style={{
-          fontFamily: "'Playfair Display', 'Times New Roman', serif",
+          fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
           fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
           fontWeight: 400,
           color: '#1A1A1A',
@@ -470,7 +470,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
       {/* Reflective tagline */}
       <p
         style={{
-          fontFamily: "'Playfair Display', 'Times New Roman', serif",
+          fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
           fontSize: '1.15rem',
           fontStyle: 'italic',
           color: '#6B7280',
@@ -511,7 +511,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
           <h3 
             style={{ 
               margin: '0 0 0.5rem', 
-              fontFamily: "'Playfair Display', 'Times New Roman', serif",
+              fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
               color: '#1F2937', 
               fontSize: '1.25rem', 
               fontWeight: 400,

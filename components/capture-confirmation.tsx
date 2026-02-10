@@ -234,7 +234,7 @@ export function CaptureConfirmation({
             style={{
               ...fieldStyle,
               fontSize: '2rem',
-              fontFamily: "'Playfair Display', serif",
+              fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
               fontWeight: 400,
               lineHeight: 1.2,
               borderBottomColor: editingField === 'headline' ? '#DC143C' : 'transparent',

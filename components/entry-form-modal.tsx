@@ -86,7 +86,7 @@ export function EntryFormModal({ onSuccess, onCancel }: EntryFormModalProps) {
             <h1
               style={{
                 fontSize: '2.5rem',
-                fontFamily: "'Playfair Display', serif",
+                fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                 color: '#000000',
                 marginBottom: '0.5rem',
                 fontWeight: 400,

@@ -125,7 +125,7 @@ export function DesktopSidebar({
                 color: '#FFFFFF',
                 fontSize: '1.15rem',
                 fontWeight: 400,
-                fontFamily: "'Playfair Display', 'Times New Roman', serif",
+                fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                 letterSpacing: '0.02rem',
                 whiteSpace: 'nowrap',
               }}
@@ -168,7 +168,7 @@ export function DesktopSidebar({
               style={{
                 fontSize: '1.25rem',
                 fontWeight: 800,
-                fontFamily: 'var(--font-playfair)',
+                fontFamily: 'var(--font-bodoni-moda)',
               }}
             >
               P
@@ -319,6 +319,7 @@ export function DesktopSidebar({
                       color: showTimeline ? '#FFFFFF' : 'rgba(255, 255, 255, 0.75)',
                       fontSize: '0.9rem',
                       fontWeight: 500,
+                      fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                       textAlign: 'left',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
@@ -342,6 +343,7 @@ export function DesktopSidebar({
                   fontWeight: 600,
                   letterSpacing: '0.1rem',
                   textTransform: 'uppercase',
+                  fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                 }}
               >
                 Entries
@@ -363,6 +365,7 @@ export function DesktopSidebar({
                         color: currentEntryType === type.value ? '#FFFFFF' : 'rgba(255, 255, 255, 0.75)',
                         fontSize: '0.9rem',
                         fontWeight: 500,
+                        fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                         textAlign: 'left',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
@@ -402,6 +405,7 @@ export function DesktopSidebar({
                   fontWeight: 600,
                   letterSpacing: '0.1rem',
                   textTransform: 'uppercase',
+                  fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                 }}
               >
                 Life Areas
@@ -421,6 +425,7 @@ export function DesktopSidebar({
                         color: currentLifeArea === area.value ? '#FFFFFF' : 'rgba(255, 255, 255, 0.6)',
                         fontSize: '0.85rem',
                         fontWeight: currentLifeArea === area.value ? 600 : 400,
+                        fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                         textAlign: 'left',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',

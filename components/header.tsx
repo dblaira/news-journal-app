@@ -114,7 +114,7 @@ export function Header({
                 style={{ 
                   fontSize: '1.15rem',
                   fontWeight: 400,
-                  fontFamily: "'Playfair Display', 'Times New Roman', serif",
+                  fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                   letterSpacing: '0.02rem',
                 }}
               >

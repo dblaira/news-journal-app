@@ -84,7 +84,7 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
       {title && (
         <div className="px-4 md:px-6 mb-6 mx-auto">
           <div className="border-t border-b border-neutral-200 py-3">
-            <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase">
+            <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
               {title}
             </h2>
           </div>
@@ -137,7 +137,7 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
                   </span>
 
                   {/* Headline */}
-                  <h3 className="text-neutral-900 text-sm font-semibold leading-tight mt-1 line-clamp-3 group-hover:text-neutral-600 transition-colors">
+                  <h3 className="text-neutral-900 text-sm font-semibold leading-tight mt-1 line-clamp-3 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                     {entry.headline}
                   </h3>
 

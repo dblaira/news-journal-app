@@ -1232,7 +1232,7 @@ export function EntryModal({
             style={{
               width: '100%',
               fontSize: '2.8rem',
-              fontFamily: "'Playfair Display', serif",
+              fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
               fontWeight: 400,
               lineHeight: 1.15,
               marginBottom: '0.5rem',
@@ -1249,7 +1249,7 @@ export function EntryModal({
           <h2
             style={{
               fontSize: '2.8rem',
-              fontFamily: "'Playfair Display', serif",
+              fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
               fontWeight: 400,
               lineHeight: 1.15,
               marginBottom: '0.5rem',
@@ -2082,7 +2082,7 @@ export function EntryModal({
                       >
                         <h1
                           style={{
-                            fontFamily: "'Playfair Display', 'Times New Roman', serif",
+                            fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
                             fontSize: '2.5rem',
                             fontWeight: 900,
                             textTransform: 'uppercase',
