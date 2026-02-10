@@ -541,15 +541,16 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
           {/* CENTER COLUMN: Headline */}
           <div style={{ padding: '1.25rem 1.5rem 2rem', overflow: 'hidden', minWidth: 0, overflowWrap: 'break-word' as const }}>
             <h2 style={{
-              margin: '0 0 0.75rem', fontSize: '0.6rem', fontWeight: 700,
-              color: RED, textTransform: 'uppercase', letterSpacing: '0.1rem',
+              margin: '0 0 0.75rem', fontSize: '0.75rem', fontWeight: 700,
+              color: RED, textTransform: 'uppercase', letterSpacing: '0.14rem',
               paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              textAlign: 'center',
             }}>
-              <span>Headline</span>
+              Headline
               <span style={{
                 background: 'rgba(220,20,60,0.15)', color: RED,
                 fontSize: '0.55rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: 0,
+                marginLeft: '0.5rem', verticalAlign: 'middle',
               }}>
                 {headline.length}
               </span>
