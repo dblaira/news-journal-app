@@ -39,7 +39,6 @@ const MOBILE_STYLES = `
     .workout-mobile .day-workout-type { font-size: 0.85rem; margin-right: 0; }
     .workout-mobile .day-content { padding: 1rem; }
     .workout-mobile .exercise-row { flex-direction: column; align-items: flex-start; text-align: left; gap: 0.75rem; padding: 1rem; min-height: auto; }
-    .workout-mobile .exercise-image { display: none; }
     .workout-mobile .exercise-name { font-size: 1.05rem; line-height: 1.35; }
     .workout-mobile .exercise-reps { justify-content: flex-start; }
     .workout-mobile .exercise-checkboxes { justify-content: flex-start; }
@@ -74,6 +73,38 @@ interface Exercise {
   reps?: string
   notes?: string
   log?: ExerciseLog
+}
+
+/** Map exercise name to illustration image path. Returns null for exercises that don't need a visual. */
+function getExerciseImage(name: string): string | null {
+  const n = name.toLowerCase()
+  if (n.includes('dorsiflexion')) return '/workout-images/exercise-dorsiflexion.png'
+  if (n.includes('ankle circle') || n.includes('eversion') || n.includes('short foot')) return '/workout-images/exercise-ankle-work.png'
+  if (n.includes('hip flexor march') || n.includes('hip flexion march')) return '/workout-images/exercise-hip-march.png'
+  if (n.includes('adduction') || n.includes('adductor')) return '/workout-images/exercise-adductor-work.png'
+  if (n.includes('single leg balance')) return '/workout-images/exercise-single-leg-balance.png'
+  if (n.includes('rdl') || n.includes('romanian')) return '/workout-images/exercise-rdl.png'
+  if (n.includes('split squat')) return '/workout-images/exercise-split-squat.png'
+  if (n.includes('sumo') && n.includes('squat')) return '/workout-images/exercise-sumo-squat.png'
+  if (n.includes('transverse rotation') || n.includes('cable rotation')) return '/workout-images/exercise-cable-rotation.png'
+  if (n.includes('lateral band')) return '/workout-images/exercise-lateral-band.png'
+  if (n.includes('hanging knee') || n.includes('knees to chest')) return '/workout-images/exercise-hanging-knee-raise.png'
+  if (n.includes('calf raise')) return '/workout-images/exercise-calf-raises.png'
+  if (n.includes('row')) return '/workout-images/exercise-rows.png'
+  if (n.includes('bench press')) return '/workout-images/exercise-bench-press.png'
+  if (n.includes('crunch')) return '/workout-images/exercise-crunches.png'
+  if (n.includes('pull down') || n.includes('pull-down') || n.includes('pulldown')) return '/workout-images/exercise-pull-downs.png'
+  if (n.includes('shoulder press')) return '/workout-images/exercise-shoulder-press.png'
+  if (n.includes('plank')) return '/workout-images/exercise-plank.png'
+  if (n.includes('dead hang')) return '/workout-images/exercise-dead-hang.png'
+  if (n.includes('tricep')) return '/workout-images/exercise-tricep-extension.png'
+  if (n.includes('bicep') || n.includes('curl')) return '/workout-images/exercise-bicep-curls.png'
+  if (n.includes('chest press')) return '/workout-images/exercise-cable-chest-press.png'
+  if (n.includes('pull-up') || n.includes('pull up')) return '/workout-images/exercise-pull-ups.png'
+  if (n.includes('push-up') || n.includes('push up')) return '/workout-images/exercise-push-ups.png'
+  if (n.includes('foam roll')) return '/workout-images/exercise-foam-roll.png'
+  if (n.includes('stretch')) return '/workout-images/exercise-stretching.png'
+  return null
 }
 
 /** Parse reps string to determine number of sets (e.g. "4 × 12" → 4, "1 set × 10" → 1) */
@@ -305,6 +336,7 @@ const INITIAL_WEEK: WorkoutDay[] = [
 
 function ExerciseRow({
   exercise,
+  sectionTitle,
   onSetToggle,
   onLogUpdate,
   isExpanded,
@@ -312,6 +344,7 @@ function ExerciseRow({
   variant = 'light',
 }: {
   exercise: Exercise
+  sectionTitle: string
   onSetToggle: (exerciseId: string, setIndex: number) => void
   onLogUpdate: (exerciseId: string, log: Partial<ExerciseLog>) => void
   isExpanded: boolean
@@ -357,26 +390,6 @@ function ExerciseRow({
           <span style={{ transform: isExpanded ? 'rotate(-90deg)' : 'none', transition: 'transform 0.2s', fontSize: '1rem' }}>▸</span>
         </button>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
-          <div
-            className="exercise-image"
-            style={{
-              flexShrink: 0,
-              width: 72,
-              height: 72,
-              background: isDark ? 'rgba(255, 255, 255, 0.1)' : '#E5E2DD',
-              borderRadius: 0,
-              overflow: 'hidden',
-              marginBottom: '0.5rem',
-            }}
-          >
-            {exercise.imageUrl ? (
-              <img src={exercise.imageUrl} alt={exercise.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isDark ? 'rgba(255,255,255,0.4)' : '#9A9590', fontSize: '0.7rem' }}>
-                Image
-              </div>
-            )}
-          </div>
           <div className="exercise-name" style={{ fontFamily: BODONI, fontSize: '1rem', fontWeight: 600, color: isDark ? '#FFFFFF' : '#1F2937', marginBottom: '0.15rem', textTransform: 'uppercase' }}>
             {exercise.name}
           </div>
@@ -409,6 +422,24 @@ function ExerciseRow({
             background: isDark ? 'rgba(0,0,0,0.3)' : '#FAFAF9',
           }}
         >
+          {(() => {
+            const imgSrc = getExerciseImage(exercise.name)
+            return imgSrc ? (
+              <div style={{ marginBottom: '1rem', maxWidth: 360 }}>
+                <img
+                  src={imgSrc}
+                  alt={exercise.name}
+                  loading="lazy"
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    borderRadius: 6,
+                    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E8E5DF',
+                  }}
+                />
+              </div>
+            ) : null
+          })()}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: 320 }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: isDark ? 'rgba(255,255,255,0.7)' : '#6B7280' }}>
@@ -615,6 +646,7 @@ export function WorkoutProgram() {
                               <ExerciseRow
                                 key={exercise.id}
                                 exercise={exercise}
+                                sectionTitle={section.title}
                                 onSetToggle={(exId, setIdx) => handleSetToggle(exId, setIdx, day.id)}
                                 onLogUpdate={(exId, log) => handleLogUpdate(exId, day.id, log)}
                                 isExpanded={!!expandedExercises[exercise.id]}
