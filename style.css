@@ -1074,6 +1074,14 @@ footer {
         gap: 1.5rem;
     }
 
+    /* Mobile header resets — let inline styles control layout */
+    .site-header.mobile-header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0;
+        gap: 0;
+    }
+
     .header-controls {
         width: 100%;
         flex-direction: column;

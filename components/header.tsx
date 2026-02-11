@@ -105,6 +105,8 @@ export function Header({
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '0.75rem 1rem',
+              width: '100%',
+              boxSizing: 'border-box',
             }}
           >
             {/* Logo */}
