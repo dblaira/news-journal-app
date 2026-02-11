@@ -2,7 +2,6 @@
 
 import { Entry } from '@/types'
 import { formatEntryDateShort, truncateHtml } from '@/lib/utils'
-import { getCategoryImage } from '@/lib/mindset'
 import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 import { useState, useEffect } from 'react'
 
@@ -83,8 +82,7 @@ export function VanityFairLayout({
               <div className="space-y-3">
                 {pinnedStories.slice(0, PINNED_DISPLAY_LIMIT).map((entry) => {
                   const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
-                  const fallbackUrl = imageUrl || getCategoryImage(entry.category)
-                  const hasImageError = imageErrors.has(entry.id)
+                  const hasRealImage = !!imageUrl && !imageErrors.has(entry.id)
 
                   return (
                     <div
@@ -92,10 +90,10 @@ export function VanityFairLayout({
                       className="cursor-pointer group flex gap-3"
                       onClick={() => onViewEntry(entry.id)}
                     >
-                      {!hasImageError && (
+                      {hasRealImage && (
                         <div className="w-20 h-20 flex-shrink-0 overflow-hidden">
                           <img
-                            src={fallbackUrl}
+                            src={imageUrl}
                             alt={entry.headline}
                             className="w-full h-full object-cover"
                             style={{ objectPosition }}
@@ -261,15 +259,14 @@ export function VanityFairLayout({
             }
 
             const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
-            const fallbackUrl = imageUrl || getCategoryImage(entry.category)
-            const hasImageError = imageErrors.has(entry.id)
+            const hasRealImage = !!imageUrl && !imageErrors.has(entry.id)
 
             return (
               <div key={entry.id} className="cursor-pointer group" onClick={() => onViewEntry(entry.id)}>
-                {!hasImageError && (
+                {hasRealImage && (
                   <div className="mb-3 overflow-hidden">
                     <img
-                      src={fallbackUrl}
+                      src={imageUrl}
                       alt={entry.headline}
                       className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                       style={{ objectPosition }}
@@ -305,8 +302,7 @@ export function VanityFairLayout({
           ) : (
             latestEntries.map((entry) => {
               const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
-              const fallbackUrl = imageUrl || getCategoryImage(entry.category)
-              const hasImageError = imageErrors.has(entry.id)
+              const hasRealImage = !!imageUrl && !imageErrors.has(entry.id)
 
               return (
                 <article
@@ -314,10 +310,10 @@ export function VanityFairLayout({
                   className="cursor-pointer group"
                   onClick={() => onViewEntry(entry.id)}
                 >
-                  {!hasImageError && (
+                  {hasRealImage && (
                     <div className="mb-4 overflow-hidden rounded-lg">
                       <img
-                        src={fallbackUrl}
+                        src={imageUrl}
                         alt={entry.headline}
                         className="w-full h-64 md:h-80 object-cover transition-transform duration-300 group-hover:scale-105"
                         style={{ objectPosition }}
@@ -367,8 +363,7 @@ export function VanityFairLayout({
               <div className="space-y-4">
                 {pinnedStories.slice(0, PINNED_DISPLAY_LIMIT).map((entry) => {
                   const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
-                  const fallbackUrl = imageUrl || getCategoryImage(entry.category)
-                  const hasImageError = imageErrors.has(entry.id)
+                  const hasRealImage = !!imageUrl && !imageErrors.has(entry.id)
 
                   return (
                     <div
@@ -376,10 +371,10 @@ export function VanityFairLayout({
                       className="cursor-pointer group"
                       onClick={() => onViewEntry(entry.id)}
                     >
-                      {!hasImageError && (
+                      {hasRealImage && (
                         <div className="mb-2 overflow-hidden">
                           <img
-                            src={fallbackUrl}
+                            src={imageUrl}
                             alt={entry.headline}
                             className="w-full h-28 object-cover transition-transform duration-300 group-hover:scale-105"
                             style={{ objectPosition }}

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Entry, EntryType } from '@/types'
 import { formatEntryDateShort, truncateHtml } from '@/lib/utils'
-import { getCategoryImage } from '@/lib/mindset'
 import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 
 interface TimelineViewProps {
@@ -205,8 +204,7 @@ export function TimelineView({
           <div>
             {group.entries.map((entry) => {
               const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
-              const fallbackUrl = imageUrl || getCategoryImage(entry.category)
-              const hasImageError = imageErrors.has(entry.id)
+              const hasRealImage = !!imageUrl && !imageErrors.has(entry.id)
               const typeLabel = getEntryTypeLabel(entry.entry_type)
               const typeIcon = getEntryTypeIcon(entry.entry_type)
 
@@ -229,8 +227,8 @@ export function TimelineView({
                     e.currentTarget.style.background = 'transparent'
                   }}
                 >
-                  {/* Thumbnail */}
-                  {!hasImageError && (
+                  {/* Thumbnail — only when entry has a real image */}
+                  {hasRealImage && (
                     <div
                       style={{
                         width: '72px',
@@ -238,11 +236,10 @@ export function TimelineView({
                         flexShrink: 0,
                         overflow: 'hidden',
                         borderRadius: '4px',
-                        background: '#F3F4F6',
                       }}
                     >
                       <img
-                        src={fallbackUrl}
+                        src={imageUrl}
                         alt={entry.headline}
                         style={{
                           width: '100%',

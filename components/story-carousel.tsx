@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Entry } from '@/types'
 import { formatEntryDateShort } from '@/lib/utils'
-import { getCategoryImage } from '@/lib/mindset'
 import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 
 interface StoryCarouselProps {
@@ -103,8 +102,7 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
       >
         {entries.map((entry) => {
           const { url: imageUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
-          const fallbackUrl = imageUrl || getCategoryImage(entry.category)
-          const hasImageError = imageErrors.has(entry.id)
+          const hasRealImage = !!imageUrl && !imageErrors.has(entry.id)
 
           return (
             <div
@@ -116,11 +114,11 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
             >
               {/* Card with image on left, text on right */}
               <div className="flex gap-4 items-start">
-                {/* Thumbnail */}
-                {!hasImageError && (
+                {/* Thumbnail — only when entry has a real image */}
+                {hasRealImage && (
                   <div className="w-24 h-24 flex-shrink-0 overflow-hidden bg-neutral-100">
                     <img
-                      src={fallbackUrl}
+                      src={imageUrl}
                       alt={entry.headline}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       style={{ objectPosition }}

@@ -3,27 +3,26 @@
 import { useState, useEffect } from 'react'
 import { Entry, EntryImage } from '@/types'
 import { formatEntryDateLong, formatEntryDateShort } from '@/lib/utils'
-import { getCategoryImage } from '@/lib/mindset'
 import { ContextSummaryDisplay } from './context'
 
 // Helper to get poster image URL and focal point from entry (handles both new images array and legacy fields)
-// Returns the poster image URL and CSS object-position value for proper image cropping
+// Returns the poster image URL (empty string if no real image) and CSS object-position value
 function getEntryPosterWithFocalPoint(entry: Entry): { url: string; objectPosition: string } {
   // Check new images array first
   if (entry.images && entry.images.length > 0) {
     const poster = entry.images.find(img => img.is_poster) || entry.images[0]
-    if (poster) {
+    if (poster?.url) {
       const x = poster.focal_x ?? 50
       const y = poster.focal_y ?? 50
       return {
-        url: poster.url || getCategoryImage(entry.category),
+        url: poster.url,
         objectPosition: `${x}% ${y}%`,
       }
     }
   }
-  // Fallback to legacy single image fields (no focal point)
+  // Fallback to legacy single image fields (no focal point) — no category placeholder
   return {
-    url: entry.image_url || entry.photo_url || getCategoryImage(entry.category),
+    url: entry.image_url || entry.photo_url || '',
     objectPosition: '50% 50%',
   }
 }
@@ -70,68 +69,45 @@ export function EntryCard({
       <span className="entry-mood">Enhanced</span>
     ) : null
 
+  const hasRealImage = !!imageUrl && !imageError
+
   return (
     <article className="entry-card">
-      <div className="entry-card__media" style={{ position: 'relative' }}>
-        {imageError ? (
-          <div style={{
-            width: '100%',
-            height: '200px',
-            background: 'var(--bg-panel-alt)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-muted)',
-            borderRadius: 'var(--radius-sm)',
-          }}>
-            Image unavailable
-          </div>
-        ) : (
-          <>
-            <img 
-              src={imageUrl} 
-              alt={entry.photo_url || entry.image_url ? entry.headline : `${entry.category} illustration`}
-              loading="lazy"
-              crossOrigin="anonymous"
-              style={{ objectPosition }}
-              onError={(e) => {
-                // Only handle errors after component is mounted to avoid hydration issues
-                if (isMounted) {
-                  console.error('Image failed to load:', imageUrl, 'Entry:', entry.headline)
-                  setImageError(true)
-                }
+      {hasRealImage && (
+        <div className="entry-card__media" style={{ position: 'relative' }}>
+          <img 
+            src={imageUrl} 
+            alt={entry.headline}
+            loading="lazy"
+            crossOrigin="anonymous"
+            style={{ objectPosition }}
+            onError={() => {
+              if (isMounted) setImageError(true)
+            }}
+          />
+          {hasMultipleImages && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '0.5rem',
+                right: '0.5rem',
+                background: 'rgba(0, 0, 0, 0.7)',
+                color: '#fff',
+                padding: '0.2rem 0.5rem',
+                borderRadius: '4px',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
               }}
-              onLoad={() => {
-                if (entry.photo_url || entry.image_url) {
-                  console.log('Photo loaded successfully:', imageUrl)
-                }
-              }}
-            />
-            {/* Image count badge for multi-image entries */}
-            {hasMultipleImages && (
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '0.5rem',
-                  right: '0.5rem',
-                  background: 'rgba(0, 0, 0, 0.7)',
-                  color: '#fff',
-                  padding: '0.2rem 0.5rem',
-                  borderRadius: '4px',
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                }}
-              >
-                <span>📷</span>
-                <span>{imageCount}</span>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+            >
+              <span>📷</span>
+              <span>{imageCount}</span>
+            </div>
+          )}
+        </div>
+      )}
       <div className="entry-card__body">
         <div className="entry-card__meta">
           <span className="category-label">{entry.category}</span>

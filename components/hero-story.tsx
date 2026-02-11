@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Entry } from '@/types'
 import { formatEntryDateLong } from '@/lib/utils'
-import { getCategoryImage } from '@/lib/mindset'
 import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 
 interface HeroStoryProps {
@@ -43,15 +42,16 @@ export function HeroStory({
               </button>
             </div>
           </div>
-          <div className="hero-card__media" style={{ background: '#000' }}></div>
+          <div className="hero-card__media" style={{ background: '#111' }}></div>
         </div>
       </section>
     )
   }
 
-  // Get poster image with focal point support
+  // Get poster image with focal point support — no category placeholder
   const { url: posterUrl, objectPosition } = getEntryPosterWithFocalPoint(entry)
-  const imageUrl = posterUrl || getCategoryImage(entry.category)
+  const imageUrl = posterUrl || ''
+  const hasRealImage = !!imageUrl && !imageError
   const formattedDate = formatEntryDateLong(entry.created_at)
 
   return (
@@ -89,34 +89,21 @@ export function HeroStory({
             )}
           </div>
         </div>
-        <div className="hero-card__media">
-          {imageError ? (
-            <div style={{
-              width: '100%',
-              height: '100%',
-              background: '#000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#999',
-            }}>
-              Image unavailable
-            </div>
-          ) : (
+        {hasRealImage ? (
+          <div className="hero-card__media">
             <img 
               src={imageUrl} 
-              alt={entry.photo_url ? entry.headline : `${entry.category} feature image`}
+              alt={entry.headline}
               loading="lazy"
               style={{ objectPosition }}
-              onError={(e) => {
-                // Only handle errors after component is mounted to avoid hydration issues
-                if (isMounted) {
-                  setImageError(true)
-                }
+              onError={() => {
+                if (isMounted) setImageError(true)
               }}
             />
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="hero-card__media" style={{ background: '#111' }}></div>
+        )}
       </div>
     </section>
   )

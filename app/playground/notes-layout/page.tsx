@@ -562,27 +562,6 @@ function CompactNoteCard({ note }: { note: SampleNote }) {
       )}
 
       {/* No image → small decorative theme font as avatar, bg matches card */}
-      {!hasImage && (
-        <div style={{
-          flexShrink: 0,
-          width: '56px',
-          height: '56px',
-          borderRadius: 0,
-          background: '#FFFFFF',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: getCategoryFont(note.category),
-          fontSize: '1.4rem',
-          fontWeight: 300,
-          color: '#C4BFB7',
-          fontStyle: 'italic',
-          lineHeight: 1,
-        }}>
-          {note.category.charAt(0)}
-        </div>
-      )}
-
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontSize: '0.78rem',
