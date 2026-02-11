@@ -499,7 +499,8 @@ body {
     color: var(--text-hero);
     line-height: 1.15;
     font-weight: 400;
-    letter-spacing: -0.02em;
+    letter-spacing: 0em;
+    word-spacing: 0.04em;
 }
 
 .hero-card p {

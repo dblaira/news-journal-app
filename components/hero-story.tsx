@@ -61,7 +61,7 @@ export function HeroStory({
             <span className="category-label">{entry.category}</span>
             <span>{formattedDate}</span>
           </div>
-          <h1>{entry.headline}</h1>
+          <h1>{entry.headline.replace(/:\s*/g, ':\u2002')}</h1>
           {entry.subheading && <p style={{ fontSize: '1.2rem', fontStyle: 'italic', marginTop: '0.5rem' }}>{entry.subheading}</p>}
           <div 
             className="rendered-content hero-preview"

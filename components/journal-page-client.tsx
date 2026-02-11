@@ -9,8 +9,6 @@ import { ContentHeader } from './content-header'
 import { ActionsContent } from './actions-content'
 import { NotesContent } from './notes-content'
 import { StoryContent } from './story-content'
-import { MindsetBanner } from './mindset-banner'
-import { WeeklyThemeBanner } from './weekly-theme-banner'
 import { CategoryNav } from './category-nav'
 import { HeroStory } from './hero-story'
 import { VanityFairLayout } from './vanity-fair-layout'
@@ -21,7 +19,6 @@ import { WorkoutProgram } from './workout-program'
 import { EntryFormModal } from './entry-form-modal'
 import { EntryModal } from './entry-modal'
 import { CaptureFAB } from './capture-fab'
-import { deriveMindsetPreset } from '@/lib/mindset'
 import { deleteEntry, updateEntryVersions, generateWeeklyTheme, toggleActionComplete, createLinkedEntry } from '@/app/actions/entries'
 import { supabase } from '@/lib/supabase/client'
 
@@ -97,18 +94,6 @@ export function JournalPageClient({
       return haystack.includes(searchQuery)
     })
   }
-
-  // Calculate mindset
-  const primaryEntry = entries[0]
-  const mindset = primaryEntry
-    ? deriveMindsetPreset(
-        (primaryEntry.mood || '').toLowerCase(),
-        (primaryEntry.category || '').toLowerCase()
-      )
-    : {
-        headline: 'Calling all Big Wave Riders',
-        subtitle: 'Step into the day like it is a headline worth remembering.',
-      }
 
   // Calculate issue tagline
   const editionNumber = Math.max(entries.length, 1).toString().padStart(2, '0')
@@ -426,10 +411,6 @@ export function JournalPageClient({
             onViewEntry={handleViewEntry}
             onCreateEntry={handleCreateEntry}
             onGenerateVersions={handleGenerateVersions}
-            weeklyTheme={weeklyTheme}
-            onViewTheme={handleViewTheme}
-            onGenerateWeeklyTheme={handleGenerateWeeklyTheme}
-            isGeneratingTheme={isGeneratingTheme}
             categoryEntries={categoryEntries}
             latestEntries={latestEntries}
             pinnedStories={pinnedStories}
@@ -459,6 +440,9 @@ export function JournalPageClient({
         showTimeline={showTimeline}
         onToggleTimeline={handleToggleTimeline}
         onOpenChat={handleOpenChat}
+        onGenerateWeeklyTheme={handleGenerateWeeklyTheme}
+        isGeneratingTheme={isGeneratingTheme}
+        hasWeeklyTheme={!!weeklyTheme}
       />
 
       {/* Header - hidden on lg+ (desktop uses sidebar) */}
@@ -525,51 +509,15 @@ export function JournalPageClient({
           />
         </div>
 
-        {weeklyTheme ? (
-          <WeeklyThemeBanner
-            theme={weeklyTheme}
-            onViewTheme={handleViewTheme}
-          />
-        ) : (
-          <MindsetBanner
-            headline={mindset.headline}
-            subtitle={mindset.subtitle}
-          />
-        )}
+        {/* Story Carousel - Latest Stories (directly after hero) */}
+        <StoryCarousel
+          entries={latestEntries}
+          title="LATEST STORIES"
+          onViewEntry={handleViewEntry}
+        />
 
-        {entries.length >= 7 && !weeklyTheme && (
-          <div style={{ 
-            padding: '1.5rem 2rem', 
-            textAlign: 'center',
-            background: '#F5F0E8',
-          }}>
-            <p style={{ 
-              marginBottom: '1rem', 
-              color: '#666666',
-              fontSize: '0.95rem'
-            }}>
-              You have {entries.length} entries. Generate your weekly theme!
-            </p>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={handleGenerateWeeklyTheme}
-              disabled={isGeneratingTheme}
-              style={{ fontSize: '1rem', padding: '0.9rem 2rem' }}
-            >
-              {isGeneratingTheme ? 'Generating...' : '✨ Generate Weekly Theme'}
-            </button>
-          </div>
-        )}
-
-        {/* WHITE SECTION - Latest Stories, Category Layout, Footer */}
+        {/* WHITE SECTION - Category Layout, Footer */}
         <div className="white-content-section" style={{ background: '#FFFFFF' }}>
-          <StoryCarousel
-            entries={latestEntries}
-            title="LATEST STORIES"
-            onViewEntry={handleViewEntry}
-          />
-
           <VanityFairLayout
             categoryEntries={categoryEntries}
             latestEntries={latestEntries}

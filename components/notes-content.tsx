@@ -417,6 +417,24 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
   const groupedTrending = useMemo(() => groupByCategory(trending), [trending])
   const groupedOpinion = useMemo(() => groupByCategory(opinion), [opinion])
 
+  // Split trending groups into two columns (alternating for balance)
+  const { trendingLeft, trendingRight } = useMemo(() => {
+    const left: typeof groupedTrending = []
+    const right: typeof groupedTrending = []
+    let leftCount = 0
+    let rightCount = 0
+    for (const group of groupedTrending) {
+      if (leftCount <= rightCount) {
+        left.push(group)
+        leftCount += group.notes.length
+      } else {
+        right.push(group)
+        rightCount += group.notes.length
+      }
+    }
+    return { trendingLeft: left, trendingRight: right }
+  }, [groupedTrending])
+
   const hasAny = headline.length > 0 || trending.length > 0 || opinion.length > 0
 
   if (!hasAny) {
@@ -440,7 +458,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
     <div style={{ background: '#FFFFFF' }}>
       {/* ── BLACK HEADER ──────────────────────────────────────── */}
       <header style={{ background: '#111111', padding: '2rem 1.5rem 1.5rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
           <h1 style={{
             fontFamily: BODONI,
             fontSize: 'clamp(2.8rem, 5.5vw, 4rem)', fontWeight: 400,
@@ -460,17 +478,18 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
         </div>
       </header>
 
-      {/* ── 3-COLUMN LAYOUT ───────────────────────────────────── */}
+      {/* ── 4-COLUMN LAYOUT ───────────────────────────────────── */}
       <div style={{ position: 'relative' }}>
         {/* Background layer — extends to viewport edges */}
         <div style={{
           position: 'absolute', inset: 0,
-          display: 'grid', gridTemplateColumns: '1fr 1.4fr 1fr',
-          maxWidth: '1200px', margin: '0 auto', zIndex: 0,
+          display: 'grid', gridTemplateColumns: '1fr 1fr 1.4fr 1fr',
+          maxWidth: '1600px', margin: '0 auto', zIndex: 0,
         }}>
           <div style={{ background: '#FFFFFF', boxShadow: '-100vw 0 0 0 #FFFFFF', borderTop: `3px solid ${RED}` }}>
             <div style={{ position: 'absolute', top: 0, left: '-100vw', width: '100vw', height: '3px', background: RED }} />
           </div>
+          <div style={{ background: '#FFFFFF', borderTop: `3px solid ${RED}` }} />
           <div style={{ background: '#111111', borderLeft: `3px solid ${RED}` }} />
           <div style={{ background: '#F5F2ED', boxShadow: '100vw 0 0 0 #F5F2ED', borderTop: `3px solid ${RED}` }}>
             <div style={{ position: 'absolute', top: 0, right: '-100vw', width: '100vw', height: '3px', background: RED }} />
@@ -479,13 +498,13 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
 
         {/* Content grid */}
         <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1.4fr 1fr',
-          maxWidth: '1200px', margin: '0 auto',
+          display: 'grid', gridTemplateColumns: '1fr 1fr 1.4fr 1fr',
+          maxWidth: '1600px', margin: '0 auto',
           minHeight: 'calc(100vh - 160px)',
           position: 'relative', zIndex: 1,
         }}>
 
-          {/* LEFT COLUMN: Trending */}
+          {/* LEFT COLUMN 1: Trending (first half) */}
           <div style={{ padding: '1.25rem 1.25rem 2rem', overflow: 'hidden', minWidth: 0, overflowWrap: 'break-word' as const }}>
             <h2 style={{
               fontFamily: BODONI,
@@ -509,7 +528,41 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
               </p>
             )}
 
-            {groupedTrending.map(group => {
+            {trendingLeft.map(group => {
+              const typo = getCategoryTypography(group.category)
+              return (
+                <div key={group.category} style={{ marginBottom: '1rem' }}>
+                  <div style={{
+                    fontFamily: typo.fontFamily, fontSize: '0.65rem',
+                    fontWeight: typo.fontWeight, fontStyle: typo.fontStyle,
+                    color: RED, textTransform: typo.textTransform,
+                    letterSpacing: typo.letterSpacing, marginBottom: '0.5rem',
+                    display: 'flex', alignItems: 'center', gap: '0.35rem',
+                  }}>
+                    <div style={{ width: '7px', height: '7px', borderRadius: 0, background: RED, opacity: 0.4 }} />
+                    {group.category}
+                  </div>
+                  {group.notes.map(entry => (
+                    <TrendingCard key={entry.id} entry={entry} onViewEntry={onViewEntry} onImageError={handleImageError} />
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* LEFT COLUMN 2: Trending (second half) */}
+          <div style={{ padding: '1.25rem 1.25rem 2rem', overflow: 'hidden', minWidth: 0, overflowWrap: 'break-word' as const }}>
+            <h2 style={{
+              fontFamily: BODONI,
+              margin: '0 0 0.75rem', fontSize: '0.7rem', fontWeight: 700,
+              color: RED, textTransform: 'uppercase', letterSpacing: '0.1rem',
+              paddingBottom: '0.5rem', borderBottom: '1px solid #E5E2DD',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <span>Trending</span>
+            </h2>
+
+            {trendingRight.map(group => {
               const typo = getCategoryTypography(group.category)
               return (
                 <div key={group.category} style={{ marginBottom: '1rem' }}>

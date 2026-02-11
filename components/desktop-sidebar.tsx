@@ -19,6 +19,9 @@ interface DesktopSidebarProps {
   showTimeline?: boolean
   onToggleTimeline?: () => void
   onOpenChat?: () => void
+  onGenerateWeeklyTheme?: () => void
+  isGeneratingTheme?: boolean
+  hasWeeklyTheme?: boolean
 }
 
 const lifeAreas = [
@@ -54,6 +57,9 @@ export function DesktopSidebar({
   showTimeline = false,
   onToggleTimeline,
   onOpenChat,
+  onGenerateWeeklyTheme,
+  isGeneratingTheme = false,
+  hasWeeklyTheme = false,
 }: DesktopSidebarProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -393,6 +399,35 @@ export function DesktopSidebar({
                   </li>
                 ))}
               </ul>
+
+              {/* Generate Weekly Theme button — only when on Stories and no theme yet */}
+              {currentEntryType === 'story' && !hasWeeklyTheme && onGenerateWeeklyTheme && (
+                <button
+                  onClick={onGenerateWeeklyTheme}
+                  disabled={isGeneratingTheme}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    width: 'calc(100% - 3rem)',
+                    margin: '0.75rem 1.5rem 0',
+                    padding: '0.55rem 0.75rem',
+                    background: isGeneratingTheme ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid #DC143C',
+                    borderRadius: '6px',
+                    color: 'rgba(255, 255, 255, 0.85)',
+                    fontSize: '0.95rem',
+                    fontWeight: 500,
+                    fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
+                    cursor: isGeneratingTheme ? 'wait' : 'pointer',
+                    transition: 'all 0.15s ease',
+                    opacity: isGeneratingTheme ? 0.7 : 1,
+                  }}
+                >
+                  <span style={{ fontSize: '0.9rem' }}>✨</span>
+                  <span>{isGeneratingTheme ? 'Generating...' : 'Weekly Theme'}</span>
+                </button>
+              )}
             </div>
 
             {/* Life Areas Section */}

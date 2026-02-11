@@ -78,12 +78,12 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
   if (entries.length === 0) return null
 
   return (
-    <div className="story-carousel bg-white py-8">
+    <div className="story-carousel py-8" style={{ background: '#E8E2D8', borderBottom: '2px solid #DC143C' }}>
       {/* Section Title */}
       {title && (
         <div className="px-4 md:px-6 mb-6 mx-auto">
           <div className="border-t border-b border-neutral-200 py-3">
-            <h2 className="text-sm font-bold tracking-widest text-neutral-900 uppercase" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
+            <h2 className="font-bold tracking-widest text-neutral-900 uppercase" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif", fontSize: '1.5rem', letterSpacing: '0.18em' }}>
               {title}
             </h2>
           </div>

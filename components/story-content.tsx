@@ -1,12 +1,9 @@
 'use client'
 
-import { Entry, WeeklyTheme } from '@/types'
+import { Entry } from '@/types'
 import { HeroStory } from './hero-story'
-import { WeeklyThemeBanner } from './weekly-theme-banner'
-import { MindsetBanner } from './mindset-banner'
 import { StoryCarousel } from './story-carousel'
 import { VanityFairLayout } from './vanity-fair-layout'
-import { deriveMindsetPreset } from '@/lib/mindset'
 
 interface StoryContentProps {
   entries: Entry[]
@@ -14,10 +11,6 @@ interface StoryContentProps {
   onViewEntry: (id: string) => void
   onCreateEntry: () => void
   onGenerateVersions: (id: string) => void
-  weeklyTheme: WeeklyTheme | null
-  onViewTheme: (theme: WeeklyTheme) => void
-  onGenerateWeeklyTheme: () => void
-  isGeneratingTheme: boolean
   categoryEntries: Entry[]
   latestEntries: Entry[]
   pinnedStories: Entry[]
@@ -32,10 +25,6 @@ export function StoryContent({
   onViewEntry,
   onCreateEntry,
   onGenerateVersions,
-  weeklyTheme,
-  onViewTheme,
-  onGenerateWeeklyTheme,
-  isGeneratingTheme,
   categoryEntries,
   latestEntries,
   pinnedStories,
@@ -56,18 +45,6 @@ export function StoryContent({
     filteredCategoryEntries = categoryEntries.filter(e => e.category.toLowerCase() === lifeArea.toLowerCase())
     filteredLatestEntries = latestEntries.filter(e => e.category.toLowerCase() === lifeArea.toLowerCase())
   }
-
-  // Calculate mindset
-  const primaryEntry = filtered[0]
-  const mindset = primaryEntry
-    ? deriveMindsetPreset(
-        (primaryEntry.mood || '').toLowerCase(),
-        (primaryEntry.category || '').toLowerCase()
-      )
-    : {
-        headline: 'Calling all Big Wave Riders',
-        subtitle: 'Step into the day like it is a headline worth remembering.',
-      }
 
   const hasStories = filtered.length > 0
 
@@ -106,54 +83,15 @@ export function StoryContent({
         />
       </div>
 
-      {/* Theme/Mindset Banner */}
-      {weeklyTheme ? (
-        <WeeklyThemeBanner
-          theme={weeklyTheme}
-          onViewTheme={onViewTheme}
-        />
-      ) : (
-        <MindsetBanner
-          headline={mindset.headline}
-          subtitle={mindset.subtitle}
-        />
-      )}
+      {/* Story Carousel - Latest Stories (directly after hero) */}
+      <StoryCarousel
+        entries={filteredLatestEntries.filter(e => (e.entry_type || 'story') === 'story')}
+        title="LATEST STORIES"
+        onViewEntry={onViewEntry}
+      />
 
-      {/* Generate Weekly Theme prompt */}
-      {entries.length >= 7 && !weeklyTheme && (
-        <div style={{ 
-          padding: '1.5rem 2rem', 
-          textAlign: 'center',
-          background: '#F5F0E8',
-        }}>
-          <p style={{ 
-            marginBottom: '1rem', 
-            color: '#666666',
-            fontSize: '0.95rem'
-          }}>
-            You have {entries.length} entries. Generate your weekly theme!
-          </p>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={onGenerateWeeklyTheme}
-            disabled={isGeneratingTheme}
-            style={{ fontSize: '1rem', padding: '0.9rem 2rem' }}
-          >
-            {isGeneratingTheme ? 'Generating...' : '✨ Generate Weekly Theme'}
-          </button>
-        </div>
-      )}
-
-      {/* WHITE SECTION - Latest Stories, Category Layout */}
+      {/* WHITE SECTION - Category Layout */}
       <div className="white-content-section" style={{ background: '#FFFFFF' }}>
-        {/* Story Carousel - Latest Stories */}
-        <StoryCarousel
-          entries={filteredLatestEntries.filter(e => (e.entry_type || 'story') === 'story')}
-          title="LATEST STORIES"
-          onViewEntry={onViewEntry}
-        />
-
         {/* 3-Column Vanity Fair Layout */}
         <VanityFairLayout
           categoryEntries={filteredCategoryEntries}
