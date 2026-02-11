@@ -10,6 +10,7 @@ const categories = [
   'Business',
   'Finance',
   'Health',
+  'Fitness',
   'Spiritual',
   'Fun',
   'Social',

@@ -26,6 +26,7 @@ const lifeAreas = [
   { value: 'Business', label: 'Business' },
   { value: 'Finance', label: 'Finance' },
   { value: 'Health', label: 'Health' },
+  { value: 'Fitness', label: 'Fitness' },
   { value: 'Spiritual', label: 'Spiritual' },
   { value: 'Fun', label: 'Fun' },
   { value: 'Social', label: 'Social' },

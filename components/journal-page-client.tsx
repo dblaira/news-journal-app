@@ -17,6 +17,7 @@ import { VanityFairLayout } from './vanity-fair-layout'
 import { StoryCarousel } from './story-carousel'
 import { TimelineView } from './timeline-view'
 import { SearchChat } from './search-chat'
+import { WorkoutProgram } from './workout-program'
 import { EntryFormModal } from './entry-form-modal'
 import { EntryModal } from './entry-modal'
 import { CaptureFAB } from './capture-fab'
@@ -381,6 +382,10 @@ export function JournalPageClient({
 
   // Render desktop content based on entry type selection
   const renderDesktopContent = () => {
+    // Fitness theme shows workout program
+    if (currentFilter === 'Fitness') {
+      return <WorkoutProgram />
+    }
     // Timeline view takes priority when active
     if (showTimeline) {
       return (
@@ -477,7 +482,7 @@ export function JournalPageClient({
         sidebarExpanded ? 'lg:ml-[260px]' : 'lg:ml-[64px]'
       }`}>
         {/* Desktop Content Header with Breadcrumb (actions only - notes & stories have their own hero) */}
-        {currentEntryType === 'action' && (
+        {currentEntryType === 'action' && currentFilter !== 'Fitness' && (
           <ContentHeader
             entryType={currentEntryType}
             lifeArea={currentFilter}
@@ -487,13 +492,13 @@ export function JournalPageClient({
 
         {/* Desktop Content */}
         <div
-          className={currentEntryType !== 'story' && currentEntryType !== 'note' ? 'desktop-content-padded' : ''}
+          className={currentEntryType !== 'story' && currentEntryType !== 'note' && currentFilter !== 'Fitness' ? 'desktop-content-padded' : ''}
         >
           {renderDesktopContent()}
         </div>
 
-        {/* Footer for desktop non-story/non-note views */}
-        {currentEntryType !== 'story' && currentEntryType !== 'note' && (
+        {/* Footer for desktop non-story/non-note views (not Fitness) */}
+        {currentEntryType !== 'story' && currentEntryType !== 'note' && currentFilter !== 'Fitness' && (
           <footer className="desktop-footer">
             <p>&copy; 2025 Understood.</p>
           </footer>
@@ -502,12 +507,16 @@ export function JournalPageClient({
 
       {/* Mobile Main Content Area - shown on mobile, hidden on lg+ */}
       <main className="block lg:hidden">
-        <div className="hero-section-wrapper">
-          <CategoryNav
-            currentFilter={currentFilter}
-            onFilterChange={setCurrentFilter}
-          />
+        <CategoryNav
+          currentFilter={currentFilter}
+          onFilterChange={setCurrentFilter}
+        />
 
+        {currentFilter === 'Fitness' ? (
+          <WorkoutProgram />
+        ) : (
+          <>
+        <div className="hero-section-wrapper">
           <HeroStory
             entry={filtered[0] || null}
             onCreateEntry={handleCreateEntry}
@@ -575,6 +584,8 @@ export function JournalPageClient({
             <p>&copy; 2025 Understood.</p>
           </footer>
         </div>
+          </>
+        )}
       </main>
 
       {/* Floating Action Button for Quick Capture */}

@@ -47,11 +47,12 @@ export async function middleware(request: NextRequest) {
       error,
     } = await supabase.auth.getUser()
 
-    // Always allow access to login page, auth callback, and debug pages
+    // Always allow access to login page, auth callback, debug pages, and playground
     if (request.nextUrl.pathname === '/login' || 
         request.nextUrl.pathname.startsWith('/auth/') ||
         request.nextUrl.pathname === '/debug-auth' || 
-        request.nextUrl.pathname === '/debug-photo') {
+        request.nextUrl.pathname === '/debug-photo' ||
+        request.nextUrl.pathname.startsWith('/playground/')) {
       // Only redirect away from login if user is definitely authenticated
       if (request.nextUrl.pathname === '/login' && user && !error) {
         return NextResponse.redirect(new URL('/', request.url))
