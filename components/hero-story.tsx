@@ -27,7 +27,7 @@ export function HeroStory({
   if (!entry) {
     return (
       <section className="hero-section">
-        <div className="hero-card hero-card--placeholder">
+        <div className="hero-card hero-card--no-image">
           <div className="hero-card__content">
             <span className="badge">Start here</span>
             <h1>Write your first headline</h1>
@@ -42,7 +42,6 @@ export function HeroStory({
               </button>
             </div>
           </div>
-          <div className="hero-card__media" style={{ background: '#111' }}></div>
         </div>
       </section>
     )
@@ -56,7 +55,7 @@ export function HeroStory({
 
   return (
     <section className="hero-section">
-      <div className="hero-card">
+      <div className={`hero-card${hasRealImage ? '' : ' hero-card--no-image'}`}>
         <div className="hero-card__content">
           <div className="hero-card__meta">
             <span className="category-label">{entry.category}</span>
@@ -89,7 +88,7 @@ export function HeroStory({
             )}
           </div>
         </div>
-        {hasRealImage ? (
+        {hasRealImage && (
           <div className="hero-card__media">
             <img 
               src={imageUrl} 
@@ -101,8 +100,6 @@ export function HeroStory({
               }}
             />
           </div>
-        ) : (
-          <div className="hero-card__media" style={{ background: '#111' }}></div>
         )}
       </div>
     </section>

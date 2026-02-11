@@ -428,6 +428,17 @@ body {
     color: var(--text-hero);
 }
 
+/* When no image: full-width text, no empty space */
+.hero-card--no-image {
+    grid-template-columns: 1fr;
+    min-height: auto;
+}
+
+.hero-card--no-image .hero-card__content {
+    padding: 3rem 3rem 2.5rem;
+    max-width: 800px;
+}
+
 .hero-card__media {
     position: relative;
     overflow: hidden;
