@@ -44,3 +44,6 @@ out/
 /playwright-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Worktree config (local only)
+.worktreeinclude
