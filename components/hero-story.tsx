@@ -76,16 +76,6 @@ export function HeroStory({
             >
               Read Story
             </button>
-            {!entry.versions && !entry.generating_versions && (
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => onGenerateVersions(entry.id)}
-                style={{ color: 'var(--text-hero)', borderColor: 'rgba(255,255,255,0.3)' }}
-              >
-                ✨ Generate Versions
-              </button>
-            )}
           </div>
         </div>
         {hasRealImage && (

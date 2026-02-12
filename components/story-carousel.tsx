@@ -83,7 +83,7 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
       {title && (
         <div className="px-4 md:px-6 mb-6 mx-auto">
           <div className="border-t border-b border-neutral-200 py-3">
-            <h2 className="font-bold tracking-widest text-neutral-900 uppercase" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif", fontSize: '1.5rem', letterSpacing: '0.18em' }}>
+            <h2 className="font-bold text-neutral-900 uppercase" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif", fontSize: '1.5rem', letterSpacing: '0.06em' }}>
               {title}
             </h2>
           </div>
@@ -109,14 +109,14 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
               key={entry.id}
               data-carousel-card
               className="flex-shrink-0 snap-center cursor-pointer group"
-              style={{ width: '300px' }}
+              style={{ width: '420px' }}
               onClick={() => onViewEntry?.(entry.id)}
             >
               {/* Card with image on left, text on right */}
-              <div className="flex gap-4 items-start">
+              <div className="flex gap-5 items-start">
                 {/* Thumbnail — only when entry has a real image */}
                 {hasRealImage && (
-                  <div className="w-24 h-24 flex-shrink-0 overflow-hidden bg-neutral-100">
+                  <div className="flex-shrink-0 overflow-hidden bg-neutral-100" style={{ width: '160px', height: '160px' }}>
                     <img
                       src={imageUrl}
                       alt={entry.headline}
@@ -130,17 +130,17 @@ export function StoryCarousel({ entries, title, onViewEntry }: StoryCarouselProp
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {/* Category */}
-                  <span className="text-xs font-bold tracking-wider text-red-600 uppercase">
+                  <span className="font-bold tracking-wider text-red-600 uppercase" style={{ fontSize: '1rem' }}>
                     {entry.category}
                   </span>
 
                   {/* Headline */}
-                  <h3 className="text-neutral-900 text-base font-semibold leading-tight mt-1 line-clamp-3 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
+                  <h3 className="text-neutral-900 font-semibold leading-snug mt-1 line-clamp-3 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif", fontSize: '1.5rem' }}>
                     {entry.headline}
                   </h3>
 
                   {/* Date */}
-                  <p className="text-xs text-neutral-500 mt-2 uppercase tracking-wide">
+                  <p className="text-neutral-500 mt-2 uppercase tracking-wide" style={{ fontSize: '0.9rem' }}>
                     {formatEntryDateShort(entry.created_at)}
                   </p>
                 </div>
