@@ -14,6 +14,7 @@ import { ImageGallery } from './entry/ImageGallery'
 import { CopyButton } from './ui/copy-button'
 import { SelectionToolbar } from './ui/selection-toolbar'
 import { renderWithHighlights, addHighlight, removeHighlightAt } from '@/lib/utils/highlights'
+import { LiteraryVersion, NewsVersion, getNewsBody, PoeticVersion, FallbackVersion } from './version-renderers'
 
 // Dynamic imports for ReactFlow-based components to avoid SSR issues
 const MindMapCanvas = dynamic(() => import('./mindmap/MindMapCanvas'), { ssr: false })
@@ -1951,84 +1952,50 @@ export function EntryModal({
               // Literary/Personal Essay Style
               if (version.name === 'literary') {
                 return (
-                  <div
-                    key={version.name}
-                    style={{
-                      maxWidth: isMobile ? '100%' : '650px',
-                      margin: '0 auto 2rem',
-                      padding: isMobile ? '1.5rem 1rem' : '2rem 3rem',
-                      background: '#FAF9F6',
-                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)',
-                      minHeight: isMobile ? '300px' : '400px',
-                      position: 'relative',
-                    }}
-                  >
-                    <h4
-                      style={{
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '2px',
-                        marginBottom: '1.5rem',
-                        color: '#8B4513',
-                        textAlign: 'center',
-                      }}
-                    >
-                      {version.title}
-                    </h4>
-                    <SelectionToolbar
-                      onHighlight={(start, end) => handleAddHighlight(version.name, start, end)}
-                    >
-                      <div
-                        style={{
-                          fontFamily: "'Georgia', serif",
-                          fontSize: '1.25rem',
-                          lineHeight: 1.8,
-                          color: '#2c2c2c',
-                          textAlign: 'justify',
-                        }}
+                  <div key={version.name}>
+                    <LiteraryVersion version={version} isMobile={isMobile}>
+                      <SelectionToolbar
+                        onHighlight={(start, end) => handleAddHighlight(version.name, start, end)}
                       >
-                        {highlights.length > 0 ? (
-                          <span style={{ whiteSpace: 'pre-wrap' }}>
-                            {renderWithHighlights(
-                              version.content,
-                              highlights,
-                              (offset) => handleRemoveHighlight(version.name, offset)
-                            )}
-                          </span>
-                        ) : (
-                          <>
-                            {/* Drop cap for first letter */}
-                            <span
-                              style={{
-                                float: 'left',
-                                fontSize: '3.5em',
-                                fontWeight: 'bold',
-                                lineHeight: 0.8,
-                                paddingRight: '8px',
-                                color: '#8b0000',
-                              }}
-                            >
-                              {version.content.charAt(0)}
-                            </span>
+                        <div
+                          style={{
+                            fontFamily: "'Georgia', serif",
+                            fontSize: '1.25rem',
+                            lineHeight: 1.8,
+                            color: '#2c2c2c',
+                            textAlign: 'justify',
+                          }}
+                        >
+                          {highlights.length > 0 ? (
                             <span style={{ whiteSpace: 'pre-wrap' }}>
-                              {version.content.slice(1)}
+                              {renderWithHighlights(
+                                version.content,
+                                highlights,
+                                (offset) => handleRemoveHighlight(version.name, offset)
+                              )}
                             </span>
-                          </>
-                        )}
-                      </div>
-                    </SelectionToolbar>
-                    {/* Decorative separator + copy full version */}
-                    <div
-                      style={{
-                        marginTop: '3rem',
-                        textAlign: 'center',
-                        color: '#9CA3AF',
-                        fontSize: '1.5rem',
-                      }}
-                    >
-                      ❦
-                    </div>
+                          ) : (
+                            <>
+                              <span
+                                style={{
+                                  float: 'left',
+                                  fontSize: '3.5em',
+                                  fontWeight: 'bold',
+                                  lineHeight: 0.8,
+                                  paddingRight: '8px',
+                                  color: '#8b0000',
+                                }}
+                              >
+                                {version.content.charAt(0)}
+                              </span>
+                              <span style={{ whiteSpace: 'pre-wrap' }}>
+                                {version.content.slice(1)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </SelectionToolbar>
+                    </LiteraryVersion>
                     <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
                       <CopyButton value={version.content} label="Copy full version" iconSize={12} className="h-6 w-auto px-1.5 gap-1 text-neutral-400 hover:text-neutral-600" />
                     </div>
@@ -2038,64 +2005,11 @@ export function EntryModal({
 
               // News Feature Style
               if (version.name === 'news') {
-                // Use structured headline/body if available
-                const contentLooksLikeJson = version.content.trim().startsWith('{') || version.content.trim().startsWith('[')
-                const newsHeadline = version.headline || (contentLooksLikeJson ? 'News Feature' : version.content.split('\n')[0])
-                const newsBody = version.body || (contentLooksLikeJson ? version.content : version.content.split('\n').slice(1).join('\n'))
-                
-                return (
-                  <div
-                    key={version.name}
-                    style={{
-                      maxWidth: isMobile ? '100%' : '56rem',
-                      margin: '0 auto 2rem',
-                      background: '#F1F1F1',
-                      color: '#000000',
-                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                      overflow: 'hidden',
-                      minHeight: isMobile ? '300px' : '400px',
-                      border: '1px solid #D1D5DB',
-                      position: 'relative',
-                    }}
-                  >
-                    <div style={{ padding: isMobile ? '1.5rem 1rem' : '2rem 3rem' }}>
-                      <h4
-                        style={{
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '2px',
-                          marginBottom: '1rem',
-                          color: '#6B7280',
-                          textAlign: 'center',
-                        }}
-                      >
-                        {version.title}
-                      </h4>
-                      {/* Double border headline */}
-                      <div
-                        style={{
-                          borderBottom: '3px double #000000',
-                          paddingBottom: '1.5rem',
-                          marginBottom: '1.5rem',
-                        }}
-                      >
-                        <h1
-                          style={{
-                            fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
-                            fontSize: '2.8rem',
-                            fontWeight: 900,
-                            textTransform: 'uppercase',
-                            lineHeight: 1.1,
-                            letterSpacing: '-0.02em',
-                            textAlign: 'center',
-                          }}
-                        >
-                          {newsHeadline}
-                        </h1>
-                      </div>
+                const newsBody = getNewsBody(version)
 
-                      {/* Article body with dateline */}
+                return (
+                  <div key={version.name}>
+                    <NewsVersion version={version} isMobile={isMobile}>
                       <SelectionToolbar
                         onHighlight={(start, end) => handleAddHighlight(version.name, start, end)}
                       >
@@ -2134,9 +2048,9 @@ export function EntryModal({
                           </p>
                         </div>
                       </SelectionToolbar>
-                      <div style={{ textAlign: 'right', marginTop: '1rem' }}>
-                        <CopyButton value={newsBody} label="Copy full version" iconSize={12} className="h-6 w-auto px-1.5 gap-1 text-neutral-400 hover:text-neutral-600" />
-                      </div>
+                    </NewsVersion>
+                    <div style={{ textAlign: 'right', marginTop: '1rem' }}>
+                      <CopyButton value={newsBody} label="Copy full version" iconSize={12} className="h-6 w-auto px-1.5 gap-1 text-neutral-400 hover:text-neutral-600" />
                     </div>
                   </div>
                 )
@@ -2145,100 +2059,41 @@ export function EntryModal({
               // Poetic Style
               if (version.name === 'poetic') {
                 return (
-                  <div
-                    key={version.name}
-                    style={{
-                      maxWidth: isMobile ? '100%' : '40rem',
-                      margin: '0 auto 2rem',
-                      padding: isMobile ? '2rem 1rem' : '3rem 4rem',
-                      background: '#f4ebd0',
-                      boxShadow: 'inset 0 0 80px rgba(139, 69, 19, 0.15), 0 10px 30px rgba(0,0,0,0.1)',
-                      borderRadius: '2px',
-                      minHeight: isMobile ? '250px' : '400px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative',
-                    }}
-                  >
-                    <h4
-                      style={{
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '3px',
-                        marginBottom: '2rem',
-                        color: '#8B7355',
-                      }}
-                    >
-                      {version.title}
-                    </h4>
-                    <SelectionToolbar
-                      onHighlight={(start, end) => handleAddHighlight(version.name, start, end)}
-                    >
-                      <div
-                        style={{
-                          fontFamily: "'Georgia', 'Times New Roman', serif",
-                          fontStyle: 'italic',
-                          fontSize: '1.25rem',
-                          color: '#5c4b37',
-                          textAlign: 'center',
-                          whiteSpace: 'pre-wrap',
-                          lineHeight: 2,
-                          letterSpacing: '0.03em',
-                        }}
+                  <div key={version.name}>
+                    <PoeticVersion version={version} isMobile={isMobile}>
+                      <SelectionToolbar
+                        onHighlight={(start, end) => handleAddHighlight(version.name, start, end)}
                       >
-                        {highlights.length > 0
-                          ? renderWithHighlights(
-                              version.content,
-                              highlights,
-                              (offset) => handleRemoveHighlight(version.name, offset)
-                            )
-                          : version.content}
-                      </div>
-                    </SelectionToolbar>
-                    <div style={{ textAlign: 'right', marginTop: '1.5rem', width: '100%' }}>
-                      <CopyButton value={version.content} label="Copy full version" iconSize={12} className="h-6 w-auto px-1.5 gap-1 text-neutral-400 hover:text-neutral-600" />
-                    </div>
+                        <div
+                          style={{
+                            fontFamily: "'Georgia', 'Times New Roman', serif",
+                            fontStyle: 'italic',
+                            fontSize: '1.25rem',
+                            color: '#5c4b37',
+                            textAlign: 'center',
+                            whiteSpace: 'pre-wrap',
+                            lineHeight: 2,
+                            letterSpacing: '0.03em',
+                          }}
+                        >
+                          {highlights.length > 0
+                            ? renderWithHighlights(
+                                version.content,
+                                highlights,
+                                (offset) => handleRemoveHighlight(version.name, offset)
+                              )
+                            : version.content}
+                        </div>
+                      </SelectionToolbar>
+                    </PoeticVersion>
                   </div>
                 )
               }
 
-              // Fallback for unknown styles
+              // Fallback for unknown styles (humorous, etc.)
               return (
-                <div
-                  key={version.name}
-                  style={{
-                    background: '#f0f9f1',
-                    padding: isMobile ? '1rem' : '2rem',
-                    borderRadius: '8px',
-                    marginBottom: '2rem',
-                    borderLeft: '4px solid #4CAF50',
-                  }}
-                >
-                  <h4
-                    style={{
-                      fontSize: '1rem',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '1px',
-                      marginBottom: '1rem',
-                      color: '#2e7d32',
-                    }}
-                  >
-                    {version.title}
-                  </h4>
-                  <div
-                    style={{
-                      fontSize: '1rem',
-                      lineHeight: 1.8,
-                      color: '#1b5e20',
-                      whiteSpace: 'pre-wrap',
-                    }}
-                  >
-                    {version.content}
-                  </div>
+                <div key={version.name}>
+                  <FallbackVersion version={version} isMobile={isMobile} />
                 </div>
               )
             })}

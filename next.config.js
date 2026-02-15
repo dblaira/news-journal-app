@@ -13,6 +13,8 @@ const nextConfig = {
     'pdf-to-png-converter',
     '@napi-rs/canvas',
     'canvas',
+    'puppeteer-core',
+    '@sparticuz/chromium-min',
   ],
   // Webpack configuration for native modules
   webpack: (config, { isServer }) => {

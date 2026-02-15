@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import PDFDocument from 'pdfkit'
+import {
+  generateEntryPDF as jspdfEntry,
+  generateMultiEntryPDF as jspdfMulti,
+} from '@/lib/pdf/generate-pdf-serverless'
+import {
+  generateEntryPDF as browserEntry,
+  generateMultiEntryPDF as browserMulti,
+} from '@/lib/pdf/generate-pdf-browser'
 import * as XLSX from 'xlsx'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx'
 import { Entry } from '@/types'
 
 export const runtime = 'nodejs'
+export const maxDuration = 60
+
+// Feature flag: set PDF_ENGINE=browser in .env.local to use headless browser
+const useBrowser = process.env.PDF_ENGINE === 'browser'
+const generateEntryPDF = useBrowser ? browserEntry : jspdfEntry
+const generateMultiEntryPDF = useBrowser ? browserMulti : jspdfMulti
 
 type ExportFormat = 'pdf' | 'csv' | 'xlsx' | 'docx'
 
@@ -32,86 +45,12 @@ function formatDate(dateStr: string): string {
   })
 }
 
-// Generate PDF export
+// Generate PDF export — delegates to jsPDF serverless generator (no font file dependencies)
 async function generatePDF(entries: Entry[], title: string): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      margin: 50,
-      size: 'A4',
-    })
-
-    const chunks: Buffer[] = []
-    doc.on('data', (chunk) => chunks.push(chunk))
-    doc.on('end', () => resolve(Buffer.concat(chunks)))
-    doc.on('error', reject)
-
-    // Title page
-    doc.fontSize(28).font('Helvetica-Bold').text(title, { align: 'center' })
-    doc.moveDown()
-    doc.fontSize(12).font('Helvetica').text(`Exported on ${formatDate(new Date().toISOString())}`, { align: 'center' })
-    doc.moveDown()
-    doc.fontSize(10).fillColor('#666').text(`${entries.length} entries`, { align: 'center' })
-    doc.fillColor('#000')
-    
-    // Add entries
-    entries.forEach((entry, index) => {
-      if (index > 0) {
-        doc.addPage()
-      } else {
-        doc.addPage()
-      }
-
-      // Category badge
-      doc.fontSize(10).fillColor('#DC143C').text(entry.category.toUpperCase(), { continued: false })
-      doc.fillColor('#000')
-      doc.moveDown(0.5)
-
-      // Headline
-      doc.fontSize(20).font('Helvetica-Bold').text(entry.headline || 'Untitled')
-      doc.moveDown(0.3)
-
-      // Subheading
-      if (entry.subheading) {
-        doc.fontSize(12).font('Helvetica-Oblique').fillColor('#555').text(entry.subheading)
-        doc.fillColor('#000')
-      }
-      doc.moveDown(0.5)
-
-      // Metadata line
-      doc.fontSize(9).font('Helvetica').fillColor('#888')
-      const metaLine = [
-        formatDate(entry.created_at),
-        entry.entry_type ? `Type: ${entry.entry_type}` : null,
-        entry.mood ? `Mood: ${entry.mood}` : null,
-      ].filter(Boolean).join(' • ')
-      doc.text(metaLine)
-      doc.fillColor('#000')
-      doc.moveDown()
-
-      // Content
-      const content = stripHtml(entry.content || '')
-      doc.fontSize(11).font('Helvetica').text(content, {
-        align: 'left',
-        lineGap: 4,
-      })
-
-      // Versions if available
-      if (entry.versions && entry.versions.length > 0) {
-        doc.moveDown()
-        doc.fontSize(10).font('Helvetica-Bold').text('Enhanced Versions:')
-        doc.moveDown(0.5)
-        
-        entry.versions.forEach((version: any) => {
-          doc.fontSize(9).font('Helvetica-Bold').fillColor('#DC143C').text(`${version.style}:`)
-          doc.fillColor('#000')
-          doc.fontSize(9).font('Helvetica').text(stripHtml(version.content || ''), { indent: 10 })
-          doc.moveDown(0.5)
-        })
-      }
-    })
-
-    doc.end()
-  })
+  if (entries.length === 1) {
+    return generateEntryPDF(entries[0])
+  }
+  return generateMultiEntryPDF(entries)
 }
 
 // Generate CSV export

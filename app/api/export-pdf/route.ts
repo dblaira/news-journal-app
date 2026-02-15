@@ -1,10 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { generateEntryPDF, generateWeeklyPDF, generateMultiEntryPDF } from '@/lib/pdf/generate-pdf-serverless'
+import {
+  generateEntryPDF as jspdfEntry,
+  generateWeeklyPDF as jspdfWeekly,
+  generateMultiEntryPDF as jspdfMulti,
+} from '@/lib/pdf/generate-pdf-serverless'
+import {
+  generateEntryPDF as browserEntry,
+  generateWeeklyPDF as browserWeekly,
+  generateMultiEntryPDF as browserMulti,
+} from '@/lib/pdf/generate-pdf-browser'
 import { Entry, WeeklyTheme } from '@/types'
 
-// PDFKit requires Node.js runtime, not Edge
+// Headless browser requires Node.js runtime
 export const runtime = 'nodejs'
+
+// Allow up to 60s for cold-start Chromium download on Vercel Pro
+export const maxDuration = 60
+
+// Feature flag: set PDF_ENGINE=browser in .env.local to use headless browser
+const useBrowser = process.env.PDF_ENGINE === 'browser'
+
+const generateEntryPDF = useBrowser ? browserEntry : jspdfEntry
+const generateWeeklyPDF = useBrowser ? browserWeekly : jspdfWeekly
+const generateMultiEntryPDF = useBrowser ? browserMulti : jspdfMulti
 
 export async function POST(request: NextRequest) {
   try {
