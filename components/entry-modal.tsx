@@ -1520,32 +1520,39 @@ export function EntryModal({
             )}
           </div>
           
-          {isEditing ? (
-            <TiptapEditor
-              key={`edit-${entry.id}`}
-              content={editedContent}
-              onChange={(html) => setEditedContent(html)}
-              onSave={handleAutoSaveContent}
-              variant="dark"
-              editable={true}
-              autoSaveDelay={2000}
-              placeholder="Write your entry..."
-              entryType={entry.entry_type}
-            />
-          ) : (
-            <div
-              className="rendered-content"
-              onClick={handleEnterEditMode}
-              style={{
-                fontSize: '1rem',
-                lineHeight: 1.85,
-                color: '#1f2333',
-                cursor: 'pointer',
-              }}
-              title="Click to edit"
-              dangerouslySetInnerHTML={{ __html: entry.content }}
-            />
-          )}
+          <SelectionToolbar highlightEnabled={true}>
+            {isEditing ? (
+              <TiptapEditor
+                key={`edit-${entry.id}`}
+                content={editedContent}
+                onChange={(html) => setEditedContent(html)}
+                onSave={handleAutoSaveContent}
+                variant="dark"
+                editable={true}
+                autoSaveDelay={2000}
+                placeholder="Write your entry..."
+                entryType={entry.entry_type}
+              />
+            ) : (
+              <div
+                className="rendered-content"
+                onClick={(e) => {
+                  // Only enter edit mode on plain click, not after text selection
+                  const selection = window.getSelection()
+                  if (selection && selection.toString().trim().length > 0) return
+                  handleEnterEditMode()
+                }}
+                style={{
+                  fontSize: '1rem',
+                  lineHeight: 1.85,
+                  color: '#1f2333',
+                  cursor: 'pointer',
+                }}
+                title="Click to edit · Select text to copy"
+                dangerouslySetInnerHTML={{ __html: entry.content }}
+              />
+            )}
+          </SelectionToolbar>
         </div>
 
         {/* Entry Lineage & Spawn Actions (Water Cycle) */}
