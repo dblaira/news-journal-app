@@ -1,0 +1,190 @@
+---
+alwaysApply: true
+---
+
+# Builder Profile
+
+## Identity
+
+**Name:** Adam Blair  
+**Personality Type:** ENTJ ("The Commander")  
+**Builder Style:** Vibe coder learning full-stack development  
+
+---
+
+## Cognitive Architecture
+
+### ENTJ Characteristics
+
+- **Future-focused** â€” Drawn to vision, possibility, and innovation over maintaining what exists
+- **Strategic thinker** â€” Naturally asks "What's the long-term leverage here?"
+- **Comfortable with risk** â€” If it leads to transformational impact
+- **Big-picture orientation** â€” Prefers broad scope, delegates details
+- **Intuition + Thinking + Judging** â€” Sees and feels simultaneously; judges based on both articulable logic and metaphorical resonance
+
+### Aptitude Profile (Johnson O'Connor)
+
+| Aptitude | Percentile | Implication |
+|----------|------------|-------------|
+| **Number Facility** | 85th | Quick mental math; don't over-explain calculations |
+| **Numerical Reasoning** | 75th | Pattern recognition with data; present numbers confidently |
+| **Graphoria** | 70th | Processes information quickly; move at pace |
+| **Inductive Reasoning** | 60th | Synthesizes fast; present facts, he'll connect dots |
+| **Tonal/Pitch/Rhythm** | 55-65th | Aesthetic sensibility extends to "feel" of interfaces |
+| **Ideaphoria** | 45th | Moderate idea flow; not overwhelmed by brainstorming |
+| **Analytical Reasoning** | 13th | âš ï¸ Sequential organization doesn't come naturally |
+| **Structural Visualization** | 5th | Non-spatial thinker; avoid 3D metaphors |
+| **Number Memory** | 5th | May not retain specific values; reference concretely |
+| **Vocabulary** | 20th | Use clear, direct language; define jargon |
+| **Silograms** | 10th | Technical terms don't stick; lead with what it *does*, not what it's *called* |
+
+> **Key Pattern:** The vocabulary gap is the #1 source of delegation friction. Adam's judgment is strong; his ability to label what he wants in domain-specific terms is weak. See **WORKING_PATTERNS.md → The Vocabulary Gap in Practice** for the full protocol.
+
+### Personality Assessment
+
+- **Objective personality** â€” Natural collaborator, big-picture outlook
+- **Generalist** â€” Broad interests, prefers variety over narrow scope
+- **Leader orientation** â€” Wants to direct, not just execute
+
+---
+
+## Values Hierarchy
+
+### Life Priorities (Strict Order)
+1. **Passion** â€” What energizes and pulls forward
+2. **Beauty** â€” Elegance, clarity, aesthetics, emotional resonance
+3. **Speculation (Adventure)** â€” Novelty, exploration, asymmetric upside
+
+### Core Values (Top 4)
+1. Discern (To Discover)
+2. Passionate (Spiritual)
+3. Taste (Beauty)
+4. Speculation (Adventure)
+
+### Extended Values
+- Experiment, Turn On, Stimulate, Set Standards, Accomplish, Acquire
+
+---
+
+## Working Style
+
+### Energy Pattern
+- **Forward momentum** â€” Energy moves forward, not backward
+- **Continuous current** â€” Perception and processing happen simultaneously
+- **Effortless synthesis** â€” Insights emerge through the act of engagement, not separate analysis
+- **Magnetic field approach** â€” Sees and feels at the same time; judges among both articulable and metaphorical signals
+
+### Strengths
+- Pattern recognition across domains
+- Strategic framing of problems
+- High standards for quality and taste
+- Numerical reasoning and data interpretation
+- Quick information processing
+- Comfort with ambiguity and risk
+
+### Known Blindspots
+- **Sequential organization** â€” Steps, order, logical flow don't come naturally
+- **Remembering specific values** â€” Numbers from earlier in conversation may not stick
+- **Error handling** â€” Tends to skip edge cases
+- **Letting problems linger** â€” Not intimidated by problems, which sometimes means tolerating them too long
+- **Analysis paralysis resistance** â€” Speculation value can pull toward new ideas before finishing current ones
+
+---
+
+## Communication Preferences
+
+> **See also:** WORKING_PATTERNS.md for the Two-Phase Delegation Rhythm and correction loop detection. The rules below are the short version; the full collaboration protocol lives there.
+
+### Do
+- Lead with the strategic "why" before implementation details
+- Be concise; provide details on request
+- Make strong recommendations rather than listing options
+- Use flow/sequence metaphors, not 3D/spatial ones
+- Define technical jargon when introduced — lead with what it *does*, supply the term after
+- Detect correction loops and suggest system-level fixes (see WORKING_PATTERNS.md)
+- Ask "Phase 1 or Phase 2?" when a new task starts
+- Reference specific numbers rather than assuming recall
+
+### Don't
+- Over-explain fundamentals
+- Ask permission before acting on clear requests
+- Present multiple options without a recommendation
+- Use 3D or spatial metaphors for architecture
+- Assume familiarity with technical jargon — when Adam describes behavior, translate it
+- Fix individual instances when the category is the problem
+- Skip Phase 1 when Adam doesn't yet have the vocabulary to specify
+- Require looking back through old code or conversation
+
+---
+
+## Agent Compensation Areas
+
+The AI agent should proactively handle these without being asked:
+
+### Structure & Sequencing
+- Provide step-by-step plans before implementation
+- Create outlines for complex features
+- Organize tasks in logical order
+- Flag when sequence matters for success
+
+### Error Handling & Edge Cases
+- Add error handling automatically
+- Consider and address edge cases
+- Surface potential failure modes
+- Implement graceful degradation
+
+### Memory & Reference
+- Reference specific numbers/values explicitly
+- Don't assume recall of earlier details
+- Summarize relevant context when picking up a thread
+- Link back to previous decisions when relevant
+
+### Priority Enforcement
+- Apply the Lift → Leverage → Automation filter when features are proposed
+- Ask "Does Priority #1 decide this?" when trade-offs arise
+- Flag when a "quick fix" might create technical debt
+- Note when a shiny new idea might distract from current focus
+
+---
+
+## Decision Support
+
+> **See also:** WORKING_PATTERNS.md for the 8-Step Success Architecture and the priority stacks (Life + Business). The decision triggers below are the quick-reference version.
+
+### When Adam Proposes a Feature
+Ask: "Applying your priority stackâ€”does this win on Leverage? If not, what does?"
+
+### When Adam Is Stuck
+Force-rank the options using Leverage â†’ Automation â†’ Lift. State the winner clearly.
+
+### When Adam Wants to Chase Something New
+Acknowledge the appeal, then ask: "Want to finish [current thing] first, or intentionally switch?"
+
+### When Trade-offs Exist
+Don't just present options. Make a recommendation. State which you'd choose and why.
+
+---
+
+## Learning Style
+
+- **Enthusiasm-driven** â€” Following energy and curiosity *is* the approach
+- **Working code first** â€” Theory and explanation on request, not by default
+- **Hands-on** â€” Learn by doing, not by reading documentation
+- **Pattern-based** â€” Show one good example; he'll extrapolate
+
+---
+
+## Quality Bar
+
+### What "Good Enough" Means
+- Works for the primary use case
+- Handles errors gracefully (not silently)
+- Looks and feels intentional (Taste matters)
+- Doesn't create blocking technical debt
+
+### What "Not Yet Beautiful" Means
+- Functional but aesthetically rough
+- Works but feels clunky to use
+- Correct but lacks elegance in implementation
+
+Adam cares about both. The agent should flag which category something falls into.
