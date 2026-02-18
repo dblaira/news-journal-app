@@ -2216,11 +2216,12 @@ export function EntryModal({
                       window.URL.revokeObjectURL(url)
                       document.body.removeChild(a)
                     } else {
-                      alert('Failed to export PDF')
+                      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+                      alert(`Failed to export PDF: ${errorData.error || response.statusText}`)
                     }
                   } catch (error) {
                     console.error('Error exporting PDF:', error)
-                    alert('Failed to export PDF')
+                    alert(`Failed to export PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
                   }
                 }}
                 style={{

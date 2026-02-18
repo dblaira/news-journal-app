@@ -11,15 +11,34 @@ import { Entry } from '@/types'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-// Feature flag: set PDF_ENGINE=browser in .env.local to use headless browser
 const useBrowser = process.env.PDF_ENGINE === 'browser'
+
+type GenerateFn<T extends unknown[]> = (...args: T) => Promise<Buffer>
+
+function withFallback<T extends unknown[]>(
+  browserFn: GenerateFn<T>,
+  jspdfFn: GenerateFn<T>,
+): GenerateFn<T> {
+  return async (...args: T) => {
+    try {
+      return await browserFn(...args)
+    } catch (err) {
+      console.warn('Browser PDF generation failed, retrying with jsPDF:', err)
+      return jspdfFn(...args)
+    }
+  }
+}
 
 async function getPdfGenerators() {
   if (useBrowser) {
-    const mod = await import('@/lib/pdf/generate-pdf-browser')
-    return {
-      generateEntryPDF: mod.generateEntryPDF,
-      generateMultiEntryPDF: mod.generateMultiEntryPDF,
+    try {
+      const mod = await import('@/lib/pdf/generate-pdf-browser')
+      return {
+        generateEntryPDF: withFallback(mod.generateEntryPDF, jspdfEntry),
+        generateMultiEntryPDF: withFallback(mod.generateMultiEntryPDF, jspdfMulti),
+      }
+    } catch (err) {
+      console.warn('Browser PDF engine failed to load, falling back to jsPDF:', err)
     }
   }
   return {
