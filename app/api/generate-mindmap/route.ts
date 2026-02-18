@@ -96,7 +96,7 @@ async function generateMindMap(text: string, apiKey: string): Promise<MindMap> {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: MIND_MAP_SYSTEM_PROMPT,
       messages: [

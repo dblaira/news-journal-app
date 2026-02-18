@@ -16,7 +16,7 @@ A personal journal app that transforms daily entries into a "newsroom" experienc
 
 - Next.js 14 App Router + TypeScript
 - Supabase (PostgreSQL, Auth, Storage)
-- Anthropic Claude API (claude-sonnet-4-20250514)
+- Anthropic Claude API (claude-sonnet-4-6)
 - Vercel (hosting, cron jobs)
 - Sharp for image processing
 
