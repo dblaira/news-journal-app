@@ -5,11 +5,6 @@ import {
   generateWeeklyPDF as jspdfWeekly,
   generateMultiEntryPDF as jspdfMulti,
 } from '@/lib/pdf/generate-pdf-serverless'
-import {
-  generateEntryPDF as browserEntry,
-  generateWeeklyPDF as browserWeekly,
-  generateMultiEntryPDF as browserMulti,
-} from '@/lib/pdf/generate-pdf-browser'
 import { Entry, WeeklyTheme } from '@/types'
 
 // Headless browser requires Node.js runtime
@@ -21,9 +16,21 @@ export const maxDuration = 60
 // Feature flag: set PDF_ENGINE=browser in .env.local to use headless browser
 const useBrowser = process.env.PDF_ENGINE === 'browser'
 
-const generateEntryPDF = useBrowser ? browserEntry : jspdfEntry
-const generateWeeklyPDF = useBrowser ? browserWeekly : jspdfWeekly
-const generateMultiEntryPDF = useBrowser ? browserMulti : jspdfMulti
+async function getGenerators() {
+  if (useBrowser) {
+    const mod = await import('@/lib/pdf/generate-pdf-browser')
+    return {
+      generateEntryPDF: mod.generateEntryPDF,
+      generateWeeklyPDF: mod.generateWeeklyPDF,
+      generateMultiEntryPDF: mod.generateMultiEntryPDF,
+    }
+  }
+  return {
+    generateEntryPDF: jspdfEntry,
+    generateWeeklyPDF: jspdfWeekly,
+    generateMultiEntryPDF: jspdfMulti,
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +43,8 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const { generateEntryPDF, generateWeeklyPDF, generateMultiEntryPDF } = await getGenerators()
 
     const body = await request.json()
     const { type, entryIds, themeId } = body

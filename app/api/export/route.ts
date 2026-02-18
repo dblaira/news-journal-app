@@ -4,10 +4,6 @@ import {
   generateEntryPDF as jspdfEntry,
   generateMultiEntryPDF as jspdfMulti,
 } from '@/lib/pdf/generate-pdf-serverless'
-import {
-  generateEntryPDF as browserEntry,
-  generateMultiEntryPDF as browserMulti,
-} from '@/lib/pdf/generate-pdf-browser'
 import * as XLSX from 'xlsx'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx'
 import { Entry } from '@/types'
@@ -17,8 +13,20 @@ export const maxDuration = 60
 
 // Feature flag: set PDF_ENGINE=browser in .env.local to use headless browser
 const useBrowser = process.env.PDF_ENGINE === 'browser'
-const generateEntryPDF = useBrowser ? browserEntry : jspdfEntry
-const generateMultiEntryPDF = useBrowser ? browserMulti : jspdfMulti
+
+async function getPdfGenerators() {
+  if (useBrowser) {
+    const mod = await import('@/lib/pdf/generate-pdf-browser')
+    return {
+      generateEntryPDF: mod.generateEntryPDF,
+      generateMultiEntryPDF: mod.generateMultiEntryPDF,
+    }
+  }
+  return {
+    generateEntryPDF: jspdfEntry,
+    generateMultiEntryPDF: jspdfMulti,
+  }
+}
 
 type ExportFormat = 'pdf' | 'csv' | 'xlsx' | 'docx'
 
@@ -47,6 +55,7 @@ function formatDate(dateStr: string): string {
 
 // Generate PDF export — delegates to jsPDF serverless generator (no font file dependencies)
 async function generatePDF(entries: Entry[], title: string): Promise<Buffer> {
+  const { generateEntryPDF, generateMultiEntryPDF } = await getPdfGenerators()
   if (entries.length === 1) {
     return generateEntryPDF(entries[0])
   }
