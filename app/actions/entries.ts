@@ -35,6 +35,7 @@ export async function createEntry(input: CreateEntryInput) {
         user_id: user.id,
         versions: null,
         generating_versions: false,
+        skip_auto_generate: input.entry_type === 'connection' ? true : undefined,
       },
     ])
     .select()

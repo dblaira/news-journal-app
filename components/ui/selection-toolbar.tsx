@@ -1,13 +1,15 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { Copy, Check, Highlighter } from 'lucide-react'
+import { Copy, Check, Highlighter, Zap } from 'lucide-react'
 
 interface SelectionToolbarProps {
   /** Called when the user clicks "Highlight" with the selected text range */
   onHighlight?: (start: number, end: number, text: string) => void
   /** Called when the user clicks "Copy" (optional — defaults to clipboard copy) */
   onCopy?: (text: string) => void
+  /** Called when the user clicks "Connect" with the selected text */
+  onConnect?: (text: string) => void
   /** Whether highlighting is enabled (shows the Highlight button) */
   highlightEnabled?: boolean
   /** Content to wrap — the toolbar listens for selections within this content */
@@ -22,6 +24,7 @@ interface ToolbarPosition {
 export function SelectionToolbar({
   onHighlight,
   onCopy,
+  onConnect,
   highlightEnabled = true,
   children,
 }: SelectionToolbarProps) {
@@ -166,6 +169,15 @@ export function SelectionToolbar({
     window.getSelection()?.removeAllRanges()
   }, [onHighlight])
 
+  const handleConnect = useCallback(() => {
+    const data = selectionDataRef.current
+    if (!data) return
+
+    onConnect?.(data.text)
+    setVisible(false)
+    window.getSelection()?.removeAllRanges()
+  }, [onConnect])
+
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
       {children}
@@ -260,6 +272,42 @@ export function SelectionToolbar({
               <Highlighter size={14} />
               <span>Highlight</span>
             </button>
+          )}
+
+          {/* Connect button */}
+          {onConnect && (
+            <>
+              <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.15)' }} />
+              <button
+                onClick={handleConnect}
+                title="Save as Connection"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#a78bfa',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  transition: 'all 0.12s ease',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(167, 139, 250, 0.15)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                <Zap size={14} />
+                <span>Connect</span>
+              </button>
+            </>
           )}
         </div>
       )}

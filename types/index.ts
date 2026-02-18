@@ -1,5 +1,18 @@
 // Entry types for the unified entry system
-export type EntryType = 'story' | 'action' | 'note'
+export type EntryType = 'story' | 'action' | 'note' | 'connection'
+
+// Connection subtypes for the belief library
+export type ConnectionType = 'identity_anchor' | 'pattern_interrupt' | 'validated_principle' | 'process_anchor'
+
+export interface SurfaceConditions {
+  time_of_day?: 'morning' | 'afternoon' | 'evening'
+  days_of_week?: number[]
+  when_mood?: string[]
+  when_energy?: 'low' | 'medium' | 'high'
+  when_category_active?: string[]
+  when_no_entries_hours?: number
+  fixed_schedule?: string
+}
 
 // Re-export multimodal types for convenience
 export type { ImageExtraction, ImageAttachment } from './multimodal'
@@ -49,6 +62,11 @@ export interface Entry {
   pinned_at?: string | null
   // Entry lineage — links to the parent entry that spawned this one (water cycle)
   source_entry_id?: string | null
+  // Connection (belief library) fields
+  connection_type?: ConnectionType | null
+  surface_conditions?: SurfaceConditions | null
+  last_surfaced_at?: string | null
+  surface_count?: number
   // Multimodal capture fields (legacy single-image support)
   image_url?: string
   image_extracted_data?: import('./multimodal').ImageExtraction
@@ -99,6 +117,9 @@ export interface CreateEntryInput {
   recurrence_rule?: string | null
   // Entry lineage
   source_entry_id?: string | null
+  // Connection (belief library) fields
+  connection_type?: ConnectionType | null
+  surface_conditions?: SurfaceConditions | null
   // Multimodal capture fields (legacy single-image support)
   image_url?: string
   image_extracted_data?: import('./multimodal').ImageExtraction

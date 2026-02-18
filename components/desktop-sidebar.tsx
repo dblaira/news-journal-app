@@ -40,6 +40,7 @@ const entryTypes: { value: EntryType; label: string; icon: string }[] = [
   { value: 'story', label: 'Stories', icon: '📰' },
   { value: 'note', label: 'Notes', icon: '📝' },
   { value: 'action', label: 'Actions', icon: '☑' },
+  { value: 'connection', label: 'Connections', icon: '🔗' },
 ]
 
 export function DesktopSidebar({

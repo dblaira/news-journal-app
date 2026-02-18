@@ -10,6 +10,7 @@ export interface InferredEntry {
   // Unified entry system fields
   entry_type: EntryType
   due_date: string | null
+  connection_type: string | null
 }
 
 export async function POST(request: NextRequest) {
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
     const inferred = await inferEntryMetadata(content.trim(), apiKey, documentContent)
 
     // SAFETY NET: If AI returned "story" but content has obvious action patterns, override
+    // Skip override for connections — short declarative statements can look like imperatives
     if (inferred.entry_type === 'story') {
       const actionOverride = detectObviousActionPatterns(content.trim())
       if (actionOverride) {
@@ -68,11 +70,15 @@ export async function POST(request: NextRequest) {
 
     // Only override AI inference if user EXPLICITLY selected a type
     // selectedType will be null if user didn't touch the dropdown
-    if (selectedType && ['story', 'action', 'note'].includes(selectedType)) {
+    if (selectedType && ['story', 'action', 'note', 'connection'].includes(selectedType)) {
       inferred.entry_type = selectedType as EntryType
       // If user explicitly chose non-action type, clear due_date
       if (selectedType !== 'action') {
         inferred.due_date = null
+      }
+      // If user explicitly chose non-connection type, clear connection_type
+      if (selectedType !== 'connection') {
+        inferred.connection_type = null
       }
     }
     // Otherwise, trust the AI inference (which now has improved action detection)
@@ -151,6 +157,14 @@ ${documentSection}
 - Pure information storage (facts, quotes, links, references)
 - NOT tasks, NOT things to do
 
+**"connection"** - USE FOR:
+- A distilled truth, principle, or identity statement
+- Short and declarative (typically under ~50 words)
+- Reads as wisdom, a mantra, or a pattern interrupt rather than narrative
+- Often imperative or present-tense
+- Examples: "Am I building a system or doing a task?", "Feelings aren't facts.", "Work on what I can. Figure out the rest later.", "Anything that gives me a feeling of momentum is worthwhile."
+- NOT a story, NOT a task, NOT reference material — it's a belief or principle
+
 ## Examples - MEMORIZE THESE:
 
 INPUT: "Research Grok Tasks. Take supplements."
@@ -206,8 +220,14 @@ OUTPUT: "story" (pure reflection, no tasks)
 ${content}
 """
 
+6. **connection_type** (only if entry_type is "connection", otherwise null):
+   - "identity_anchor" — reconnect with a settled version of yourself
+   - "pattern_interrupt" — force a zoom-out when in the weeds
+   - "validated_principle" — a conclusion earned through experience
+   - "process_anchor" — a specific sequence for a specific situation
+
 Return ONLY valid JSON:
-{"headline": "...", "subheading": "...", "category": "...", "mood": "...", "entry_type": "...", "due_date": "..." or null}`
+{"headline": "...", "subheading": "...", "category": "...", "mood": "...", "entry_type": "...", "due_date": "..." or null, "connection_type": "..." or null}`
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -269,10 +289,16 @@ Return ONLY valid JSON:
     }
 
     // Validate entry_type
-    const validEntryTypes: EntryType[] = ['story', 'action', 'note']
+    const validEntryTypes: EntryType[] = ['story', 'action', 'note', 'connection']
     const entryType: EntryType = validEntryTypes.includes(parsed.entry_type) 
       ? parsed.entry_type 
       : 'story' // Default to story if not recognized
+
+    // Validate connection_type
+    const validConnectionTypes = ['identity_anchor', 'pattern_interrupt', 'validated_principle', 'process_anchor']
+    const connectionType = (entryType === 'connection' && validConnectionTypes.includes(parsed.connection_type))
+      ? parsed.connection_type
+      : null
 
     // Validate and parse due_date
     let dueDate: string | null = null
@@ -291,6 +317,7 @@ Return ONLY valid JSON:
       mood: parsed.mood || 'reflective',
       entry_type: entryType,
       due_date: dueDate,
+      connection_type: connectionType,
     }
   } catch {
     // If JSON parsing fails, create defaults
@@ -302,6 +329,7 @@ Return ONLY valid JSON:
       mood: 'reflective',
       entry_type: 'story',
       due_date: null,
+      connection_type: null,
     }
   }
 }

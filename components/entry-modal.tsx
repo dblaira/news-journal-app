@@ -15,6 +15,8 @@ import { CopyButton } from './ui/copy-button'
 import { SelectionToolbar } from './ui/selection-toolbar'
 import { renderWithHighlights, addHighlight, removeHighlightAt } from '@/lib/utils/highlights'
 import { LiteraryVersion, NewsVersion, getNewsBody, PoeticVersion, FallbackVersion } from './version-renderers'
+import { ConnectionDetail } from './connection-detail'
+import { ConnectionExtractModal } from './connection-extract-modal'
 
 // Dynamic imports for ReactFlow-based components to avoid SSR issues
 const MindMapCanvas = dynamic(() => import('./mindmap/MindMapCanvas'), { ssr: false })
@@ -114,6 +116,9 @@ export function EntryModal({
   
   // Edit mode is "sticky" - once entered, it can only be exited via explicit user action
   // This prevents accidental exits on mobile from touch events, blur, etc.
+
+  // Connection extraction state
+  const [extractText, setExtractText] = useState<string | null>(null)
 
   // Mind map state
   const [showMindMap, setShowMindMap] = useState(false)
@@ -343,6 +348,11 @@ export function EntryModal({
     // Persist to database
     await updateVersionHighlights(entry.id, versionName, updated)
   }, [versionHighlights, entry.id])
+
+  // Handle "Connect" — open extraction modal with selected text
+  const handleConnect = useCallback((text: string) => {
+    setExtractText(text)
+  }, [])
 
   // Close export menu when clicking outside
   useEffect(() => {
@@ -666,6 +676,19 @@ export function EntryModal({
     } finally {
       setIsRemovingPhoto(false)
     }
+  }
+
+  // Connections get their own dedicated detail view — no versions, no story layout
+  if (entry.entry_type === 'connection') {
+    return (
+      <ConnectionDetail
+        entry={entry}
+        onClose={onClose}
+        onDeleteEntry={onDeleteEntry}
+        onEntryUpdated={onEntryUpdated}
+        onViewEntry={(id) => onViewEntry?.(id)}
+      />
+    )
   }
 
   return (
@@ -1520,7 +1543,7 @@ export function EntryModal({
             )}
           </div>
           
-          <SelectionToolbar highlightEnabled={true}>
+          <SelectionToolbar highlightEnabled={true} onConnect={handleConnect}>
             {isEditing ? (
               <TiptapEditor
                 key={`edit-${entry.id}`}
@@ -1963,6 +1986,7 @@ export function EntryModal({
                     <LiteraryVersion version={version} isMobile={isMobile}>
                       <SelectionToolbar
                         onHighlight={(start, end) => handleAddHighlight(version.name, start, end)}
+                        onConnect={handleConnect}
                       >
                         <div
                           style={{
@@ -2019,6 +2043,7 @@ export function EntryModal({
                     <NewsVersion version={version} isMobile={isMobile}>
                       <SelectionToolbar
                         onHighlight={(start, end) => handleAddHighlight(version.name, start, end)}
+                        onConnect={handleConnect}
                       >
                         <div
                           style={{
@@ -2070,6 +2095,7 @@ export function EntryModal({
                     <PoeticVersion version={version} isMobile={isMobile}>
                       <SelectionToolbar
                         onHighlight={(start, end) => handleAddHighlight(version.name, start, end)}
+                        onConnect={handleConnect}
                       >
                         <div
                           style={{
@@ -2281,6 +2307,20 @@ export function EntryModal({
             onViewEntry?.(id)
           }}
           onClose={() => setShowWatershed(false)}
+        />
+      )}
+
+      {/* Connection extraction modal */}
+      {extractText && (
+        <ConnectionExtractModal
+          selectedText={extractText}
+          sourceEntryId={entry.id}
+          sourceCategory={entry.category}
+          onClose={() => setExtractText(null)}
+          onSaved={(newEntry) => {
+            setExtractText(null)
+            onEntryCreated?.(newEntry)
+          }}
         />
       )}
     </div>

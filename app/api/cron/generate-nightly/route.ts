@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('generating_versions', false)
       .is('versions', null)
+      .neq('skip_auto_generate', true)
+      .neq('entry_type', 'connection')
       .gte('created_at', dateString)
       .order('created_at', { ascending: false })
       .limit(10) // Process up to 10 entries per run

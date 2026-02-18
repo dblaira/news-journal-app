@@ -12,6 +12,7 @@ import { StoryContent } from './story-content'
 import { CategoryNav } from './category-nav'
 import { HeroStory } from './hero-story'
 import { VanityFairLayout } from './vanity-fair-layout'
+import { ConnectionsContent } from './connections-content'
 import { StoryCarousel } from './story-carousel'
 import { TimelineView } from './timeline-view'
 import { SearchChat } from './search-chat'
@@ -397,6 +398,14 @@ export function JournalPageClient({
       case 'note':
         return (
           <NotesContent
+            entries={entries}
+            lifeArea={currentFilter}
+            onViewEntry={handleViewEntry}
+          />
+        )
+      case 'connection':
+        return (
+          <ConnectionsContent
             entries={entries}
             lifeArea={currentFilter}
             onViewEntry={handleViewEntry}
