@@ -34,6 +34,7 @@ const entryTypes: { id: EntryType; label: string; icon: string }[] = [
   { id: 'story', label: 'Story', icon: '📖' },
   { id: 'action', label: 'Action', icon: '✓' },
   { id: 'note', label: 'Note', icon: '📝' },
+  { id: 'connection', label: 'Connection', icon: '🔗' },
 ]
 
 const categories: Entry['category'][] = [
