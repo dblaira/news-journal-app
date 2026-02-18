@@ -12,6 +12,7 @@ const entryTypeLabels: Record<EntryType, string> = {
   action: 'Actions',
   note: 'Notes',
   story: 'Story',
+  connection: 'Connections',
 }
 
 export function ContentHeader({ entryType, lifeArea, issueTagline }: ContentHeaderProps) {
