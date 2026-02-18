@@ -22,7 +22,7 @@ interface TiptapEditorProps {
   autoSaveDelay?: number
   variant?: 'light' | 'dark'
   placeholder?: string
-  entryType?: 'story' | 'action' | 'note'
+  entryType?: 'story' | 'action' | 'note' | 'connection'
   currentEntryId?: string // For excluding current entry from link picker
 }
 

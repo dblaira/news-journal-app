@@ -7,7 +7,7 @@ import { CALLOUT_TYPES, CalloutType } from './extensions/Callout'
 interface ToolbarProps {
   editor: Editor | null
   variant?: 'light' | 'dark'
-  entryType?: 'story' | 'action' | 'note'
+  entryType?: 'story' | 'action' | 'note' | 'connection'
   onOpenEntryPicker?: () => void
 }
 
