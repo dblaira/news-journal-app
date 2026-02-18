@@ -179,7 +179,7 @@ export function DesktopSidebar({
                 fontFamily: 'var(--font-bodoni-moda)',
               }}
             >
-              P
+              U
             </span>
             {/* Badge for action count */}
             {actionCount > 0 && (

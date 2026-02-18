@@ -5,6 +5,12 @@ import { HeroStory } from './hero-story'
 import { StoryCarousel } from './story-carousel'
 import { VanityFairLayout } from './vanity-fair-layout'
 
+const BODONI = "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif"
+
+function getTodayFormatted(): string {
+  return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+}
+
 interface StoryContentProps {
   entries: Entry[]
   lifeArea: string
@@ -73,6 +79,45 @@ export function StoryContent({
 
   return (
     <div style={{ background: '#000000' }}>
+      {/* ── BEIGE HEADER ──────────────────────────────────────── */}
+      <header style={{ background: '#E8E2D8', padding: '3rem 3rem 2.5rem', borderBottom: '3px solid #DC143C' }}>
+        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            alignItems: 'center',
+            fontSize: '0.75rem',
+            letterSpacing: '0.1rem',
+            textTransform: 'uppercase',
+            fontWeight: 600,
+            marginBottom: '1.5rem',
+          }}>
+            <span style={{ color: '#DC143C' }}>
+              {lifeArea === 'all' ? 'All Areas' : lifeArea}
+            </span>
+            <span style={{ color: '#8B8178' }}>
+              {getTodayFormatted()}
+            </span>
+          </div>
+          <h1 style={{
+            fontFamily: BODONI,
+            fontSize: 'clamp(2.8rem, 5.5vw, 4rem)', fontWeight: 400,
+            color: '#DC143C', letterSpacing: '-0.02em', lineHeight: 1.1,
+            margin: '0 0 0.25rem',
+          }}>
+            Stories
+          </h1>
+          <span style={{
+            fontFamily: BODONI,
+            fontSize: 'clamp(1.15rem, 2.3vw, 1.5rem)', fontWeight: 400,
+            color: '#6B7280', letterSpacing: '-0.01em',
+            fontStyle: 'italic',
+          }}>
+            Your personal newsroom
+          </span>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <div className="hero-section-wrapper">
         <HeroStory

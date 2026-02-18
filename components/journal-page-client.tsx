@@ -474,8 +474,8 @@ export function JournalPageClient({
       <main className={`hidden lg:block min-h-screen transition-[margin] duration-300 ${
         sidebarExpanded ? 'lg:ml-[260px]' : 'lg:ml-[64px]'
       }`}>
-        {/* Desktop Content Header with Breadcrumb (actions only - notes & stories have their own hero) */}
-        {currentEntryType === 'action' && currentFilter !== 'Fitness' && (
+        {/* Desktop Content Header with Breadcrumb (non-section views only) */}
+        {currentEntryType !== 'story' && currentEntryType !== 'note' && currentEntryType !== 'connection' && currentEntryType !== 'action' && currentFilter !== 'Fitness' && (
           <ContentHeader
             entryType={currentEntryType}
             lifeArea={currentFilter}
@@ -485,13 +485,13 @@ export function JournalPageClient({
 
         {/* Desktop Content */}
         <div
-          className={currentEntryType !== 'story' && currentEntryType !== 'note' && currentFilter !== 'Fitness' ? 'desktop-content-padded' : ''}
+          className={currentEntryType !== 'story' && currentEntryType !== 'note' && currentEntryType !== 'connection' && currentEntryType !== 'action' && currentFilter !== 'Fitness' && !showTimeline ? 'desktop-content-padded' : ''}
         >
           {renderDesktopContent()}
         </div>
 
-        {/* Footer for desktop non-story/non-note views (not Fitness) */}
-        {currentEntryType !== 'story' && currentEntryType !== 'note' && currentFilter !== 'Fitness' && (
+        {/* Footer for desktop views not handled by section layouts (not Fitness) */}
+        {currentEntryType !== 'story' && currentEntryType !== 'note' && currentEntryType !== 'connection' && currentEntryType !== 'action' && currentFilter !== 'Fitness' && (
           <footer className="desktop-footer">
             <p>&copy; 2025 Understood.</p>
           </footer>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Entry } from '@/types'
 import { formatEntryDateShort, truncate } from '@/lib/utils'
 import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
+import { StoryCarousel } from './story-carousel'
 
 interface ActionsContentProps {
   entries: Entry[]
@@ -160,6 +161,7 @@ function ActionItem({
       onClick={() => onViewEntry(entry.id)}
       style={{
         display: 'flex',
+        flexDirection: 'column',
         width: '100%',
         background: '#FFFFFF',
         border: '1px solid #E5E7EB',
@@ -167,7 +169,7 @@ function ActionItem({
         textAlign: 'left',
         cursor: 'pointer',
         transition: 'all 0.15s ease',
-        marginBottom: '0.5rem',
+        marginBottom: '0.75rem',
         overflow: 'hidden',
       }}
       onMouseEnter={(e) => {
@@ -179,13 +181,13 @@ function ActionItem({
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* Thumbnail */}
+      {/* Full-width header image */}
       {imageUrl && (
         <div style={{
-          flexShrink: 0,
-          width: '72px',
-          minHeight: '72px',
-          background: '#F3F4F6',
+          width: '100%',
+          height: '160px',
+          overflow: 'hidden',
+          position: 'relative',
         }}>
           <img
             src={imageUrl}
@@ -200,11 +202,18 @@ function ActionItem({
               opacity: isCompleted ? 0.5 : 1,
             }}
           />
+          {entry.pinned_at && (
+            <span style={{
+              position: 'absolute',
+              top: '0.5rem',
+              right: '0.5rem',
+              fontSize: '0.85rem',
+            }}>📌</span>
+          )}
         </div>
       )}
 
-      <div style={{ flex: 1, padding: '1rem 1.25rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-        {/* Clickable Checkbox */}
+      <div style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
         <button
           onClick={handleCheckboxClick}
           disabled={isToggling}
@@ -219,7 +228,6 @@ function ActionItem({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginTop: '0px',
             cursor: isToggling ? 'wait' : 'pointer',
             opacity: isToggling ? 0.6 : 1,
             transition: 'all 0.15s ease',
@@ -234,7 +242,6 @@ function ActionItem({
         </button>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Headline */}
           <div
             style={{
               fontSize: '0.95rem',
@@ -248,7 +255,6 @@ function ActionItem({
             {entry.headline}
           </div>
 
-          {/* Preview */}
           {preview && (
             <div
               style={{
@@ -262,7 +268,6 @@ function ActionItem({
             </div>
           )}
 
-          {/* Meta row */}
           <div
             style={{
               display: 'flex',
@@ -272,7 +277,6 @@ function ActionItem({
               color: '#9CA3AF',
             }}
           >
-            {/* Category */}
             <span
               style={{
                 background: '#F3F4F6',
@@ -286,7 +290,6 @@ function ActionItem({
               {entry.category}
             </span>
 
-            {/* Due date */}
             {entry.due_date && !isCompleted && (
               <span style={{ color: isOverdue ? '#DC143C' : '#6B7280', fontWeight: isOverdue ? 600 : 400 }}>
                 {isOverdue ? 'Overdue: ' : 'Due: '}
@@ -294,7 +297,6 @@ function ActionItem({
               </span>
             )}
 
-            {/* Completed date */}
             {entry.completed_at && (
               <span style={{ color: '#10B981' }}>
                 Completed {formatEntryDateShort(entry.completed_at)}
@@ -303,8 +305,8 @@ function ActionItem({
           </div>
         </div>
 
-        {/* Pin indicator */}
-        {entry.pinned_at && (
+        {/* Pin indicator (only when no image -- image cards show pin on the image) */}
+        {entry.pinned_at && !imageUrl && (
           <span style={{ color: '#DC143C', fontSize: '0.9rem' }}>📌</span>
         )}
       </div>
@@ -429,63 +431,141 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
   const tagline = getReflectiveTagline(grouped.today.length, grouped.overdue.length)
   const todayFormatted = getTodayFormatted()
 
-  // Hero header component
+  // Find the first action with an image for the hero
+  const allActions = [...grouped.pinned, ...grouped.today, ...grouped.overdue, ...grouped.upcoming]
+  const heroAction = allActions.find(e => {
+    const { url } = getEntryPosterWithFocalPoint(e)
+    return !!url && !imageErrors.has(e.id)
+  })
+  const heroImage = heroAction ? getEntryPosterWithFocalPoint(heroAction) : null
+  const hasHeroImage = !!heroImage?.url
+
   const HeroHeader = () => (
-    <header
-      style={{
-        marginBottom: '3rem',
-        paddingBottom: '2rem',
-        borderBottom: '1px solid #E5E7EB',
-      }}
-    >
-      {/* Date label */}
-      <div
-        style={{
+    <section style={{ width: '100%' }}>
+      {/* Beige branding area */}
+      <div style={{
+        background: '#E8E2D8',
+        width: '100%',
+        padding: '3rem 3rem 2.5rem',
+      }}>
+        <div style={{
+          display: 'flex',
+          gap: '1rem',
+          alignItems: 'center',
           fontSize: '0.75rem',
-          fontWeight: 500,
-          color: '#DC143C',
-          textTransform: 'uppercase',
           letterSpacing: '0.1rem',
-          marginBottom: '0.5rem',
-        }}
-      >
-        {todayFormatted}
-      </div>
-      
-      {/* Hero title - "Today" */}
-      <h1
-        style={{
+          textTransform: 'uppercase',
+          fontWeight: 600,
+          marginBottom: '1.5rem',
+        }}>
+          <span style={{ color: '#DC143C' }}>
+            {lifeArea === 'all' ? 'All Areas' : lifeArea}
+          </span>
+          <span style={{ color: '#8B8178' }}>
+            {todayFormatted}
+          </span>
+        </div>
+
+        <h1 style={{
           fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
           fontSize: 'clamp(2.8rem, 5.5vw, 4rem)',
           fontWeight: 400,
-          color: '#1A1A1A',
+          color: '#DC143C',
           letterSpacing: '-0.02em',
           lineHeight: 1.1,
           margin: '0 0 0.75rem 0',
-        }}
-      >
-        Today
-      </h1>
-      
-      {/* Reflective tagline */}
-      <p
-        style={{
+        }}>
+          Today
+        </h1>
+
+        <p style={{
           fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
           fontSize: '1.3rem',
           fontStyle: 'italic',
           color: '#6B7280',
           margin: 0,
           lineHeight: 1.4,
-        }}
-      >
-        {tagline}
-      </p>
-    </header>
+        }}>
+          {tagline}
+        </p>
+      </div>
+
+      {/* Black image area (split layout when hero image available) */}
+      {hasHeroImage && heroAction && (
+        <div style={{
+          background: '#000000',
+          width: '100%',
+          borderTop: '3px solid #DC143C',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          minHeight: '320px',
+        }}>
+          <div style={{
+            padding: '2.5rem 3rem',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}>
+            <span style={{
+              color: '#DC143C',
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              letterSpacing: '0.1rem',
+              textTransform: 'uppercase',
+              marginBottom: '0.5rem',
+            }}>
+              {heroAction.category}
+            </span>
+            <h2 style={{
+              fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
+              fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)',
+              fontWeight: 400,
+              color: '#FFFFFF',
+              lineHeight: 1.15,
+              letterSpacing: '-0.02em',
+              margin: 0,
+            }}>
+              {heroAction.headline}
+            </h2>
+            {heroAction.due_date && (
+              <span style={{
+                color: 'rgba(255,255,255,0.4)',
+                fontSize: '0.75rem',
+                marginTop: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05rem',
+              }}>
+                Due {formatEntryDateShort(heroAction.due_date)}
+              </span>
+            )}
+          </div>
+          <div style={{
+            position: 'relative',
+            overflow: 'hidden',
+            minHeight: '320px',
+          }}>
+            <img
+              src={heroImage.url}
+              alt=""
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: heroImage.objectPosition,
+                display: 'block',
+                filter: 'saturate(1.1)',
+              }}
+              onError={() => handleImageError(heroAction.id)}
+            />
+          </div>
+        </div>
+      )}
+    </section>
   )
 
   if (!hasAnyActions) {
     return (
-      <div style={{ padding: '0' }}>
+      <div style={{ background: '#FFFFFF' }}>
         <HeroHeader />
         <div
           style={{
@@ -493,10 +573,8 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '3rem 2rem',
+            padding: '4rem 2rem',
             textAlign: 'center',
-            background: '#FAFAFA',
-            borderRadius: '12px',
           }}
         >
           <div 
@@ -528,9 +606,19 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
   }
 
   return (
-    <div style={{ padding: '0' }}>
+    <div style={{ background: '#FFFFFF' }}>
       <HeroHeader />
+
+      {/* Carousel for quick-swipe on mobile */}
+      {allActions.length > 0 && (
+        <StoryCarousel
+          entries={allActions}
+          title="ACTIONS"
+          onViewEntry={onViewEntry}
+        />
+      )}
       
+      <div style={{ padding: '2.5rem 3rem' }}>
       <ActionSection
         title="Pinned"
         entries={grouped.pinned}
@@ -575,6 +663,7 @@ export function ActionsContent({ entries, lifeArea, onViewEntry, onToggleComplet
         collapsible
         defaultCollapsed
       />
+      </div>
     </div>
   )
 }

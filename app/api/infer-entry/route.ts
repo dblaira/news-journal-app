@@ -58,13 +58,22 @@ export async function POST(request: NextRequest) {
 
     const inferred = await inferEntryMetadata(content.trim(), apiKey, documentContent)
 
-    // SAFETY NET: If AI returned "story" but content has obvious action patterns, override
-    // Skip override for connections — short declarative statements can look like imperatives
+    // SAFETY NET: If AI returned "story", check if it's actually a connection or action
     if (inferred.entry_type === 'story') {
-      const actionOverride = detectObviousActionPatterns(content.trim())
-      if (actionOverride) {
-        console.log('[infer-entry] AI said story, but heuristic detected action patterns')
-        inferred.entry_type = 'action'
+      const trimmed = content.trim()
+
+      // Check connection FIRST — short declarative principles shouldn't become actions
+      const connectionOverride = detectObviousConnectionPatterns(trimmed)
+      if (connectionOverride) {
+        console.log('[infer-entry] AI said story, but heuristic detected connection patterns')
+        inferred.entry_type = 'connection'
+        inferred.connection_type = connectionOverride
+      } else {
+        const actionOverride = detectObviousActionPatterns(trimmed)
+        if (actionOverride) {
+          console.log('[infer-entry] AI said story, but heuristic detected action patterns')
+          inferred.entry_type = 'action'
+        }
       }
     }
 
@@ -345,7 +354,7 @@ function detectObviousActionPatterns(content: string): boolean {
     'organize', 'find', 'look into', 'check', 'review', 'update', 'finish',
     'complete', 'submit', 'pay', 'sign up', 'register', 'cancel', 'return',
     'make', 'do', 'go to', 'visit', 'meet', 'attend', 'follow up', 'reach out',
-    'contact', 'remind', 'remember to', 'don\'t forget', 'need to', 'have to',
+    'contact', 'remind', 'remember to', "don't forget", 'dont forget', 'need to', 'have to',
     'should', 'must', 'workout', 'exercise', 'meditate', 'practice', 'study',
     'read', 'watch', 'listen', 'try', 'test', 'write', 'plan', 'prepare'
   ]
@@ -388,5 +397,52 @@ function detectObviousActionPatterns(content: string): boolean {
   }
   
   return false
+}
+
+// Heuristic safety net to catch short declarative principles the AI misclassified as stories
+function detectObviousConnectionPatterns(content: string): string | null {
+  const lowerContent = content.toLowerCase().trim()
+  const wordCount = content.split(/\s+/).length
+
+  // Connections are short — if it's longer than 50 words, it's not a connection
+  if (wordCount > 50) return null
+
+  // Must be short AND declarative/imperative to be a connection candidate
+  // Long narrative text (even short) with past-tense storytelling isn't a connection
+  const pastTenseNarrative = /\b(i was|i had|i went|we were|we had|it was|there was|yesterday|last night|last week|earlier today i)\b/i
+  if (pastTenseNarrative.test(content)) return null
+
+  // Pattern: starts with "Don't" / "Never" / "Always" / "Stop" + verb — imperative wisdom
+  const imperativeWisdom = /^(don'?t|never|always|stop|start|keep|stay|let|avoid|embrace|accept|trust|remember|focus on|work on|build|choose)\b/i
+  if (wordCount <= 20 && imperativeWisdom.test(content)) {
+    // "Don't forget to X" / "Remember to X" are actions, not connections
+    if (/^(don'?t forget|remember to)\b/i.test(content)) return null
+    return 'pattern_interrupt'
+  }
+
+  // Pattern: short present-tense declarations of truth / identity
+  // e.g., "Feelings aren't facts", "Anything that gives me momentum is worthwhile"
+  const identityPatterns = /\b(i am|i'm|i can|i choose|i deserve|i create|i build|i decide|my job is|my role is)\b/i
+  if (wordCount <= 25 && identityPatterns.test(content)) {
+    return 'identity_anchor'
+  }
+
+  // Pattern: question-form principles — "Am I building a system or doing a task?"
+  if (wordCount <= 25 && content.trim().endsWith('?') && !/(when|where|what time|how much)\b/i.test(content)) {
+    return 'pattern_interrupt'
+  }
+
+  // Pattern: very short (≤12 words) declarative sentence with no task/date words
+  // These are aphorisms: "Less is more.", "Simplicity wins.", "Ship it."
+  const taskDateWords = /\b(tomorrow|today|tonight|next week|by friday|deadline|due|schedule|appointment|meeting|call|email)\b/i
+  if (wordCount <= 12 && !taskDateWords.test(content) && !content.includes('?')) {
+    // Make sure it's not an action — no imperative task verb at start
+    const taskImperatives = /^(buy|call|email|send|text|schedule|book|order|pay|pick up|drop off|fix|clean|cancel)\b/i
+    if (!taskImperatives.test(content)) {
+      return 'validated_principle'
+    }
+  }
+
+  return null
 }
 

@@ -4,6 +4,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { Entry, EntryType } from '@/types'
 import { formatEntryDateShort, truncateHtml } from '@/lib/utils'
 import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
+import { StoryCarousel } from './story-carousel'
+
+const BODONI = "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif"
+
+function getTodayFormatted(): string {
+  return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+}
 
 interface TimelineViewProps {
   entries: Entry[]
@@ -146,31 +153,58 @@ export function TimelineView({
 
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
-      {/* Timeline Header */}
-      <div
-        style={{
-          padding: '2rem 2rem 1rem',
-          borderBottom: '1px solid #E5E7EB',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <h2
-            style={{
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              color: '#111827',
-              margin: 0,
-            }}
-          >
-            All Entries
-          </h2>
-          <span style={{ fontSize: '0.8rem', color: '#9CA3AF' }}>
-            {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
+      {/* ── BEIGE HEADER ──────────────────────────────────────── */}
+      <header style={{ background: '#E8E2D8', padding: '3rem 3rem 2.5rem', borderBottom: '3px solid #DC143C' }}>
+        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            alignItems: 'center',
+            fontSize: '0.75rem',
+            letterSpacing: '0.1rem',
+            textTransform: 'uppercase',
+            fontWeight: 600,
+            marginBottom: '1.5rem',
+          }}>
+            <span style={{ color: '#DC143C' }}>
+              {lifeArea === 'all' ? 'All Areas' : lifeArea}
+            </span>
+            <span style={{ color: '#8B8178' }}>
+              {getTodayFormatted()}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+            <h1 style={{
+              fontFamily: BODONI,
+              fontSize: 'clamp(2.8rem, 5.5vw, 4rem)', fontWeight: 400,
+              color: '#DC143C', letterSpacing: '-0.02em', lineHeight: 1.1,
+              margin: '0 0 0.25rem',
+            }}>
+              All Entries
+            </h1>
+            <span style={{ fontSize: '0.85rem', color: '#8B8178', fontWeight: 500 }}>
+              {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
+            </span>
+          </div>
+          <span style={{
+            fontFamily: BODONI,
+            fontSize: 'clamp(1.15rem, 2.3vw, 1.5rem)', fontWeight: 400,
+            color: '#6B7280', letterSpacing: '-0.01em',
+            fontStyle: 'italic',
+          }}>
+            Your complete archive
           </span>
         </div>
-      </div>
+      </header>
+
+      {/* Carousel for quick-swipe on mobile */}
+      {filtered.length > 0 && (
+        <StoryCarousel
+          entries={filtered.slice(0, 15)}
+          title="LATEST"
+          onViewEntry={onViewEntry}
+        />
+      )}
 
       {/* Month Groups */}
       {monthGroups.map((group) => (
@@ -214,8 +248,7 @@ export function TimelineView({
                   onClick={() => onViewEntry(entry.id)}
                   style={{
                     display: 'flex',
-                    gap: '1rem',
-                    padding: '1rem 2rem',
+                    flexDirection: 'column',
                     borderBottom: '1px solid #F3F4F6',
                     cursor: 'pointer',
                     transition: 'background 0.15s ease',
@@ -227,15 +260,12 @@ export function TimelineView({
                     e.currentTarget.style.background = 'transparent'
                   }}
                 >
-                  {/* Thumbnail — only when entry has a real image */}
                   {hasRealImage && (
                     <div
                       style={{
-                        width: '72px',
-                        height: '72px',
-                        flexShrink: 0,
+                        width: '100%',
+                        height: '180px',
                         overflow: 'hidden',
-                        borderRadius: '4px',
                       }}
                     >
                       <img
@@ -252,8 +282,7 @@ export function TimelineView({
                     </div>
                   )}
 
-                  {/* Content */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ padding: '1rem 2rem', flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                       <span
                         style={{

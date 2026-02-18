@@ -157,7 +157,7 @@ function TrendingCard({ entry, onViewEntry, onImageError }: {
       onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
     >
       {hasImage && (
-        <div style={{ width: '100%', height: '150px' }}>
+        <div style={{ width: '100%', height: '200px' }}>
           <img
             src={imageUrl}
             alt={entry.headline}
@@ -228,7 +228,7 @@ function TrendingCard({ entry, onViewEntry, onImageError }: {
   )
 }
 
-// CENTER COLUMN: Headline notes — float on uniform black
+// CENTER COLUMN: Headline notes — float on beige background
 function HeadlineCard({ entry, onViewEntry, onImageError }: {
   entry: Entry
   onViewEntry: (id: string) => void
@@ -246,7 +246,7 @@ function HeadlineCard({ entry, onViewEntry, onImageError }: {
       onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
     >
       {hasImage && (
-        <div style={{ width: '100%', height: '180px', position: 'relative', marginBottom: '0.75rem' }}>
+        <div style={{ width: '100%', height: '280px', position: 'relative', marginBottom: '0.75rem' }}>
           <img
             src={imageUrl}
             alt={entry.headline}
@@ -278,14 +278,14 @@ function HeadlineCard({ entry, onViewEntry, onImageError }: {
 
       <div style={{
         fontFamily: BODONI,
-        fontSize: '1.25rem', fontWeight: 400, color: '#FFFFFF',
+        fontSize: '1.25rem', fontWeight: 400, color: '#1A1A1A',
         lineHeight: 1.3, marginBottom: '0.45rem', letterSpacing: '-0.01em',
       }}>
         {entry.headline}
       </div>
 
       <div style={{
-        fontSize: '0.8rem', color: 'rgba(255,255,255,0.65)',
+        fontSize: '0.8rem', color: '#6B7280',
         lineHeight: 1.6, marginBottom: '0.6rem',
       }}>
         {truncate(plainText, 300)}
@@ -302,11 +302,11 @@ function HeadlineCard({ entry, onViewEntry, onImageError }: {
             }}>
               {entry.category}
             </span>
-            <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1 }}>
+            <span style={{ fontSize: '0.65rem', color: '#9CA3AF', lineHeight: 1 }}>
               {formatEntryDateShort(entry.created_at)}
             </span>
             {entry.mood && (
-              <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1 }}>
+              <span style={{ fontSize: '0.65rem', color: '#9CA3AF', lineHeight: 1 }}>
                 &middot; {entry.mood}
               </span>
             )}
@@ -317,10 +317,10 @@ function HeadlineCard({ entry, onViewEntry, onImageError }: {
       {entry.source_entry_id && (
         <div style={{
           marginTop: '0.5rem', paddingTop: '0.45rem',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
-          fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)',
+          borderTop: '1px solid rgba(0,0,0,0.08)',
+          fontSize: '0.58rem', color: '#9CA3AF',
         }}>
-          ↑ <span style={{ color: '#E8857A', fontWeight: 500 }}>Linked entry</span>
+          ↑ <span style={{ color: RED, fontWeight: 500 }}>Linked entry</span>
         </div>
       )}
     </div>
@@ -341,15 +341,16 @@ function OpinionCard({ entry, onViewEntry, onImageError }: {
     <div
       onClick={() => onViewEntry(entry.id)}
       style={{
-        display: 'flex', gap: '0.6rem', padding: '0.6rem',
+        display: 'flex', flexDirection: 'column',
         background: '#FFFFFF', border: '1px solid #E8E5DF', borderRadius: 0,
         cursor: 'pointer', transition: 'all 0.15s ease', marginBottom: '0.4rem',
+        overflow: 'hidden',
       }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#D1CCC4'; e.currentTarget.style.background = '#FDFCFA' }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E8E5DF'; e.currentTarget.style.background = '#FFFFFF' }}
     >
       {hasImage && (
-        <div style={{ flexShrink: 0, width: '56px', height: '56px', borderRadius: 0, overflow: 'hidden' }}>
+        <div style={{ width: '100%', height: '120px', overflow: 'hidden' }}>
           <img
             src={imageUrl}
             alt=""
@@ -359,7 +360,7 @@ function OpinionCard({ entry, onViewEntry, onImageError }: {
         </div>
       )}
 
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ padding: '0.6rem' }}>
         <div style={{
           fontFamily: BODONI,
           fontSize: '0.88rem', fontWeight: 600, color: '#1F2937', lineHeight: 1.3,
@@ -456,13 +457,31 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
 
   return (
     <div style={{ background: '#FFFFFF' }}>
-      {/* ── BLACK HEADER ──────────────────────────────────────── */}
-      <header style={{ background: '#111111', padding: '2rem 1.5rem 1.5rem' }}>
+      {/* ── BEIGE HEADER ──────────────────────────────────────── */}
+      <header style={{ background: '#E8E2D8', padding: '3rem 3rem 2.5rem' }}>
         <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+          {/* Life area + date label */}
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            alignItems: 'center',
+            fontSize: '0.75rem',
+            letterSpacing: '0.1rem',
+            textTransform: 'uppercase',
+            fontWeight: 600,
+            marginBottom: '1.5rem',
+          }}>
+            <span style={{ color: '#DC143C' }}>
+              {lifeArea === 'all' ? 'All Areas' : lifeArea}
+            </span>
+            <span style={{ color: '#8B8178' }}>
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </span>
+          </div>
           <h1 style={{
             fontFamily: BODONI,
             fontSize: 'clamp(2.8rem, 5.5vw, 4rem)', fontWeight: 400,
-            color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.1,
+            color: '#DC143C', letterSpacing: '-0.02em', lineHeight: 1.1,
             margin: '0 0 0.25rem',
           }}>
             Notes
@@ -470,7 +489,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
           <span style={{
             fontFamily: BODONI,
             fontSize: 'clamp(1.15rem, 2.3vw, 1.5rem)', fontWeight: 400,
-            color: '#FFFFFF', letterSpacing: '-0.01em',
+            color: '#6B7280', letterSpacing: '-0.01em',
             fontStyle: 'italic',
           }}>
             From story to story
@@ -490,7 +509,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
             <div style={{ position: 'absolute', top: 0, left: '-100vw', width: '100vw', height: '3px', background: RED }} />
           </div>
           <div style={{ background: '#FFFFFF', borderTop: `3px solid ${RED}` }} />
-          <div style={{ background: '#111111', borderLeft: `3px solid ${RED}` }} />
+          <div style={{ background: '#E8E2D8', borderLeft: `3px solid ${RED}` }} />
           <div style={{ background: '#F5F2ED', boxShadow: '100vw 0 0 0 #F5F2ED', borderTop: `3px solid ${RED}` }}>
             <div style={{ position: 'absolute', top: 0, right: '-100vw', width: '100vw', height: '3px', background: RED }} />
           </div>
@@ -585,13 +604,13 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
           </div>
 
           {/* CENTER COLUMN: Headline */}
-          <div style={{ padding: '1.25rem 1.5rem 2rem', overflow: 'hidden', minWidth: 0, overflowWrap: 'break-word' as const }}>
+          <div style={{ paddingTop: '0.25rem', paddingLeft: '1.5rem', paddingRight: '1.5rem', paddingBottom: '2rem', minWidth: 0, overflowWrap: 'break-word' as const }}>
             <h2 style={{
               fontFamily: BODONI,
-              margin: '0 0 0.75rem', fontSize: '0.85rem', fontWeight: 700,
-              color: RED, textTransform: 'uppercase', letterSpacing: '0.14rem',
-              paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)',
-              textAlign: 'center',
+              margin: '0 0 1rem', fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 400,
+              color: RED, textTransform: 'uppercase', letterSpacing: '0.06rem',
+              paddingBottom: '0.75rem', borderBottom: '1px solid rgba(0,0,0,0.1)',
+              textAlign: 'center', lineHeight: 1,
             }}>
               Headline
               <span style={{
@@ -604,7 +623,7 @@ export function NotesContent({ entries, lifeArea, onViewEntry }: NotesContentPro
             </h2>
 
             {headline.length === 0 && (
-              <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic' }}>
+              <p style={{ fontSize: '0.75rem', color: '#9CA3AF', fontStyle: 'italic' }}>
                 Pin your most important notes to make them headlines.
               </p>
             )}

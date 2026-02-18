@@ -361,14 +361,10 @@ li[data-type="taskItem"]::marker {
   padding: 0;
 }
 
-/* Preview truncation styles */
+/* Preview fills remaining hero space */
 .hero-preview {
-  display: -webkit-box;
-  -webkit-line-clamp: 6;
-  line-clamp: 6;
-  -webkit-box-orient: vertical;
+  flex-grow: 1;
   overflow: hidden;
-  max-height: 12em;
 }
 
 .hero-preview h1,
