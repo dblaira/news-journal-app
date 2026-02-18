@@ -34,27 +34,32 @@ export async function POST(request: NextRequest) {
 }
 
 async function generateAllVersions(entry: Entry, apiKey: string) {
+  const plainText = entry.content.replace(/<[^>]*>/g, '').trim()
+  const wordCount = plainText.split(/\s+/).filter(Boolean).length
+
+  const maxTokens = Math.max(300, Math.round(wordCount * 2 * 3))
+
   const styles = [
     {
       name: 'literary',
       title: 'Literary/Personal Essay',
-      prompt: createLiteraryPrompt(entry),
+      prompt: createLiteraryPrompt(entry, wordCount),
     },
     {
       name: 'news',
       title: 'News Feature',
-      prompt: createNewsPrompt(entry),
+      prompt: createNewsPrompt(entry, wordCount),
     },
     {
       name: 'poetic',
       title: 'Poetic',
-      prompt: createPoeticPrompt(entry),
+      prompt: createPoeticPrompt(entry, wordCount),
     },
   ]
 
   const results = await Promise.all(
     styles.map(async (style) => {
-      const content = await callClaudeAPI(style.prompt, apiKey)
+      const content = await callClaudeAPI(style.prompt, apiKey, maxTokens)
       
       // Parse structured JSON response for news style
       if (style.name === 'news') {
@@ -99,7 +104,7 @@ async function generateAllVersions(entry: Entry, apiKey: string) {
   return results
 }
 
-async function callClaudeAPI(prompt: string, apiKey: string): Promise<string> {
+async function callClaudeAPI(prompt: string, apiKey: string, maxTokens: number = 2000): Promise<string> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -109,7 +114,7 @@ async function callClaudeAPI(prompt: string, apiKey: string): Promise<string> {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
+      max_tokens: maxTokens,
       messages: [
         {
           role: 'user',
@@ -133,7 +138,7 @@ async function callClaudeAPI(prompt: string, apiKey: string): Promise<string> {
   return data.content[0].text
 }
 
-function createPoeticPrompt(entry: Entry): string {
+function createPoeticPrompt(entry: Entry, wordCount: number): string {
   return `Transform this journal entry into a poetic style. Use evocative imagery, rhythm, and carefully chosen language. Make it feel contemplative and artistic without being fragmented or disjointed.
 
 Entry:
@@ -145,6 +150,13 @@ Mood: ${entry.mood || 'not specified'}
 Content:
 ${entry.content}
 
+CRITICAL LENGTH RULE:
+The original entry is approximately ${wordCount} words.
+Your rewrite MUST be approximately ${wordCount} words (within 20% either direction).
+A 40-word entry gets a 35-50 word rewrite. A 200-word entry gets a 160-240 word rewrite.
+Do not inflate, pad, or expand beyond the original's scale.
+The voice changes. The length does not.
+
 IMPORTANT FORMATTING RULES:
 - Write ONLY the poetic version
 - Do NOT include a title, heading, or any introductory line
@@ -154,7 +166,7 @@ IMPORTANT FORMATTING RULES:
 - Use plain text only`
 }
 
-function createNewsPrompt(entry: Entry): string {
+function createNewsPrompt(entry: Entry, wordCount: number): string {
   return `Rewrite this journal entry as a compelling news feature article in the style of the New York Times. Use journalistic structure and make it feel significant. IMPORTANT: Only include facts and details that are explicitly present in the original entry—do not invent quotes, statistics, or embellish with fabricated details.
 
 Entry:
@@ -166,6 +178,13 @@ Mood: ${entry.mood || 'not specified'}
 Content:
 ${entry.content}
 
+CRITICAL LENGTH RULE:
+The original entry is approximately ${wordCount} words.
+Your rewrite MUST be approximately ${wordCount} words (within 20% either direction).
+A 40-word entry gets a 35-50 word rewrite. A 200-word entry gets a 160-240 word rewrite.
+Do not inflate, pad, or expand beyond the original's scale.
+The voice changes. The length does not.
+
 Return your response as valid JSON with this exact structure:
 {
   "headline": "Your compelling news headline here",
@@ -175,7 +194,7 @@ Return your response as valid JSON with this exact structure:
 Write ONLY the JSON object. No preamble, explanation, or markdown formatting.`
 }
 
-function createLiteraryPrompt(entry: Entry): string {
+function createLiteraryPrompt(entry: Entry, wordCount: number): string {
   return `Rewrite this journal entry as a literary personal essay. Make it thoughtful, introspective, and beautifully written. Keep metaphors sparse so each one carries more weight. Explore the deeper meanings and universal themes with a lean, economical prose style.
 
 Entry:
@@ -186,6 +205,13 @@ Mood: ${entry.mood || 'not specified'}
 
 Content:
 ${entry.content}
+
+CRITICAL LENGTH RULE:
+The original entry is approximately ${wordCount} words.
+Your rewrite MUST be approximately ${wordCount} words (within 20% either direction).
+A 40-word entry gets a 35-50 word rewrite. A 200-word entry gets a 160-240 word rewrite.
+Do not inflate, pad, or expand beyond the original's scale.
+The voice changes. The length does not.
 
 IMPORTANT FORMATTING RULES:
 - Write ONLY the essay body text
