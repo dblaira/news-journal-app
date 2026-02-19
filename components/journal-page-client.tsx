@@ -409,6 +409,7 @@ export function JournalPageClient({
             entries={entries}
             lifeArea={currentFilter}
             onViewEntry={handleViewEntry}
+            userId={userId}
           />
         )
       case 'story':
@@ -427,6 +428,89 @@ export function JournalPageClient({
             pinnedActions={pinnedActions}
             onNavigateToSection={(type) => setCurrentEntryType(type)}
           />
+        )
+    }
+  }
+
+  const renderMobileContent = () => {
+    if (currentFilter === 'Fitness') {
+      return <WorkoutProgram />
+    }
+
+    if (showTimeline) {
+      return (
+        <TimelineView
+          entries={entries}
+          lifeArea={currentFilter}
+          entryType={currentEntryType}
+          searchQuery={searchQuery}
+          onViewEntry={handleViewEntry}
+        />
+      )
+    }
+
+    switch (currentEntryType) {
+      case 'action':
+        return (
+          <ActionsContent
+            entries={entries}
+            lifeArea={currentFilter}
+            onViewEntry={handleViewEntry}
+            onToggleComplete={handleToggleComplete}
+          />
+        )
+      case 'note':
+        return (
+          <NotesContent
+            entries={entries}
+            lifeArea={currentFilter}
+            onViewEntry={handleViewEntry}
+          />
+        )
+      case 'connection':
+        return (
+          <ConnectionsContent
+            entries={entries}
+            lifeArea={currentFilter}
+            onViewEntry={handleViewEntry}
+            userId={userId}
+          />
+        )
+      case 'story':
+      default:
+        return (
+          <>
+            <div className="hero-section-wrapper">
+              <HeroStory
+                entry={filtered[0] || null}
+                onCreateEntry={handleCreateEntry}
+                onViewEntry={handleViewEntry}
+                onGenerateVersions={handleGenerateVersions}
+              />
+            </div>
+
+            <StoryCarousel
+              entries={latestEntries}
+              title="LATEST STORIES"
+              onViewEntry={handleViewEntry}
+            />
+
+            <div className="white-content-section" style={{ background: '#FFFFFF' }}>
+              <VanityFairLayout
+                categoryEntries={categoryEntries}
+                latestEntries={latestEntries}
+                pinnedStories={pinnedStories}
+                pinnedNotes={pinnedNotes}
+                pinnedActions={pinnedActions}
+                onViewEntry={handleViewEntry}
+                onNavigateToSection={(type) => setCurrentEntryType(type)}
+              />
+
+              <footer>
+                <p>&copy; 2025 Understood.</p>
+              </footer>
+            </div>
+          </>
         )
     }
   }
@@ -507,44 +591,7 @@ export function JournalPageClient({
           onFilterChange={setCurrentFilter}
         />
 
-        {currentFilter === 'Fitness' ? (
-          <WorkoutProgram />
-        ) : (
-          <>
-        <div className="hero-section-wrapper">
-          <HeroStory
-            entry={filtered[0] || null}
-            onCreateEntry={handleCreateEntry}
-            onViewEntry={handleViewEntry}
-            onGenerateVersions={handleGenerateVersions}
-          />
-        </div>
-
-        {/* Story Carousel - Latest Stories (directly after hero) */}
-        <StoryCarousel
-          entries={latestEntries}
-          title="LATEST STORIES"
-          onViewEntry={handleViewEntry}
-        />
-
-        {/* WHITE SECTION - Category Layout, Footer */}
-        <div className="white-content-section" style={{ background: '#FFFFFF' }}>
-          <VanityFairLayout
-            categoryEntries={categoryEntries}
-            latestEntries={latestEntries}
-            pinnedStories={pinnedStories}
-            pinnedNotes={pinnedNotes}
-            pinnedActions={pinnedActions}
-            onViewEntry={handleViewEntry}
-            onNavigateToSection={(type) => setCurrentEntryType(type)}
-          />
-
-          <footer>
-            <p>&copy; 2025 Understood.</p>
-          </footer>
-        </div>
-          </>
-        )}
+        {renderMobileContent()}
       </main>
 
       {/* Floating Action Button for Quick Capture */}

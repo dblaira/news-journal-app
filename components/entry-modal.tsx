@@ -686,6 +686,7 @@ export function EntryModal({
         onClose={onClose}
         onDeleteEntry={onDeleteEntry}
         onEntryUpdated={onEntryUpdated}
+        onPinToggled={onPinToggled}
         onViewEntry={(id) => onViewEntry?.(id)}
       />
     )

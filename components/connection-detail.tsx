@@ -3,13 +3,14 @@
 import { useState, useCallback } from 'react'
 import { Entry, ConnectionType, SurfaceConditions } from '@/types'
 import { stripHtml, formatEntryDateLong } from '@/lib/utils'
-import { updateEntryDetails } from '@/app/actions/entries'
+import { updateEntryDetails, togglePin } from '@/app/actions/entries'
 
 interface ConnectionDetailProps {
   entry: Entry
   onClose: () => void
   onDeleteEntry: (id: string) => void
   onEntryUpdated?: (entryId: string, updates: Partial<Entry>) => void
+  onPinToggled?: (entryId: string, isPinned: boolean) => void
   onViewEntry?: (entryId: string) => void
   sourceEntry?: Entry | null
 }
@@ -30,6 +31,7 @@ export function ConnectionDetail({
   onClose,
   onDeleteEntry,
   onEntryUpdated,
+  onPinToggled,
   onViewEntry,
   sourceEntry,
 }: ConnectionDetailProps) {
@@ -39,6 +41,29 @@ export function ConnectionDetail({
   const [conditions, setConditions] = useState<SurfaceConditions>(entry.surface_conditions ?? {})
   const [isSaving, setIsSaving] = useState(false)
   const [showConditions, setShowConditions] = useState(false)
+  const [isPinned, setIsPinned] = useState(!!entry.pinned_at)
+  const [isPinning, setIsPinning] = useState(false)
+
+  const handleTogglePin = useCallback(async () => {
+    const previousState = isPinned
+    setIsPinned(!isPinned)
+    setIsPinning(true)
+
+    try {
+      const result = await togglePin(entry.id)
+      if (result.error) {
+        setIsPinned(previousState)
+        alert(result.error)
+      } else {
+        onPinToggled?.(entry.id, result.pinned ?? !previousState)
+      }
+    } catch (error) {
+      setIsPinned(previousState)
+      console.error('Failed to toggle pin:', error)
+    } finally {
+      setIsPinning(false)
+    }
+  }, [isPinned, entry.id, onPinToggled])
 
   const handleSave = useCallback(async () => {
     setIsSaving(true)
@@ -97,23 +122,47 @@ export function ConnectionDetail({
         padding: '2rem',
         position: 'relative',
       }}>
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            background: 'transparent',
-            border: 'none',
-            fontSize: '1.25rem',
-            cursor: 'pointer',
-            color: '#9CA3AF',
-            padding: '0.25rem',
-          }}
-        >
-          &times;
-        </button>
+        {/* Top-right actions */}
+        <div style={{
+          position: 'absolute',
+          top: '1rem',
+          right: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.25rem',
+        }}>
+          <button
+            onClick={handleTogglePin}
+            disabled={isPinning}
+            title={isPinned ? 'Unpin from hero' : 'Pin to hero'}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: '1.1rem',
+              cursor: isPinning ? 'not-allowed' : 'pointer',
+              padding: '0.25rem 0.4rem',
+              borderRadius: '6px',
+              transition: 'background 0.15s ease',
+              opacity: isPinning ? 0.5 : 1,
+              color: isPinned ? '#DC143C' : '#9CA3AF',
+            }}
+          >
+            {isPinned ? '\u{1F4CC}' : '\u{1F4CC}'}
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: '1.25rem',
+              cursor: 'pointer',
+              color: '#9CA3AF',
+              padding: '0.25rem',
+            }}
+          >
+            &times;
+          </button>
+        </div>
 
         {/* Connection text */}
         <div style={{ marginBottom: '1.5rem' }}>
