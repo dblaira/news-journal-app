@@ -11,6 +11,8 @@ interface MobileMenuProps {
   onEntryTypeChange: (type: string | null) => void
   onLogout?: () => void
   onCompose?: () => void
+  showTimeline?: boolean
+  onToggleTimeline?: () => void
 }
 
 const categories = [
@@ -26,9 +28,10 @@ const categories = [
 ]
 
 const entryTypes = [
-  { value: 'action', label: 'Actions' },
-  { value: 'note', label: 'Notes' },
-  { value: 'story', label: 'Story' },
+  { value: 'story', label: 'Stories', icon: '📰' },
+  { value: 'note', label: 'Notes', icon: '📝' },
+  { value: 'action', label: 'Actions', icon: '☑' },
+  { value: 'connection', label: 'Connections', icon: '🔗' },
 ]
 
 export function MobileMenu({
@@ -40,6 +43,8 @@ export function MobileMenu({
   onEntryTypeChange,
   onLogout,
   onCompose,
+  showTimeline = false,
+  onToggleTimeline,
 }: MobileMenuProps) {
   // Prevent body scroll when menu is open
   useEffect(() => {
@@ -124,12 +129,47 @@ export function MobileMenu({
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {/* Categories section */}
+        {/* ── ENTRIES SECTION (primary) ─────────────────────── */}
+
+        {/* All Entries */}
+        {onToggleTimeline && (
+          <button
+            onClick={() => {
+              onToggleTimeline()
+              onClose()
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              width: '100%',
+              padding: '1rem 0',
+              background: 'transparent',
+              border: 'none',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              color: showTimeline ? '#DC143C' : '#FFFFFF',
+              fontSize: '1rem',
+              fontWeight: 600,
+              letterSpacing: '0.15rem',
+              textTransform: 'uppercase',
+              textAlign: 'left',
+              cursor: 'pointer',
+              transition: 'color 0.2s ease',
+            }}
+          >
+            <span>📅 All Entries</span>
+            {showTimeline && (
+              <span style={{ marginLeft: 'auto', color: '#DC143C' }}>●</span>
+            )}
+          </button>
+        )}
+
+        {/* Entry Types */}
         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {categories.map((category) => (
-            <li key={category}>
+          {entryTypes.map((type) => (
+            <li key={type.value}>
               <button
-                onClick={() => handleCategoryClick(category)}
+                onClick={() => handleEntryTypeClick(type.value)}
                 style={{
                   display: 'block',
                   width: '100%',
@@ -137,7 +177,7 @@ export function MobileMenu({
                   background: 'transparent',
                   border: 'none',
                   borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: currentFilter === category ? '#DC143C' : '#FFFFFF',
+                  color: currentEntryType === type.value && !showTimeline ? '#DC143C' : '#FFFFFF',
                   fontSize: '1rem',
                   fontWeight: 600,
                   letterSpacing: '0.15rem',
@@ -147,8 +187,8 @@ export function MobileMenu({
                   transition: 'color 0.2s ease',
                 }}
               >
-                {category === 'all' ? 'All' : category}
-                {currentFilter === category && (
+                <span>{type.icon} {type.label}</span>
+                {currentEntryType === type.value && !showTimeline && (
                   <span style={{ float: 'right', color: '#DC143C' }}>●</span>
                 )}
               </button>
@@ -165,7 +205,7 @@ export function MobileMenu({
           }}
         />
 
-        {/* Entry Types section */}
+        {/* ── LIFE AREAS / THEMES SECTION (secondary) ──────── */}
         <div
           style={{
             color: 'rgba(255, 255, 255, 0.5)',
@@ -176,13 +216,13 @@ export function MobileMenu({
             marginBottom: '0.75rem',
           }}
         >
-          Entries
+          Life Areas
         </div>
         <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {entryTypes.map((type) => (
-            <li key={type.value}>
+          {categories.map((category) => (
+            <li key={category}>
               <button
-                onClick={() => handleEntryTypeClick(type.value)}
+                onClick={() => handleCategoryClick(category)}
                 style={{
                   display: 'block',
                   width: '100%',
@@ -190,7 +230,7 @@ export function MobileMenu({
                   background: 'transparent',
                   border: 'none',
                   borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                  color: currentEntryType === type.value ? '#DC143C' : 'rgba(255, 255, 255, 0.8)',
+                  color: currentFilter === category ? '#DC143C' : 'rgba(255, 255, 255, 0.8)',
                   fontSize: '0.95rem',
                   fontWeight: 500,
                   letterSpacing: '0.1rem',
@@ -200,8 +240,8 @@ export function MobileMenu({
                   transition: 'color 0.2s ease',
                 }}
               >
-                {type.label}
-                {currentEntryType === type.value && (
+                {category === 'all' ? 'All' : category}
+                {currentFilter === category && (
                   <span style={{ float: 'right', color: '#DC143C' }}>●</span>
                 )}
               </button>

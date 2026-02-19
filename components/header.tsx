@@ -16,6 +16,8 @@ interface HeaderProps {
   searchQuery?: string
   onSearchChange?: (query: string) => void
   onOpenChat?: () => void
+  showTimeline?: boolean
+  onToggleTimeline?: () => void
 }
 
 export function Header({ 
@@ -29,6 +31,8 @@ export function Header({
   searchQuery: externalSearchQuery = '',
   onSearchChange,
   onOpenChat,
+  showTimeline = false,
+  onToggleTimeline,
 }: HeaderProps) {
   const [localSearchQuery, setLocalSearchQuery] = useState('')
   const [isMobile, setIsMobile] = useState(false)
@@ -257,6 +261,8 @@ export function Header({
           onEntryTypeChange={handleEntryTypeChange}
           onLogout={onLogout}
           onCompose={onNewEntry}
+          showTimeline={showTimeline}
+          onToggleTimeline={onToggleTimeline}
         />
       </>
     )

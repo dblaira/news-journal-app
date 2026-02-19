@@ -467,6 +467,8 @@ export function JournalPageClient({
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onOpenChat={handleOpenChat}
+          showTimeline={showTimeline}
+          onToggleTimeline={handleToggleTimeline}
         />
       </div>
 
