@@ -13,11 +13,11 @@ interface ConnectionHeroProps {
   entryLookup: Map<string, Entry>
 }
 
-const CONNECTION_TYPE_META: Record<ConnectionType, { icon: string; label: string }> = {
-  identity_anchor: { icon: '\u{1FA9E}', label: 'Identity Anchor' },
-  pattern_interrupt: { icon: '\u26A1', label: 'Pattern Interrupt' },
-  validated_principle: { icon: '\u{1F511}', label: 'Validated Principle' },
-  process_anchor: { icon: '\u{1F504}', label: 'Process Anchor' },
+const CONNECTION_TYPE_META: Record<ConnectionType, { label: string }> = {
+  identity_anchor: { label: 'Identity Anchor' },
+  pattern_interrupt: { label: 'Pattern Interrupt' },
+  validated_principle: { label: 'Validated Principle' },
+  process_anchor: { label: 'Process Anchor' },
 }
 
 function getTodayFormatted(): string {
@@ -99,40 +99,36 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
   return (
     <section style={{ width: '100%' }}>
       {/* Top -- Beige branding area */}
-      <div style={{
+      <div className="px-4 md:px-6" style={{
         background: '#E8E2D8',
         width: '100%',
-        padding: '3rem 3rem 2.5rem',
+        paddingTop: '2rem',
+        paddingBottom: '2rem',
       }}>
-        <div style={{
-          display: 'flex',
-          gap: '1rem',
-          alignItems: 'center',
+        <h1 style={{
+          fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
+          fontSize: 'clamp(3.5rem, 8vw, 5.5rem)',
+          fontWeight: 400,
+          color: '#DC143C',
+          lineHeight: 1.05,
+          letterSpacing: '-0.02em',
+          margin: 0,
+          marginBottom: '0.1rem',
+        }}>
+          Connections
+        </h1>
+
+        <span style={{
           fontSize: '0.75rem',
           letterSpacing: '0.1rem',
           textTransform: 'uppercase',
           fontWeight: 600,
-          marginBottom: '1.5rem',
+          color: '#8B8178',
+          display: 'block',
+          marginLeft: 'clamp(2.5rem, 5.71vw, 3.93rem)',
         }}>
-          <span style={{ color: '#DC143C' }}>
-            {lifeArea === 'all' ? 'All Areas' : lifeArea}
-          </span>
-          <span style={{ color: '#8B8178' }}>
-            {getTodayFormatted()}
-          </span>
-        </div>
-
-        <h1 style={{
-          fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif",
-          fontSize: 'clamp(3rem, 6vw, 5rem)',
-          fontWeight: 400,
-          color: '#DC143C',
-          lineHeight: 1.1,
-          letterSpacing: '-0.02em',
-          margin: 0,
-        }}>
-          Connections
-        </h1>
+          {getTodayFormatted()}
+        </span>
       </div>
 
       {/* Bottom -- Black featured quote area */}
@@ -154,8 +150,9 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
         onTouchEnd={showNavigation ? handleTouchEnd : undefined}
       >
         {/* Quote side */}
-        <div style={{
-          padding: '2.5rem 3rem',
+        <div className="px-4 md:px-6" style={{
+          paddingTop: '2.5rem',
+          paddingBottom: '2.5rem',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -175,7 +172,6 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
                   fontWeight: 600,
                   color: 'rgba(255, 255, 255, 0.35)',
                 }}>
-                  <span style={{ fontSize: '0.75rem' }}>&#x1F4CC;</span>
                   Pinned
                   {pinnedConnections.length > 1 && (
                     <span style={{ color: 'rgba(255, 255, 255, 0.25)' }}>
@@ -212,7 +208,6 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
                   color: 'rgba(255, 255, 255, 0.45)',
                   fontWeight: 500,
                 }}>
-                  <span>{meta.icon}</span>
                   <span>{meta.label}</span>
                 </div>
               )}

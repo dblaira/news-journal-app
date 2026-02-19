@@ -43,7 +43,7 @@ export function Header({
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640)
+      setIsMobile(window.innerWidth < 1024)
     }
     checkMobile()
     window.addEventListener('resize', checkMobile)

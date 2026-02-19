@@ -28,20 +28,11 @@ interface ConnectionGridLayoutProps {
   userId?: string
 }
 
-const CONNECTION_TYPE_META: Record<ConnectionType, { icon: string; label: string; color: string }> = {
-  identity_anchor: { icon: '\u{1FA9E}', label: 'Identity Anchor', color: '#7C3AED' },
-  pattern_interrupt: { icon: '\u26A1', label: 'Pattern Interrupt', color: '#D97706' },
-  validated_principle: { icon: '\u{1F511}', label: 'Validated Principle', color: '#059669' },
-  process_anchor: { icon: '\u{1F504}', label: 'Process Anchor', color: '#2563EB' },
-}
-
-function formatSurfacedAgo(lastSurfacedAt: string | null | undefined): string {
-  if (!lastSurfacedAt) return 'Never surfaced'
-  const diff = Date.now() - new Date(lastSurfacedAt).getTime()
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  if (days === 0) return 'Surfaced today'
-  if (days === 1) return 'Surfaced yesterday'
-  return `Surfaced ${days}d ago`
+const CONNECTION_TYPE_META: Record<ConnectionType, { label: string; color: string }> = {
+  identity_anchor: { label: 'Identity Anchor', color: '#7C3AED' },
+  pattern_interrupt: { label: 'Pattern Interrupt', color: '#D97706' },
+  validated_principle: { label: 'Validated Principle', color: '#059669' },
+  process_anchor: { label: 'Process Anchor', color: '#2563EB' },
 }
 
 const filterTypes: (ConnectionType | 'all')[] = [
@@ -185,7 +176,7 @@ function SortableConnectionCard({ conn, onViewEntry, entryLookup, imageErrors, o
           minHeight: '100px',
         }}>
           <div style={{
-            fontSize: '0.95rem',
+            fontSize: '1.05rem',
             fontWeight: 500,
             color: '#1a1a1a',
             lineHeight: 1.55,
@@ -195,33 +186,16 @@ function SortableConnectionCard({ conn, onViewEntry, entryLookup, imageErrors, o
             &ldquo;{displayText}&rdquo;
           </div>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            marginTop: '0.75rem',
-            fontSize: '0.72rem',
-            color: '#9CA3AF',
-          }}>
-            {meta && (
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                color: meta.color,
-                fontWeight: 600,
-                fontSize: '0.7rem',
-              }}>
-                {meta.icon} {meta.label}
-              </span>
-            )}
-            <span>{formatSurfacedAgo(conn.last_surfaced_at)}</span>
-            {(conn.surface_count ?? 0) > 0 && (
-              <span style={{ fontWeight: 600, color: '#6B7280' }}>
-                {conn.surface_count}&times;
-              </span>
-            )}
-          </div>
+          {meta && (
+            <div style={{
+              marginTop: '0.75rem',
+              fontSize: '0.78rem',
+              color: meta.color,
+              fontWeight: 600,
+            }}>
+              {meta.label}
+            </div>
+          )}
         </div>
       </button>
     </div>

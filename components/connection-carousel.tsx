@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { Entry, ConnectionType } from '@/types'
 import { stripHtml } from '@/lib/utils'
-import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 
 interface ConnectionCarouselProps {
   connections: Entry[]
@@ -11,31 +10,16 @@ interface ConnectionCarouselProps {
   entryLookup: Map<string, Entry>
 }
 
-const CONNECTION_TYPE_META: Record<ConnectionType, { icon: string; label: string }> = {
-  identity_anchor: { icon: '\u{1FA9E}', label: 'Identity Anchor' },
-  pattern_interrupt: { icon: '\u26A1', label: 'Pattern Interrupt' },
-  validated_principle: { icon: '\u{1F511}', label: 'Validated Principle' },
-  process_anchor: { icon: '\u{1F504}', label: 'Process Anchor' },
-}
-
-function formatSurfacedAgo(lastSurfacedAt: string | null | undefined): string {
-  if (!lastSurfacedAt) return 'Never surfaced'
-  const diff = Date.now() - new Date(lastSurfacedAt).getTime()
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  if (days === 0) return 'Surfaced today'
-  if (days === 1) return 'Surfaced yesterday'
-  return `Surfaced ${days}d ago`
+const CONNECTION_TYPE_META: Record<ConnectionType, { label: string }> = {
+  identity_anchor: { label: 'Identity Anchor' },
+  pattern_interrupt: { label: 'Pattern Interrupt' },
+  validated_principle: { label: 'Validated Principle' },
+  process_anchor: { label: 'Process Anchor' },
 }
 
 export function ConnectionCarousel({ connections, onViewEntry, entryLookup }: ConnectionCarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
-
-  const handleImageError = (id: string) => {
-    setImageErrors(prev => new Set(prev).add(id))
-  }
-
   const handleScroll = useCallback(() => {
     if (!scrollContainerRef.current) return
 
@@ -121,10 +105,6 @@ export function ConnectionCarousel({ connections, onViewEntry, entryLookup }: Co
           const displayText = plainContent.length > 120 ? plainContent.slice(0, 120) + '...' : plainContent
           const meta = conn.connection_type ? CONNECTION_TYPE_META[conn.connection_type] : null
 
-          const sourceEntry = conn.source_entry_id ? entryLookup.get(conn.source_entry_id) : undefined
-          const { url: imgUrl, objectPosition } = sourceEntry ? getEntryPosterWithFocalPoint(sourceEntry) : { url: undefined, objectPosition: '50% 50%' }
-          const hasImage = !!imgUrl && !imageErrors.has(conn.id)
-
           return (
             <div
               key={conn.id}
@@ -140,74 +120,38 @@ export function ConnectionCarousel({ connections, onViewEntry, entryLookup }: Co
                   overflow: 'hidden',
                   height: '180px',
                   display: 'flex',
-                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  padding: '1.25rem',
                   transition: 'box-shadow 0.15s ease',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)' }}
                 onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)' }}
               >
-                {/* Thumbnail from source entry */}
-                {hasImage && (
-                  <div style={{ flexShrink: 0, width: '140px', height: '180px', overflow: 'hidden' }}>
-                    <img
-                      src={imgUrl}
-                      alt=""
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        objectPosition,
-                        display: 'block',
-                      }}
-                      onError={() => handleImageError(conn.id)}
-                    />
-                  </div>
-                )}
-
-                {/* Text content */}
-                <div style={{
-                  padding: '1.25rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  flex: 1,
-                  minWidth: 0,
-                }}>
+                <div>
                   <p style={{
                     fontFamily: "Georgia, 'Times New Roman', serif",
-                    fontSize: '0.9rem',
+                    fontSize: '1.1rem',
                     fontWeight: 500,
                     color: '#1a1a1a',
                     lineHeight: 1.5,
                     margin: 0,
-                    flexGrow: 1,
-                    overflow: 'hidden',
                   }}>
                     &ldquo;{displayText}&rdquo;
                   </p>
 
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: '0.5rem',
-                    fontSize: '0.68rem',
-                    color: '#9CA3AF',
-                  }}>
-                    {meta && (
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        color: '#6B7280',
-                        fontWeight: 500,
-                      }}>
-                        {meta.icon} {meta.label}
-                      </span>
-                    )}
-                    <span>{formatSurfacedAgo(conn.last_surfaced_at)}</span>
-                  </div>
+                  {meta && (
+                    <div style={{
+                      marginTop: '0.75rem',
+                      fontSize: '0.78rem',
+                      color: '#6B7280',
+                      fontWeight: 500,
+                    }}>
+                      {meta.label}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

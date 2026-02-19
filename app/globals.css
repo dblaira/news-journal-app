@@ -501,8 +501,8 @@ li[data-type="taskItem"]::marker {
   padding-left: 1.2em;
 }
 
-/* Responsive navigation - hide desktop nav on mobile, mobile uses hamburger menu */
-@media (max-width: 640px) {
+/* Responsive navigation - hide desktop nav on mobile/tablet, mobile uses hamburger menu */
+@media (max-width: 1023px) {
   /* Black background extends to status bar on mobile */
   html, body {
     background: #000000 !important;
@@ -547,7 +547,7 @@ li[data-type="taskItem"]::marker {
 }
 
 /* Desktop - show logout button */
-@media (min-width: 641px) {
+@media (min-width: 1024px) {
   .desktop-logout-btn {
     display: block;
   }
