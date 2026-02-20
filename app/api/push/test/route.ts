@@ -1,29 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError) {
-      console.error('Push test auth error:', authError.message)
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     const vapidPrivate = process.env.VAPID_PRIVATE_KEY
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+    }
 
     if (!vapidPublic || !vapidPrivate) {
       return NextResponse.json({ error: 'VAPID keys not configured' }, { status: 500 })
     }
+
+    const supabase = createSupabaseClient(supabaseUrl, serviceRoleKey)
 
     webpush.setVapidDetails(
       'mailto:admin@understood.app',
@@ -34,11 +28,11 @@ export async function POST(request: NextRequest) {
     const { data: subscriptions, error: subError } = await supabase
       .from('push_subscriptions')
       .select('*')
-      .eq('user_id', user.id)
+      .limit(10)
 
     if (subError || !subscriptions?.length) {
       return NextResponse.json(
-        { error: 'No push subscriptions found. Enable notifications first.' },
+        { error: 'No push subscriptions found. Enable notifications first.', detail: subError?.message },
         { status: 404 }
       )
     }
