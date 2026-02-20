@@ -14,7 +14,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (!vapidPublic || !vapidPrivate) {
-      return NextResponse.json({ error: 'VAPID keys not configured' }, { status: 500 })
+      const missing = [
+        !vapidPublic && 'NEXT_PUBLIC_VAPID_PUBLIC_KEY',
+        !vapidPrivate && 'VAPID_PRIVATE_KEY',
+      ].filter(Boolean)
+      return NextResponse.json({
+        error: `Missing environment variable${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}. Add ${missing.length > 1 ? 'them' : 'it'} in Vercel → Settings → Environment Variables for Production and Preview.`,
+      }, { status: 500 })
     }
 
     const supabase = createSupabaseClient(supabaseUrl, serviceRoleKey)
