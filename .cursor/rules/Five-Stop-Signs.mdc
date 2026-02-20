@@ -1,0 +1,88 @@
+---
+description: Non-technical owner protection — five mandatory checks before any feature spec is finalized or build is green-lit
+alwaysApply: true
+---
+
+# Five Stop Signs: Non-Technical Owner Protection
+
+## The Problem This Solves
+
+Technical AI agents have information the product owner doesn't. When they write specs or build features, they can inadvertently create steps that require the owner to do technical debugging, act as a relay between agents, or use developer tools to test their own product. This is a delegation failure at the system level.
+
+These five stop signs must be checked before ANY feature spec is finalized or any build is green-lit.
+
+---
+
+## Stop Sign 1: "Can the owner test this from inside the app?"
+
+If any testing step requires a browser console, terminal command, cURL request, or developer tool — the spec is incomplete. Every feature must include a UI surface for the owner to verify it works.
+
+**Failed example:** "Test push notifications by running fetch('/api/push/test') in the console."
+**Correct example:** "Test push notifications by tapping 'Send Test' in Settings → Notifications."
+
+**Rule:** If there's an API endpoint, there must be a button in the app that calls it.
+
+---
+
+## Stop Sign 2: "Does the owner ever become a relay?"
+
+If the workflow requires the owner to carry error messages from one agent to another, copy-paste terminal output, or translate between technical contexts — the system is broken.
+
+**Failed example:** Owner copies 401 error from Safari console → pastes to Claude → gets instruction → pastes to Cursor agent → reports result back to Claude.
+**Correct example:** Agent reads the working auth pattern from an existing route, matches it, and pushes. Owner sees it work or doesn't.
+
+**Rule:** The owner provides judgment and decisions. Agents handle all technical communication with the codebase directly. If the owner is debugging, something went wrong upstream.
+
+---
+
+## Stop Sign 3: "Is every user-facing capability manageable by the user?"
+
+If the system has a capability (notifications, subscriptions, preferences, data export), the user must be able to see, control, and test that capability from within the app. No hidden state that only exists in the database or environment variables.
+
+**Failed example:** Notification subscriptions stored in DB with no UI to view or manage them.
+**Correct example:** Settings page shows subscribed devices, toggle to enable/disable, option to unsubscribe.
+
+**Rule:** If it affects the user's experience, it needs a UI. No exceptions.
+
+---
+
+## Stop Sign 4: "What happens when this breaks at 9pm?"
+
+Features will break. When they do, can the owner diagnose the situation without opening dev tools? The error state, empty state, and failure mode must be designed, not just the happy path.
+
+**Questions to answer before shipping:**
+- What does the user see if the API is down?
+- What does the user see if their session expires?
+- What does the user see if push permission is revoked?
+- Can the user recover without technical intervention?
+
+**Rule:** Every feature spec must include error states and recovery paths that work from inside the app.
+
+---
+
+## Stop Sign 5: "Am I asking the owner to learn my domain?"
+
+Technical agents know about service workers, VAPID keys, auth cookies, and cron jobs. The owner doesn't need to know any of this to run their product. If a spec includes jargon without a UI abstraction over it, the spec is leaking implementation into the owner's workflow.
+
+**Failed example:** "You need to run npx web-push generate-vapid-keys in your terminal."
+**Correct example:** "I need two environment variables. Here are the values — paste them into Vercel Settings → Environment Variables → [exact field names]." Or better: the agent handles it entirely.
+
+**Rule:** The owner's interaction with technical infrastructure should be limited to: pasting values into labeled fields, clicking buttons, and making product decisions. Everything else is the agent's job.
+
+---
+
+## When to Apply These Stop Signs
+
+1. **Before finalizing any feature spec** — every spec gets checked against all five.
+2. **Before green-lighting an agent build** — if any stop sign fails, fix the spec first.
+3. **During QA planning** — if the test plan includes dev tools, add a UI test surface.
+4. **When the owner reports friction** — check which stop sign was missed and patch it.
+
+---
+
+## The Through-Line
+
+The owner's job is: set direction, provide judgment, make product decisions, and use the product.
+The agent's job is: handle every technical step between the owner's decision and the owner's experience.
+
+If the owner is doing technical work, the system failed — not the owner.

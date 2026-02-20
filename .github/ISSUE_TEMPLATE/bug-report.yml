@@ -1,0 +1,81 @@
+name: Bug Report
+description: Something isn't working right
+title: "[Bug] "
+labels: ["bug", "qa"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe what you saw. Be as specific as you can.
+      placeholder: "When I tapped the Save button, nothing happened and the entry disappeared."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened?
+      description: What were you expecting to see instead?
+      placeholder: "The entry should have saved and I should have seen a confirmation."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Walk us through exactly what you did. Number each step.
+      placeholder: |
+        1. Opened the app
+        2. Tapped Compose
+        3. Typed a short entry
+        4. Tapped Save
+        5. Entry disappeared
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device and browser
+      description: What were you using when this happened?
+      options:
+        - iPhone — Safari
+        - iPhone — Chrome
+        - iPad — Safari
+        - Mac — Safari
+        - Mac — Chrome
+        - Android — Chrome
+        - Other (describe in notes)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: How bad is it?
+      options:
+        - Blocks me — I can't use the feature at all
+        - Annoying — It works but something is clearly wrong
+        - Minor — Small issue, not urgent
+        - Cosmetic — Visual only, doesn't affect function
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Drag and drop a screenshot here if you have one. Very helpful.
+      placeholder: Drag an image here or paste it.
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else?
+      description: Additional context, workarounds you tried, etc.
+    validations:
+      required: false
