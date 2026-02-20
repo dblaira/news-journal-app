@@ -55,7 +55,7 @@ export function JournalPageClient({
   const [isGeneratingVersions, setIsGeneratingVersions] = useState<string | null>(null)
   const [weeklyTheme, setWeeklyTheme] = useState<WeeklyTheme | null>(initialWeeklyTheme || null)
   const [isGeneratingTheme, setIsGeneratingTheme] = useState(false)
-  const [currentEntryType, setCurrentEntryType] = useState<EntryType | null>('story') // Default to story view
+  const [currentEntryType, setCurrentEntryType] = useState<EntryType | null>('connection') // Default to connections view
   const [sidebarExpanded, setSidebarExpanded] = useState(true) // Desktop sidebar expansion state
   const [showTimeline, setShowTimeline] = useState(false) // Timeline/archive view
   const [showChatSearch, setShowChatSearch] = useState(false) // AI chat search panel
