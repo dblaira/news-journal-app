@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { CaptureInput } from './capture-input'
 import { CaptureConfirmation } from './capture-confirmation'
 import { clearDraft } from '@/lib/hooks/use-draft-autosave'
-import { Entry, EntryType, ImageExtraction, EntryMetadata, EntryImage } from '@/types'
+import { Entry, EntryType, ImageExtraction, EntryMetadata, EntryImage, SurfaceConditions, ConnectionType } from '@/types'
 
 interface InferredData {
   headline: string
@@ -14,6 +14,7 @@ interface InferredData {
   content: string
   entry_type: EntryType
   due_date: string | null
+  connection_type?: string | null
   // Multimodal fields (legacy single image)
   image_url?: string
   image_extracted_data?: ImageExtraction
@@ -60,6 +61,14 @@ export function CaptureFAB({ onEntryCreated, userId }: CaptureFABProps) {
     setIsPublishing(true)
     try {
       // Use server action to create entry
+      const isConnection = data.entry_type === 'connection'
+      const defaultSurfaceConditions: SurfaceConditions = {
+        time_windows: ['morning', 'midday', 'evening'],
+        days_of_week: [0, 1, 2, 3, 4, 5, 6],
+        min_interval_hours: 48,
+        priority: 'normal',
+      }
+
       const { createEntry } = await import('@/app/actions/entries')
       const result = await createEntry({
         headline: data.headline,
@@ -69,6 +78,8 @@ export function CaptureFAB({ onEntryCreated, userId }: CaptureFABProps) {
         mood: data.mood,
         entry_type: data.entry_type,
         due_date: data.due_date,
+        connection_type: isConnection ? (data.connection_type as ConnectionType) : undefined,
+        surface_conditions: isConnection ? defaultSurfaceConditions : undefined,
         // Multimodal fields - image_url from Vision API processing (legacy)
         image_url: data.image_url,
         image_extracted_data: data.image_extracted_data,

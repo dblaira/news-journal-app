@@ -14,6 +14,7 @@ interface InferredData {
   content: string
   entry_type: EntryType
   due_date: string | null
+  connection_type?: string | null
   // Multimodal fields from image capture (legacy single image)
   image_url?: string
   image_extracted_data?: ImageExtraction
@@ -66,6 +67,7 @@ export function CaptureConfirmation({
   const [mood, setMood] = useState(data.mood)
   const [content, setContent] = useState(data.content)
   const [entryType, setEntryType] = useState<EntryType>(data.entry_type || 'story')
+  const [connectionType, setConnectionType] = useState<string | null>(data.connection_type ?? null)
   const [dueDate, setDueDate] = useState<string>(data.due_date || '')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -121,6 +123,7 @@ export function CaptureConfirmation({
       content,
       entry_type: entryType,
       due_date: entryType === 'action' && dueDate ? dueDate : null,
+      connection_type: entryType === 'connection' ? connectionType : null,
       photo: photoFile || undefined,
       // Pass through the multimodal image data (already uploaded)
       image_url: data.image_url,
@@ -395,7 +398,6 @@ export function CaptureConfirmation({
             }}
           >
             Entry Type
-            {/* Show hint when AI detected an action */}
             {data.entry_type === 'action' && (
               <span
                 style={{
@@ -408,6 +410,20 @@ export function CaptureConfirmation({
                 }}
               >
                 ✓ AI detected actionable intent
+              </span>
+            )}
+            {data.entry_type === 'connection' && (
+              <span
+                style={{
+                  fontSize: '0.6rem',
+                  background: '#EDE9FE',
+                  color: '#5B21B6',
+                  padding: '0.15rem 0.4rem',
+                  borderRadius: '3px',
+                  fontWeight: 600,
+                }}
+              >
+                🔗 AI detected belief/principle
               </span>
             )}
           </label>
@@ -598,7 +614,7 @@ export function CaptureConfirmation({
           </div>
         )}
 
-        {/* Content - Rich Text Editor */}
+        {/* Content */}
         <div style={{ marginBottom: '1.5rem' }}>
           <label
             style={{
@@ -610,26 +626,96 @@ export function CaptureConfirmation({
               marginBottom: '0.5rem',
             }}
           >
-            Your Entry
+            {entryType === 'connection' ? 'Your Connection' : 'Your Entry'}
           </label>
-          <div
-            style={{
-              border: '1px solid #eee',
-              borderRadius: '4px',
-              overflow: 'hidden',
-              background: '#fff',
-            }}
-          >
-            <TiptapEditor
-              key={`editor-${entryType}`}
-              content={content}
-              onChange={(html) => setContent(html)}
-              variant="light"
-              placeholder={entryType === 'action' ? 'Add your tasks...' : 'Write your entry...'}
-              entryType={entryType}
+          {entryType === 'connection' ? (
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="A short belief, principle, or identity statement..."
+              style={{
+                width: '100%',
+                minHeight: '100px',
+                padding: '1rem',
+                border: '1px solid #eee',
+                borderRadius: '4px',
+                fontSize: '1.05rem',
+                lineHeight: 1.6,
+                fontStyle: 'italic',
+                color: '#1a1a1a',
+                resize: 'vertical',
+                outline: 'none',
+                background: '#FAFAF5',
+                transition: 'border-color 0.2s ease',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#7C3AED' }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = '#eee' }}
             />
-          </div>
+          ) : (
+            <div
+              style={{
+                border: '1px solid #eee',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                background: '#fff',
+              }}
+            >
+              <TiptapEditor
+                key={`editor-${entryType}`}
+                content={content}
+                onChange={(html) => setContent(html)}
+                variant="light"
+                placeholder={entryType === 'action' ? 'Add your tasks...' : 'Write your entry...'}
+                entryType={entryType}
+              />
+            </div>
+          )}
         </div>
+
+        {/* Connection Type (shown for connections) */}
+        {entryType === 'connection' && connectionType && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label
+              style={{
+                fontSize: '0.65rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08rem',
+                color: '#999',
+                display: 'block',
+                marginBottom: '0.5rem',
+              }}
+            >
+              Connection Type
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {([
+                { id: 'identity_anchor', label: 'Identity Anchor', color: '#7C3AED' },
+                { id: 'pattern_interrupt', label: 'Pattern Interrupt', color: '#D97706' },
+                { id: 'validated_principle', label: 'Validated Principle', color: '#059669' },
+                { id: 'process_anchor', label: 'Process Anchor', color: '#2563EB' },
+              ] as const).map((ct) => (
+                <button
+                  key={ct.id}
+                  type="button"
+                  onClick={() => setConnectionType(ct.id)}
+                  style={{
+                    padding: '0.5rem 0.8rem',
+                    border: connectionType === ct.id ? `2px solid ${ct.color}` : '1px solid #ddd',
+                    borderRadius: '6px',
+                    background: connectionType === ct.id ? `${ct.color}10` : '#fff',
+                    color: connectionType === ct.id ? ct.color : '#666',
+                    fontSize: '0.8rem',
+                    fontWeight: connectionType === ct.id ? 600 : 400,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {ct.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Pre-attached Image from Capture Phase */}
         {data.image_url && (
