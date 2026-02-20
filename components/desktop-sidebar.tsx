@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { EntryType } from '@/types'
 import { AiSearchIcon } from './ai-search-icon'
 
@@ -62,6 +63,7 @@ export function DesktopSidebar({
   isGeneratingTheme = false,
   hasWeeklyTheme = false,
 }: DesktopSidebarProps) {
+  const router = useRouter()
   const [localSearch, setLocalSearch] = useState(searchQuery)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null)
@@ -631,13 +633,36 @@ export function DesktopSidebar({
         )}
       </div>
 
-      {/* Footer with logout */}
+      {/* Footer with settings + logout */}
       <div
         style={{
           padding: isExpanded ? '1rem 1.5rem' : '1rem',
           borderTop: '1px solid rgba(255, 255, 255, 0.1)',
         }}
       >
+        <button
+          onClick={() => router.push('/settings')}
+          title="Settings"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: isExpanded ? 'flex-start' : 'center',
+            gap: '0.75rem',
+            width: '100%',
+            padding: isExpanded ? '0.65rem 0' : '0.5rem',
+            background: 'transparent',
+            border: 'none',
+            color: 'rgba(255, 255, 255, 0.5)',
+            fontSize: '0.85rem',
+            fontWeight: 500,
+            textAlign: 'left',
+            cursor: 'pointer',
+            transition: 'color 0.15s ease',
+          }}
+        >
+          <span style={{ fontSize: '1.1rem' }}>N</span>
+          {isExpanded && <span>Settings</span>}
+        </button>
         <button
           onClick={onLogout}
           title="Logout"
