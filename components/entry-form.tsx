@@ -1,13 +1,21 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { CreateEntryInput, Entry, EntryType, MAX_IMAGES_PER_ENTRY, EntryImage } from '@/types'
 import { createEntry } from '@/app/actions/entries'
 import { TiptapEditor } from '@/components/editor/TiptapEditor'
+import { useAutosaveDraft, getSavedDraft, clearDraft } from '@/lib/hooks/use-draft-autosave'
+import { RestoreDraftDialog } from './draft-dialogs'
+
+function hasTextContent(html: string): boolean {
+  if (!html) return false
+  return html.replace(/<[^>]*>/g, '').trim().length > 0
+}
 
 interface EntryFormProps {
   onSuccess: () => void
   onCancel: () => void
+  onContentChange?: (hasContent: boolean) => void
 }
 
 interface FilePreview {
@@ -54,11 +62,12 @@ function getFileIcon(type: FilePreview['type']): string {
 // Accepted file types
 const ACCEPTED_FILES = 'image/jpeg,image/jpg,image/png,image/webp,application/pdf,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
-export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
+export function EntryForm({ onSuccess, onCancel, onContentChange }: EntryFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [files, setFiles] = useState<FilePreview[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false)
   const [formData, setFormData] = useState<CreateEntryInput>({
     headline: '',
     category: 'Business',
@@ -67,6 +76,43 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
     mood: '',
     entry_type: 'story',
   })
+
+  useAutosaveDraft('form', () => ({
+    text: formData.content,
+    headline: formData.headline,
+    entryType: formData.entry_type,
+  }))
+
+  useEffect(() => {
+    const draft = getSavedDraft('form')
+    if (draft && (draft.text?.trim() || draft.headline?.trim())) {
+      setShowRestoreDialog(true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    const has = formData.headline.trim().length > 0 || hasTextContent(formData.content)
+    onContentChange?.(has)
+  }, [formData.headline, formData.content, onContentChange])
+
+  const handleResumeDraft = () => {
+    const draft = getSavedDraft('form')
+    if (draft) {
+      setFormData(prev => ({
+        ...prev,
+        headline: draft.headline || prev.headline,
+        content: draft.text || prev.content,
+        entry_type: (draft.entryType as EntryType) || prev.entry_type,
+      }))
+    }
+    setShowRestoreDialog(false)
+  }
+
+  const handleStartFresh = () => {
+    clearDraft('form')
+    setShowRestoreDialog(false)
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files
@@ -176,6 +222,7 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
         if (f.preview) URL.revokeObjectURL(f.preview)
       })
 
+      clearDraft('form')
       onSuccess()
     } catch (err) {
       setError('Failed to create entry. Please try again.')
@@ -490,6 +537,13 @@ export function EntryForm({ onSuccess, onCancel }: EntryFormProps) {
           </button>
         </div>
       </form>
+
+      {showRestoreDialog && (
+        <RestoreDraftDialog
+          onResume={handleResumeDraft}
+          onStartFresh={handleStartFresh}
+        />
+      )}
     </section>
   )
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { CaptureInput } from './capture-input'
 import { CaptureConfirmation } from './capture-confirmation'
+import { clearDraft } from '@/lib/hooks/use-draft-autosave'
 import { Entry, EntryType, ImageExtraction, EntryMetadata, EntryImage } from '@/types'
 
 interface InferredData {
@@ -33,8 +34,10 @@ export function CaptureFAB({ onEntryCreated, userId }: CaptureFABProps) {
   const [state, setState] = useState<CaptureState>('closed')
   const [inferredData, setInferredData] = useState<InferredData | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)
+  const [isBackFromConfirmation, setIsBackFromConfirmation] = useState(false)
 
   const handleOpen = () => {
+    setIsBackFromConfirmation(false)
     setState('capturing')
   }
 
@@ -49,6 +52,7 @@ export function CaptureFAB({ onEntryCreated, userId }: CaptureFABProps) {
   }
 
   const handleBack = () => {
+    setIsBackFromConfirmation(true)
     setState('capturing')
   }
 
@@ -87,7 +91,8 @@ export function CaptureFAB({ onEntryCreated, userId }: CaptureFABProps) {
         }
       }
 
-      // Success - close and refresh
+      // Success - close, clear draft, and refresh
+      clearDraft('capture')
       handleClose()
       onEntryCreated()
 
@@ -174,6 +179,7 @@ export function CaptureFAB({ onEntryCreated, userId }: CaptureFABProps) {
         onCapture={handleCapture}
         onClose={handleClose}
         userId={userId}
+        freshOpen={!isBackFromConfirmation}
       />
     )
   }

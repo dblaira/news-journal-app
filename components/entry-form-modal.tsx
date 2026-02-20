@@ -1,6 +1,9 @@
 'use client'
 
+import { useState, useRef, useCallback } from 'react'
 import { EntryForm } from './entry-form'
+import { UnsavedChangesDialog } from './draft-dialogs'
+import { clearDraft } from '@/lib/hooks/use-draft-autosave'
 
 interface EntryFormModalProps {
   onSuccess: () => void
@@ -8,6 +11,27 @@ interface EntryFormModalProps {
 }
 
 export function EntryFormModal({ onSuccess, onCancel }: EntryFormModalProps) {
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false)
+  const hasContentRef = useRef(false)
+
+  const handleContentChange = useCallback((hasContent: boolean) => {
+    hasContentRef.current = hasContent
+  }, [])
+
+  const handleRequestClose = () => {
+    if (hasContentRef.current) {
+      setShowDiscardDialog(true)
+    } else {
+      onCancel()
+    }
+  }
+
+  const handleDiscard = () => {
+    clearDraft('form')
+    setShowDiscardDialog(false)
+    onCancel()
+  }
+
   return (
     <div
       className="entry-form-modal"
@@ -28,7 +52,7 @@ export function EntryFormModal({ onSuccess, onCancel }: EntryFormModalProps) {
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
-          onCancel()
+          handleRequestClose()
         }
       }}
     >
@@ -49,7 +73,7 @@ export function EntryFormModal({ onSuccess, onCancel }: EntryFormModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={onCancel}
+          onClick={handleRequestClose}
           style={{
             position: 'absolute',
             top: '1.5rem',
@@ -100,9 +124,20 @@ export function EntryFormModal({ onSuccess, onCancel }: EntryFormModalProps) {
             </p>
           </div>
           
-          <EntryForm onSuccess={onSuccess} onCancel={onCancel} />
+          <EntryForm
+            onSuccess={onSuccess}
+            onCancel={handleRequestClose}
+            onContentChange={handleContentChange}
+          />
         </div>
       </div>
+
+      {showDiscardDialog && (
+        <UnsavedChangesDialog
+          onDiscard={handleDiscard}
+          onCancel={() => setShowDiscardDialog(false)}
+        />
+      )}
     </div>
   )
 }

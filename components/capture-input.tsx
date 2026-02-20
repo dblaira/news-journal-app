@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useVoiceInput } from '@/lib/hooks/use-voice-input'
+import { useAutosaveDraft, getSavedDraft, clearDraft } from '@/lib/hooks/use-draft-autosave'
+import { UnsavedChangesDialog, RestoreDraftDialog } from './draft-dialogs'
 import { Entry, EntryType, ImageExtraction, EntryMetadata, EntryImage, MAX_IMAGES_PER_ENTRY } from '@/types'
 import { FileAttachment, ImageAttachment } from '@/types/multimodal'
 import FileAttachmentButton from './capture/FileAttachmentButton'
@@ -29,6 +31,7 @@ interface CaptureInputProps {
   onCapture: (data: InferredData) => void
   onClose: () => void
   userId?: string
+  freshOpen?: boolean
 }
 
 type InputMode = 'voice' | 'type' | 'paste'
@@ -39,7 +42,7 @@ const entryTypeOptions: { id: EntryType; label: string; icon: string }[] = [
   { id: 'action', label: 'Action', icon: '✓' },
 ]
 
-export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) {
+export function CaptureInput({ onCapture, onClose, userId, freshOpen = true }: CaptureInputProps) {
   const [mode, setMode] = useState<InputMode>('type')
   const [text, setText] = useState('')
   const [isInferring, setIsInferring] = useState(false)
@@ -48,9 +51,64 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
   const [userExplicitlySelectedType, setUserExplicitlySelectedType] = useState(false)
   const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   const [fileAttachments, setFileAttachments] = useState<FileAttachment[]>([])
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false)
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false)
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typeDropdownRef = useRef<HTMLDivElement>(null)
+  const freshOpenRef = useRef(freshOpen)
+
+  useAutosaveDraft('capture', () => ({
+    text,
+    entryType: selectedType,
+  }))
+
+  useEffect(() => {
+    const draft = getSavedDraft('capture')
+    if (!draft) return
+
+    if (freshOpenRef.current) {
+      setShowRestoreDialog(true)
+    } else {
+      setText(draft.text || '')
+      if (draft.entryType) {
+        setSelectedType(draft.entryType as EntryType)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleGuardedClose = () => {
+    const hasContent = text.trim().length > 0 || transcript.trim().length > 0 || fileAttachments.length > 0
+    if (hasContent) {
+      setShowDiscardDialog(true)
+    } else {
+      clearDraft('capture')
+      onClose()
+    }
+  }
+
+  const handleResumeDraft = () => {
+    const draft = getSavedDraft('capture')
+    if (draft) {
+      setText(draft.text || '')
+      if (draft.entryType) {
+        setSelectedType(draft.entryType as EntryType)
+      }
+    }
+    setShowRestoreDialog(false)
+  }
+
+  const handleStartFresh = () => {
+    clearDraft('capture')
+    setShowRestoreDialog(false)
+  }
+
+  const handleDiscardAndClose = () => {
+    clearDraft('capture')
+    setShowDiscardDialog(false)
+    onClose()
+  }
   
   const { processImage, isProcessingImage, processingStep } = useMultimodalCapture()
   const {
@@ -373,13 +431,13 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget && !isInferring && !voiceProcessing && !isProcessingImage) {
-          onClose()
+          handleGuardedClose()
         }
       }}
     >
       {/* Close button */}
       <button
-        onClick={onClose}
+        onClick={handleGuardedClose}
         disabled={isInferring || voiceProcessing || isProcessingImage}
         style={{
           position: 'absolute',
@@ -807,6 +865,19 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
           )
         })()}
       </div>
+
+      {showDiscardDialog && (
+        <UnsavedChangesDialog
+          onDiscard={handleDiscardAndClose}
+          onCancel={() => setShowDiscardDialog(false)}
+        />
+      )}
+      {showRestoreDialog && (
+        <RestoreDraftDialog
+          onResume={handleResumeDraft}
+          onStartFresh={handleStartFresh}
+        />
+      )}
 
       {/* CSS animations */}
       <style jsx>{`
