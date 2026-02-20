@@ -16,6 +16,7 @@ interface InferredData {
   content: string
   entry_type: EntryType
   due_date: string | null
+  connection_type?: string | null
   // Multimodal fields (legacy single image)
   image_url?: string
   image_extracted_data?: ImageExtraction
@@ -37,6 +38,7 @@ const entryTypeOptions: { id: EntryType; label: string; icon: string }[] = [
   { id: 'story', label: 'Story', icon: '📖' },
   { id: 'note', label: 'Note', icon: '📝' },
   { id: 'action', label: 'Action', icon: '✓' },
+  { id: 'connection', label: 'Connection', icon: '🔗' },
 ]
 
 export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) {
@@ -321,6 +323,7 @@ export function CaptureInput({ onCapture, onClose, userId }: CaptureInputProps) 
         ...inferred,
         content: finalContent || imageExtractedData?.combinedNarrative || inferred.content,
         entry_type: finalEntryType,
+        connection_type: inferred.connection_type ?? null,
         // Legacy single-image fields (for backward compatibility)
         image_url: imageUrl,
         image_extracted_data: imageExtractedData,
