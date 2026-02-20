@@ -93,7 +93,7 @@ export const config = {
      * - api routes (API routes)
      * - static files (images, etc.)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.svg$|.*\\.ico$|.*\\.webp$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api|sw\\.js|manifest\\.json|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.svg$|.*\\.ico$|.*\\.webp$).*)',
   ],
 }
 

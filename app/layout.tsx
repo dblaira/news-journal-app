@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display, Libre_Baskerville, Lora, Source_Serif_4, Crimson_Pro, Bodoni_Moda } from 'next/font/google'
+import { PushNotificationProvider } from '@/components/push-notification-provider'
+import { PushPermissionPrompt } from '@/components/push-permission-prompt'
+import { IosInstallPrompt } from '@/components/ios-install-prompt'
 import './globals.css'
 
 const inter = Inter({
@@ -73,13 +76,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
       </head>
       <body className={`${inter.variable} ${playfair.variable} ${libreBaskerville.variable} ${lora.variable} ${sourceSerif.variable} ${crimsonPro.variable} ${bodoniModa.variable}`}>
-        {children}
+        <PushNotificationProvider>
+          {children}
+          <PushPermissionPrompt />
+          <IosInstallPrompt />
+        </PushNotificationProvider>
       </body>
     </html>
   )
