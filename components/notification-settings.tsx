@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { usePush } from '@/components/push-notification-provider'
+import { NotificationHistory } from '@/components/notification-history'
 
 interface Device {
   id: string
@@ -11,12 +12,41 @@ interface Device {
   last_used_at: string | null
 }
 
+interface NotifPreferences {
+  morning_time: string
+  midday_time: string
+  evening_time: string
+  timezone: string
+}
+
+const TIMEZONE_OPTIONS = [
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'America/Anchorage',
+  'Pacific/Honolulu',
+  'Europe/London',
+  'Europe/Paris',
+  'Asia/Tokyo',
+  'Australia/Sydney',
+]
+
 export function NotificationSettings() {
   const { permission, isSubscribed, subscribe, unsubscribe } = usePush()
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(false)
   const [testStatus, setTestStatus] = useState<string | null>(null)
   const [toggling, setToggling] = useState(false)
+  const [prefs, setPrefs] = useState<NotifPreferences>({
+    morning_time: '07:00',
+    midday_time: '12:00',
+    evening_time: '18:00',
+    timezone: 'America/Los_Angeles',
+  })
+  const [savingPrefs, setSavingPrefs] = useState(false)
+  const [prefsStatus, setPrefsStatus] = useState<string | null>(null)
+  const [prefsLoaded, setPrefsLoaded] = useState(false)
 
   const fetchDevices = useCallback(async () => {
     try {
@@ -30,9 +60,30 @@ export function NotificationSettings() {
     }
   }, [])
 
+  const fetchPrefs = useCallback(async () => {
+    try {
+      const res = await fetch('/api/user/notification-preferences', { credentials: 'same-origin' })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.preferences) {
+          setPrefs({
+            morning_time: data.preferences.morning_time || '07:00',
+            midday_time: data.preferences.midday_time || '12:00',
+            evening_time: data.preferences.evening_time || '18:00',
+            timezone: data.preferences.timezone || 'America/Los_Angeles',
+          })
+        }
+      }
+    } catch {
+      // silently fail
+    }
+    setPrefsLoaded(true)
+  }, [])
+
   useEffect(() => {
     fetchDevices()
-  }, [fetchDevices, isSubscribed])
+    fetchPrefs()
+  }, [fetchDevices, fetchPrefs, isSubscribed])
 
   async function handleToggle() {
     setToggling(true)
@@ -65,6 +116,28 @@ export function NotificationSettings() {
     setLoading(false)
   }
 
+  async function handleSavePrefs() {
+    setSavingPrefs(true)
+    setPrefsStatus(null)
+    try {
+      const res = await fetch('/api/user/notification-preferences', {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(prefs),
+      })
+      if (res.ok) {
+        setPrefsStatus('Saved')
+        setTimeout(() => setPrefsStatus(null), 2000)
+      } else {
+        setPrefsStatus('Failed to save')
+      }
+    } catch {
+      setPrefsStatus('Network error')
+    }
+    setSavingPrefs(false)
+  }
+
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'short',
@@ -87,6 +160,10 @@ export function NotificationSettings() {
     if (permission === 'granted' && isSubscribed) return '#22c55e'
     if (permission === 'denied') return '#ef4444'
     return 'rgba(255,255,255,0.4)'
+  }
+
+  function formatTimezone(tz: string) {
+    return tz.replace(/_/g, ' ').split('/').pop() || tz
   }
 
   return (
@@ -115,33 +192,15 @@ export function NotificationSettings() {
           marginBottom: '1rem',
         }}>
           <div>
-            <div style={{
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              color: '#fff',
-              marginBottom: '0.25rem',
-            }}>
+            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fff', marginBottom: '0.25rem' }}>
               Push Notifications
             </div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.8rem',
-              color: 'rgba(255,255,255,0.5)',
-            }}>
-              <span style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: getStatusColor(),
-                display: 'inline-block',
-              }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: getStatusColor(), display: 'inline-block' }} />
               {getPermissionLabel()}
             </div>
           </div>
 
-          {/* Toggle */}
           {permission !== 'unsupported' && permission !== 'denied' && (
             <button
               onClick={handleToggle}
@@ -173,16 +232,108 @@ export function NotificationSettings() {
         </div>
 
         {permission === 'denied' && (
-          <p style={{
-            fontSize: '0.8rem',
-            color: 'rgba(255,255,255,0.4)',
-            lineHeight: 1.5,
-            margin: 0,
-          }}>
+          <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, margin: 0 }}>
             Notifications are blocked. To enable them, open your browser settings and allow notifications for this site.
           </p>
         )}
       </div>
+
+      {/* Time Window Settings */}
+      {prefsLoaded && (
+        <div style={{
+          background: '#1a1a1a',
+          borderRadius: '12px',
+          padding: '1.5rem',
+          marginBottom: '1rem',
+        }}>
+          <h3 style={{
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            color: 'rgba(255,255,255,0.6)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            marginTop: 0,
+            marginBottom: '1rem',
+          }}>
+            Delivery Windows
+          </h3>
+          <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', margin: '0 0 1rem 0', lineHeight: 1.5 }}>
+            The system checks for connections to surface at these times each day.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {[
+              { key: 'morning_time' as const, label: 'Morning' },
+              { key: 'midday_time' as const, label: 'Midday' },
+              { key: 'evening_time' as const, label: 'Evening' },
+            ].map(({ key, label }) => (
+              <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)' }}>{label}</span>
+                <input
+                  type="time"
+                  value={prefs[key]}
+                  onChange={e => setPrefs({ ...prefs, [key]: e.target.value })}
+                  style={{
+                    background: '#111',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: '6px',
+                    padding: '0.4rem 0.6rem',
+                    color: '#fff',
+                    fontSize: '0.85rem',
+                    fontFamily: 'monospace',
+                  }}
+                />
+              </div>
+            ))}
+
+            {/* Timezone */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem' }}>
+              <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)' }}>Timezone</span>
+              <select
+                value={prefs.timezone}
+                onChange={e => setPrefs({ ...prefs, timezone: e.target.value })}
+                style={{
+                  background: '#111',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '6px',
+                  padding: '0.4rem 0.6rem',
+                  color: '#fff',
+                  fontSize: '0.85rem',
+                }}
+              >
+                {TIMEZONE_OPTIONS.map(tz => (
+                  <option key={tz} value={tz}>{formatTimezone(tz)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button
+              onClick={handleSavePrefs}
+              disabled={savingPrefs}
+              style={{
+                padding: '0.6rem 1.25rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: '#2a2a2a',
+                color: '#fff',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: savingPrefs ? 'wait' : 'pointer',
+                opacity: savingPrefs ? 0.6 : 1,
+              }}
+            >
+              {savingPrefs ? 'Saving...' : 'Save Preferences'}
+            </button>
+            {prefsStatus && (
+              <span style={{ fontSize: '0.8rem', color: prefsStatus === 'Saved' ? '#22c55e' : '#ef4444' }}>
+                {prefsStatus}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Test button */}
       {isSubscribed && (
@@ -206,18 +357,12 @@ export function NotificationSettings() {
               fontWeight: 600,
               cursor: loading ? 'wait' : 'pointer',
               opacity: loading ? 0.6 : 1,
-              transition: 'opacity 0.15s ease',
             }}
           >
             {loading ? 'Sending...' : 'Send Test Notification'}
           </button>
           {testStatus && (
-            <p style={{
-              fontSize: '0.8rem',
-              color: 'rgba(255,255,255,0.5)',
-              marginTop: '0.75rem',
-              marginBottom: 0,
-            }}>
+            <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginTop: '0.75rem', marginBottom: 0 }}>
               {testStatus}
             </p>
           )}
@@ -230,6 +375,7 @@ export function NotificationSettings() {
           background: '#1a1a1a',
           borderRadius: '12px',
           padding: '1.5rem',
+          marginBottom: '1rem',
         }}>
           <h3 style={{
             fontSize: '0.85rem',
@@ -253,18 +399,10 @@ export function NotificationSettings() {
                 borderRadius: '8px',
               }}>
                 <div>
-                  <div style={{
-                    fontSize: '0.9rem',
-                    color: '#fff',
-                    fontWeight: 500,
-                  }}>
+                  <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 500 }}>
                     {device.device_name || 'Unknown device'}
                   </div>
-                  <div style={{
-                    fontSize: '0.75rem',
-                    color: 'rgba(255,255,255,0.4)',
-                    marginTop: '0.2rem',
-                  }}>
+                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.2rem' }}>
                     {device.timezone || 'No timezone'} · Added {formatDate(device.created_at)}
                   </div>
                 </div>
@@ -273,6 +411,15 @@ export function NotificationSettings() {
           </div>
         </div>
       )}
+
+      {/* Notification History */}
+      <div style={{
+        background: '#1a1a1a',
+        borderRadius: '12px',
+        padding: '1.5rem',
+      }}>
+        <NotificationHistory />
+      </div>
     </div>
   )
 }

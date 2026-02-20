@@ -60,6 +60,24 @@ export function JournalPageClient({
   const [showTimeline, setShowTimeline] = useState(false) // Timeline/archive view
   const [showChatSearch, setShowChatSearch] = useState(false) // AI chat search panel
   const [whatChangedPrompt, setWhatChangedPrompt] = useState<{ entryId: string; headline: string; category: Entry['category'] } | null>(null)
+  const [fromNotification, setFromNotification] = useState(false)
+
+  // Open a connection from notification deep link
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const connectionId = params.get('connection')
+    const from = params.get('from')
+    if (connectionId) {
+      const entry = entries.find(e => e.id === connectionId)
+      if (entry) {
+        setSelectedEntry(entry)
+        if (from === 'notification') {
+          setFromNotification(true)
+        }
+      }
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   // Calculate action count for sidebar badge
   const actionCount = entries.filter(e => 
@@ -606,7 +624,7 @@ export function JournalPageClient({
         <EntryModal
           key={selectedEntry.id}
           entry={selectedEntry}
-          onClose={handleCloseModal}
+          onClose={() => { handleCloseModal(); setFromNotification(false) }}
           onGenerateVersions={handleGenerateVersions}
           onDeleteEntry={handleDeleteEntry}
           onPhotoUpdated={handlePhotoUpdated}
@@ -617,11 +635,13 @@ export function JournalPageClient({
             const target = entries.find((e) => e.id === entryId)
             if (target) {
               setSelectedEntry(target)
+              setFromNotification(false)
             }
           }}
           onEntryCreated={(newEntry) => {
             setEntries((prev) => [newEntry, ...prev])
           }}
+          fromNotification={fromNotification}
         />
       )}
 

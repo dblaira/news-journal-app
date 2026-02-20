@@ -5,6 +5,7 @@ export type EntryType = 'story' | 'action' | 'note' | 'connection'
 export type ConnectionType = 'identity_anchor' | 'pattern_interrupt' | 'validated_principle' | 'process_anchor'
 
 export interface SurfaceConditions {
+  // Legacy field -- algorithm reads time_windows only
   time_of_day?: 'morning' | 'afternoon' | 'evening'
   days_of_week?: number[]
   when_mood?: string[]
@@ -12,6 +13,10 @@ export interface SurfaceConditions {
   when_category_active?: string[]
   when_no_entries_hours?: number
   fixed_schedule?: string
+  // Sprint 3 intelligence fields
+  time_windows?: ('morning' | 'midday' | 'evening')[]
+  min_interval_hours?: number
+  priority?: 'high' | 'normal' | 'low'
 }
 
 // Re-export multimodal types for convenience
@@ -67,6 +72,9 @@ export interface Entry {
   surface_conditions?: SurfaceConditions | null
   last_surfaced_at?: string | null
   surface_count?: number
+  landed_count?: number
+  snooze_count?: number
+  snoozed_until?: string | null
   // Multimodal capture fields (legacy single-image support)
   image_url?: string
   image_extracted_data?: import('./multimodal').ImageExtraction

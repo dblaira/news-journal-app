@@ -39,6 +39,7 @@ interface EntryModalProps {
   onEntryUpdated?: (entryId: string, updates: Partial<Entry>) => void
   onViewEntry?: (entryId: string) => void
   onEntryCreated?: (entry: Entry) => void
+  fromNotification?: boolean
 }
 
 export function EntryModal({
@@ -52,6 +53,7 @@ export function EntryModal({
   onEntryUpdated,
   onViewEntry,
   onEntryCreated,
+  fromNotification,
 }: EntryModalProps) {
   const formattedDate = formatEntryDateLong(entry.created_at)
   const hasVersions = Array.isArray(entry.versions) && entry.versions.length > 0
@@ -688,6 +690,7 @@ export function EntryModal({
         onEntryUpdated={onEntryUpdated}
         onPinToggled={onPinToggled}
         onViewEntry={(id) => onViewEntry?.(id)}
+        fromNotification={fromNotification}
       />
     )
   }

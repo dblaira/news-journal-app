@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
-  const { connectionId, action } = await request.json()
+  const body = await request.json()
+  const { connectionId, action, snoozeDurationHours } = body
 
   if (!connectionId || !action) {
     return NextResponse.json({ error: 'connectionId and action required' }, { status: 400 })
@@ -34,10 +35,36 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to record response' }, { status: 500 })
   }
 
-  if (action === 'snooze') {
+  if (action === 'landed') {
+    const { data: entry } = await supabase
+      .from('entries')
+      .select('landed_count')
+      .eq('id', connectionId)
+      .single()
+
     await supabase
       .from('entries')
-      .update({ last_surfaced_at: new Date().toISOString() })
+      .update({ landed_count: (entry?.landed_count || 0) + 1 })
+      .eq('id', connectionId)
+  }
+
+  if (action === 'snooze') {
+    const { data: entry } = await supabase
+      .from('entries')
+      .select('snooze_count')
+      .eq('id', connectionId)
+      .single()
+
+    const snoozeHours = snoozeDurationHours || 48
+    const snoozedUntil = new Date(Date.now() + snoozeHours * 60 * 60 * 1000).toISOString()
+
+    await supabase
+      .from('entries')
+      .update({
+        snooze_count: (entry?.snooze_count || 0) + 1,
+        snoozed_until: snoozedUntil,
+        last_surfaced_at: new Date().toISOString(),
+      })
       .eq('id', connectionId)
   }
 

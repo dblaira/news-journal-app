@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Entry, ConnectionType, SurfaceConditions } from '@/types'
 import { stripHtml, formatEntryDateLong } from '@/lib/utils'
 import { updateEntryDetails, togglePin } from '@/app/actions/entries'
@@ -13,18 +13,41 @@ interface ConnectionDetailProps {
   onPinToggled?: (entryId: string, isPinned: boolean) => void
   onViewEntry?: (entryId: string) => void
   sourceEntry?: Entry | null
+  fromNotification?: boolean
 }
 
 const CONNECTION_TYPES: { value: ConnectionType; label: string; icon: string }[] = [
-  { value: 'identity_anchor', label: 'Identity Anchor', icon: '🪞' },
-  { value: 'pattern_interrupt', label: 'Pattern Interrupt', icon: '⚡' },
-  { value: 'validated_principle', label: 'Validated Principle', icon: '🔑' },
-  { value: 'process_anchor', label: 'Process Anchor', icon: '🔄' },
+  { value: 'identity_anchor', label: 'Identity Anchor', icon: '\u{1FA9E}' },
+  { value: 'pattern_interrupt', label: 'Pattern Interrupt', icon: '\u26A1' },
+  { value: 'validated_principle', label: 'Validated Principle', icon: '\u{1F511}' },
+  { value: 'process_anchor', label: 'Process Anchor', icon: '\u{1F504}' },
 ]
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const TIMES_OF_DAY: ('morning' | 'afternoon' | 'evening')[] = ['morning', 'afternoon', 'evening']
+const TIME_WINDOWS: { value: 'morning' | 'midday' | 'evening'; label: string }[] = [
+  { value: 'morning', label: 'Morning' },
+  { value: 'midday', label: 'Midday' },
+  { value: 'evening', label: 'Evening' },
+]
 const ENERGY_LEVELS: ('low' | 'medium' | 'high')[] = ['low', 'medium', 'high']
+const PRIORITIES: { value: 'high' | 'normal' | 'low'; label: string }[] = [
+  { value: 'high', label: 'High' },
+  { value: 'normal', label: 'Normal' },
+  { value: 'low', label: 'Low' },
+]
+const INTERVAL_OPTIONS = [
+  { hours: 24, label: 'Every day' },
+  { hours: 48, label: 'Every 2 days' },
+  { hours: 72, label: 'Every 3 days' },
+  { hours: 168, label: 'Every week' },
+  { hours: 336, label: 'Every 2 weeks' },
+]
+const SNOOZE_OPTIONS = [
+  { hours: 24, label: '1 day' },
+  { hours: 72, label: '3 days' },
+  { hours: 168, label: '1 week' },
+  { hours: 720, label: '1 month' },
+]
 
 export function ConnectionDetail({
   entry,
@@ -34,6 +57,7 @@ export function ConnectionDetail({
   onPinToggled,
   onViewEntry,
   sourceEntry,
+  fromNotification = false,
 }: ConnectionDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(stripHtml(entry.content))
@@ -43,23 +67,33 @@ export function ConnectionDetail({
   const [showConditions, setShowConditions] = useState(false)
   const [isPinned, setIsPinned] = useState(!!entry.pinned_at)
   const [isPinning, setIsPinning] = useState(false)
+  const [sendingNow, setSendingNow] = useState(false)
+  const [sendNowStatus, setSendNowStatus] = useState<string | null>(null)
+  const [respondingAction, setRespondingAction] = useState<string | null>(null)
+  const [responseRecorded, setResponseRecorded] = useState(false)
+  const [showSnoozeOptions, setShowSnoozeOptions] = useState(false)
+
+  useEffect(() => {
+    if (!conditions.time_windows && conditions.time_of_day) {
+      const migrated: ('morning' | 'midday' | 'evening')[] =
+        conditions.time_of_day === 'afternoon' ? ['midday'] : [conditions.time_of_day as 'morning' | 'evening']
+      setConditions(prev => ({ ...prev, time_windows: migrated }))
+    }
+  }, [])
 
   const handleTogglePin = useCallback(async () => {
     const previousState = isPinned
     setIsPinned(!isPinned)
     setIsPinning(true)
-
     try {
       const result = await togglePin(entry.id)
       if (result.error) {
         setIsPinned(previousState)
-        alert(result.error)
       } else {
         onPinToggled?.(entry.id, result.pinned ?? !previousState)
       }
-    } catch (error) {
+    } catch {
       setIsPinned(previousState)
-      console.error('Failed to toggle pin:', error)
     } finally {
       setIsPinning(false)
     }
@@ -96,8 +130,64 @@ export function ConnectionDetail({
     setConditions({ ...conditions, days_of_week: updated.length > 0 ? updated : undefined })
   }
 
+  const toggleTimeWindow = (window: 'morning' | 'midday' | 'evening') => {
+    const current = conditions.time_windows ?? []
+    const updated = current.includes(window) ? current.filter(w => w !== window) : [...current, window]
+    setConditions({ ...conditions, time_windows: updated.length > 0 ? updated : undefined })
+  }
+
+  const handleSendNow = async () => {
+    setSendingNow(true)
+    setSendNowStatus(null)
+    try {
+      const res = await fetch('/api/push/send-connection', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connectionId: entry.id }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSendNowStatus(`Sent to ${data.sent} device${data.sent !== 1 ? 's' : ''}`)
+      } else {
+        setSendNowStatus(data.error || 'Failed to send')
+      }
+    } catch {
+      setSendNowStatus('Network error')
+    }
+    setSendingNow(false)
+  }
+
+  const handleResponse = async (action: string, snoozeDurationHours?: number) => {
+    setRespondingAction(action)
+    try {
+      await fetch('/api/notifications/response', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          connectionId: entry.id,
+          action,
+          snoozeDurationHours,
+        }),
+      })
+      setResponseRecorded(true)
+      setShowSnoozeOptions(false)
+    } catch {
+      // silently fail
+    }
+    setRespondingAction(null)
+  }
+
+  const hasChanges = connectionType !== entry.connection_type ||
+    JSON.stringify(conditions) !== JSON.stringify(entry.surface_conditions ?? {})
+
   const plainContent = stripHtml(entry.content)
   const typeMeta = connectionType ? CONNECTION_TYPES.find(t => t.value === connectionType) : null
+
+  const surfaceCount = entry.surface_count || 0
+  const landedCount = entry.landed_count || 0
+  const snoozeCount = entry.snooze_count || 0
 
   return (
     <div style={{
@@ -142,12 +232,11 @@ export function ConnectionDetail({
               cursor: isPinning ? 'not-allowed' : 'pointer',
               padding: '0.25rem 0.4rem',
               borderRadius: '6px',
-              transition: 'background 0.15s ease',
               opacity: isPinning ? 0.5 : 1,
               color: isPinned ? '#DC143C' : '#9CA3AF',
             }}
           >
-            {isPinned ? '\u{1F4CC}' : '\u{1F4CC}'}
+            {'\u{1F4CC}'}
           </button>
           <button
             onClick={onClose}
@@ -163,6 +252,106 @@ export function ConnectionDetail({
             &times;
           </button>
         </div>
+
+        {/* Notification response buttons */}
+        {fromNotification && !responseRecorded && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            {!showSnoozeOptions ? (
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  onClick={() => handleResponse('landed')}
+                  disabled={respondingAction !== null}
+                  style={{
+                    flex: 1,
+                    padding: '0.85rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: '#1a6b3c',
+                    color: '#fff',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    cursor: respondingAction ? 'wait' : 'pointer',
+                    opacity: respondingAction === 'landed' ? 0.6 : 1,
+                  }}
+                >
+                  {respondingAction === 'landed' ? 'Recording...' : 'This Landed'}
+                </button>
+                <button
+                  onClick={() => setShowSnoozeOptions(true)}
+                  disabled={respondingAction !== null}
+                  style={{
+                    flex: 1,
+                    padding: '0.85rem',
+                    borderRadius: '10px',
+                    border: '1px solid #e5e7eb',
+                    background: '#fff',
+                    color: '#6B7280',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    cursor: respondingAction ? 'wait' : 'pointer',
+                  }}
+                >
+                  Snooze
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Snooze for...
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {SNOOZE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.hours}
+                      onClick={() => handleResponse('snooze', opt.hours)}
+                      disabled={respondingAction !== null}
+                      style={{
+                        padding: '0.5rem 0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb',
+                        background: '#fff',
+                        color: '#374151',
+                        fontSize: '0.8rem',
+                        fontWeight: 500,
+                        cursor: respondingAction ? 'wait' : 'pointer',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setShowSnoozeOptions(false)}
+                    style={{
+                      padding: '0.5rem 0.85rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#9CA3AF',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {responseRecorded && (
+          <div style={{
+            marginBottom: '1.5rem',
+            padding: '0.75rem 1rem',
+            background: '#f0fdf4',
+            borderRadius: '8px',
+            fontSize: '0.85rem',
+            color: '#166534',
+            fontWeight: 500,
+          }}>
+            Response recorded. Thank you.
+          </div>
+        )}
 
         {/* Connection text */}
         <div style={{ marginBottom: '1.5rem' }}>
@@ -205,7 +394,6 @@ export function ConnectionDetail({
           )}
         </div>
 
-        {/* Divider */}
         <hr style={{ border: 'none', borderTop: '1px solid #f0f0f0', margin: '1rem 0' }} />
 
         {/* Connection type selector */}
@@ -219,9 +407,7 @@ export function ConnectionDetail({
               return (
                 <button
                   key={type.value}
-                  onClick={() => {
-                    setConnectionType(isActive ? null : type.value)
-                  }}
+                  onClick={() => setConnectionType(isActive ? null : type.value)}
                   style={{
                     padding: '0.35rem 0.65rem',
                     borderRadius: '16px',
@@ -231,7 +417,6 @@ export function ConnectionDetail({
                     fontSize: '0.75rem',
                     fontWeight: 500,
                     cursor: 'pointer',
-                    transition: 'all 0.12s ease',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.3rem',
@@ -245,7 +430,7 @@ export function ConnectionDetail({
           </div>
         </div>
 
-        {/* Metadata */}
+        {/* Metadata + Stats */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem', color: '#6B7280', marginBottom: '1rem' }}>
           <div>Created: {formatEntryDateLong(entry.created_at)}</div>
           {sourceEntry && (
@@ -253,24 +438,18 @@ export function ConnectionDetail({
               Source:{' '}
               <button
                 onClick={() => onViewEntry?.(sourceEntry.id)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#DC143C',
-                  cursor: 'pointer',
-                  fontSize: '0.8rem',
-                  textDecoration: 'underline',
-                  padding: 0,
-                }}
+                style={{ background: 'none', border: 'none', color: '#DC143C', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline', padding: 0 }}
               >
                 {sourceEntry.headline}
               </button>
             </div>
           )}
-          {(entry.surface_count ?? 0) > 0 && (
-            <div>
-              Surfaced {entry.surface_count} time{entry.surface_count !== 1 ? 's' : ''}
-              {entry.last_surfaced_at && ` · Last: ${formatEntryDateLong(entry.last_surfaced_at)}`}
+          {surfaceCount > 0 && (
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <span>Surfaced {surfaceCount}x</span>
+              {landedCount > 0 && <span>Landed {landedCount}x</span>}
+              {snoozeCount > 0 && <span>Snoozed {snoozeCount}x</span>}
+              {entry.last_surfaced_at && <span>Last: {formatEntryDateLong(entry.last_surfaced_at)}</span>}
             </div>
           )}
         </div>
@@ -295,23 +474,23 @@ export function ConnectionDetail({
             }}
           >
             <span style={{ transform: showConditions ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', display: 'inline-block' }}>
-              ▸
+              &#x25B8;
             </span>
             Surface Conditions
           </button>
 
           {showConditions && (
             <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {/* Time of day */}
+              {/* Time windows (multi-select) */}
               <div>
-                <div style={{ fontSize: '0.7rem', color: '#9CA3AF', marginBottom: '0.35rem' }}>Time of Day</div>
+                <div style={{ fontSize: '0.7rem', color: '#9CA3AF', marginBottom: '0.35rem' }}>Time Windows</div>
                 <div style={{ display: 'flex', gap: '0.35rem' }}>
-                  {TIMES_OF_DAY.map(time => {
-                    const isActive = conditions.time_of_day === time
+                  {TIME_WINDOWS.map(tw => {
+                    const isActive = (conditions.time_windows ?? []).includes(tw.value)
                     return (
                       <button
-                        key={time}
-                        onClick={() => setConditions({ ...conditions, time_of_day: isActive ? undefined : time })}
+                        key={tw.value}
+                        onClick={() => toggleTimeWindow(tw.value)}
                         style={{
                           padding: '0.3rem 0.6rem',
                           borderRadius: '14px',
@@ -320,10 +499,9 @@ export function ConnectionDetail({
                           color: isActive ? '#fff' : '#6B7280',
                           fontSize: '0.72rem',
                           cursor: 'pointer',
-                          textTransform: 'capitalize',
                         }}
                       >
-                        {time}
+                        {tw.label}
                       </button>
                     )
                   })}
@@ -362,6 +540,60 @@ export function ConnectionDetail({
                 </div>
               </div>
 
+              {/* Frequency */}
+              <div>
+                <div style={{ fontSize: '0.7rem', color: '#9CA3AF', marginBottom: '0.35rem' }}>Frequency</div>
+                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  {INTERVAL_OPTIONS.map(opt => {
+                    const isActive = (conditions.min_interval_hours || 48) === opt.hours
+                    return (
+                      <button
+                        key={opt.hours}
+                        onClick={() => setConditions({ ...conditions, min_interval_hours: opt.hours })}
+                        style={{
+                          padding: '0.3rem 0.6rem',
+                          borderRadius: '14px',
+                          border: isActive ? '1px solid #1a1a1a' : '1px solid #e5e7eb',
+                          background: isActive ? '#1a1a1a' : '#fff',
+                          color: isActive ? '#fff' : '#6B7280',
+                          fontSize: '0.72rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Priority */}
+              <div>
+                <div style={{ fontSize: '0.7rem', color: '#9CA3AF', marginBottom: '0.35rem' }}>Priority</div>
+                <div style={{ display: 'flex', gap: '0.35rem' }}>
+                  {PRIORITIES.map(p => {
+                    const isActive = (conditions.priority || 'normal') === p.value
+                    return (
+                      <button
+                        key={p.value}
+                        onClick={() => setConditions({ ...conditions, priority: p.value })}
+                        style={{
+                          padding: '0.3rem 0.6rem',
+                          borderRadius: '14px',
+                          border: isActive ? '1px solid #1a1a1a' : '1px solid #e5e7eb',
+                          background: isActive ? '#1a1a1a' : '#fff',
+                          color: isActive ? '#fff' : '#6B7280',
+                          fontSize: '0.72rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
               {/* Energy level */}
               <div>
                 <div style={{ fontSize: '0.7rem', color: '#9CA3AF', marginBottom: '0.35rem' }}>Energy Level</div>
@@ -393,62 +625,70 @@ export function ConnectionDetail({
           )}
         </div>
 
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-          <button
-            onClick={handleDelete}
-            style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '6px',
-              border: '1px solid #fecaca',
-              background: '#fff',
-              color: '#DC2626',
-              fontSize: '0.8rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            Delete
-          </button>
-          {isEditing && (
+        {/* Send Now + Actions */}
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
-              onClick={handleSave}
-              disabled={isSaving}
+              onClick={handleSendNow}
+              disabled={sendingNow}
               style={{
                 padding: '0.5rem 1rem',
                 borderRadius: '6px',
-                border: 'none',
-                background: '#1a1a1a',
-                color: '#fff',
+                border: '1px solid #e5e7eb',
+                background: '#fff',
+                color: '#374151',
                 fontSize: '0.8rem',
                 fontWeight: 500,
-                cursor: isSaving ? 'not-allowed' : 'pointer',
-                opacity: isSaving ? 0.6 : 1,
+                cursor: sendingNow ? 'wait' : 'pointer',
+                opacity: sendingNow ? 0.6 : 1,
               }}
             >
-              {isSaving ? 'Saving...' : 'Save'}
+              {sendingNow ? 'Sending...' : 'Send Now'}
             </button>
-          )}
-          {!isEditing && (connectionType !== entry.connection_type || JSON.stringify(conditions) !== JSON.stringify(entry.surface_conditions ?? {})) && (
             <button
-              onClick={handleSave}
-              disabled={isSaving}
+              onClick={handleDelete}
               style={{
                 padding: '0.5rem 1rem',
                 borderRadius: '6px',
-                border: 'none',
-                background: '#1a1a1a',
-                color: '#fff',
+                border: '1px solid #fecaca',
+                background: '#fff',
+                color: '#DC2626',
                 fontSize: '0.8rem',
                 fontWeight: 500,
-                cursor: isSaving ? 'not-allowed' : 'pointer',
-                opacity: isSaving ? 0.6 : 1,
+                cursor: 'pointer',
               }}
             >
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              Delete
             </button>
-          )}
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {(isEditing || hasChanges) && (
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: '#1a1a1a',
+                  color: '#fff',
+                  fontSize: '0.8rem',
+                  fontWeight: 500,
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  opacity: isSaving ? 0.6 : 1,
+                }}
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+            )}
+          </div>
         </div>
+
+        {sendNowStatus && (
+          <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#6B7280' }}>
+            {sendNowStatus}
+          </div>
+        )}
       </div>
     </div>
   )
