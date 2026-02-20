@@ -75,7 +75,7 @@ export function PushNotificationProvider({ children }: { children: ReactNode }) 
     try {
       const subscription = await swRegistration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+        applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
       })
 
       const subJSON = subscription.toJSON()
