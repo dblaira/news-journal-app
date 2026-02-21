@@ -275,8 +275,8 @@ export function DebugOverlay() {
           aria-label="Open debug overlay"
           style={{
             position: 'fixed',
-            top: '12px',
-            right: '12px',
+            top: 'calc(12px + env(safe-area-inset-top, 0px))',
+            right: 'calc(12px + env(safe-area-inset-right, 0px))',
             width: '40px',
             height: '40px',
             borderRadius: '50%',
@@ -320,7 +320,7 @@ export function DebugOverlay() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '16px 20px 12px',
+            padding: 'calc(16px + env(safe-area-inset-top, 0px)) 20px 12px',
             flexShrink: 0,
           }}>
             <h2 style={{
