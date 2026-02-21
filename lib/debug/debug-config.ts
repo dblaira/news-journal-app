@@ -38,7 +38,7 @@ export const HIDDEN_PATHS: string[] = [
 
 // Set to false to disable all debug logging globally.
 // The overlay still mounts but the logger becomes a no-op.
-export const DEBUG_ENABLED = process.env.NODE_ENV === 'development'
+export const DEBUG_ENABLED = process.env.NEXT_PUBLIC_DEBUG_ENABLED === 'true' || process.env.NODE_ENV === 'development'
 
 // Maximum number of log rows kept in the database per user.
 // When exceeded, the oldest rows are deleted on the next write.
