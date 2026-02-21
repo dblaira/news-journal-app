@@ -275,8 +275,8 @@ export function DebugOverlay() {
           aria-label="Open debug overlay"
           style={{
             position: 'fixed',
-            top: 'calc(12px + env(safe-area-inset-top, 0px))',
-            right: 'calc(12px + env(safe-area-inset-right, 0px))',
+            bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+            left: 'calc(16px + env(safe-area-inset-left, 0px))',
             width: '40px',
             height: '40px',
             borderRadius: '50%',
