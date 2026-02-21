@@ -3,6 +3,7 @@ import { Inter, Playfair_Display, Libre_Baskerville, Lora, Source_Serif_4, Crims
 import { PushNotificationProvider } from '@/components/push-notification-provider'
 import { PushPermissionPrompt } from '@/components/push-permission-prompt'
 import { IosInstallPrompt } from '@/components/ios-install-prompt'
+import { DebugOverlay } from '@/components/debug-overlay'
 import './globals.css'
 
 // PRIMARY — Functional voice: body text, UI, metadata (Level 4)
@@ -93,6 +94,7 @@ export default function RootLayout({
           <PushPermissionPrompt />
           <IosInstallPrompt />
         </PushNotificationProvider>
+        <DebugOverlay />
       </body>
     </html>
   )
