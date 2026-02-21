@@ -5,18 +5,28 @@ import { PushPermissionPrompt } from '@/components/push-permission-prompt'
 import { IosInstallPrompt } from '@/components/ios-install-prompt'
 import './globals.css'
 
+// PRIMARY — Functional voice: body text, UI, metadata (Level 4)
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
 })
 
+// PRIMARY — Editorial voice: all headlines, Level 1–3
+const bodoniModa = Bodoni_Moda({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  style: ['normal', 'italic'],
+  variable: '--font-bodoni-moda',
+})
+
+// RESERVED — Available but not used in default patterns.
+// Do not use these unless Adam specifically requests a font change.
 const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['600', '700', '800'],
   variable: '--font-playfair',
 })
 
-// Serif font candidates for comparison
 const libreBaskerville = Libre_Baskerville({
   subsets: ['latin'],
   weight: ['400', '700'],
@@ -43,13 +53,6 @@ const crimsonPro = Crimson_Pro({
   weight: ['300', '400', '500', '600', '700'],
   style: ['normal', 'italic'],
   variable: '--font-crimson-pro',
-})
-
-const bodoniModa = Bodoni_Moda({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
-  style: ['normal', 'italic'],
-  variable: '--font-bodoni-moda',
 })
 
 export const metadata: Metadata = {

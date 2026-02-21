@@ -1,0 +1,425 @@
+---
+description: 
+alwaysApply: true
+---
+
+# Visual Design System — Understood.
+
+This is the single source of truth for all visual decisions. Every element in the app belongs to one of four hierarchy levels. Each level has locked specifications. Agents follow these specs directly — no improvisation.
+
+For how Adam works with agents on design (Phase 1/2, correction loops, feel vocabulary), see `design-workflow.mdc`. This file covers **what the design is**.
+
+---
+
+## 1. Visual Hierarchy Levels
+
+Every element belongs to exactly one level. When building something new, determine its level first, then apply the specs below.
+
+### Level 1 — Hero / Feature
+
+The single most important element on the page. Only one Level 1 per page.
+
+| Property | Value |
+|----------|-------|
+| Font family | Bodoni Moda (`var(--font-bodoni-moda)`) |
+| Font size | `clamp(2.8rem, 5.5vw, 4.5rem)` |
+| Font weight | 400 |
+| Line height | 1.15 |
+| Letter spacing | 0 |
+| Text color | `var(--text-hero)` — white on dark background |
+| Background | `var(--bg-hero)` — black |
+| Image treatment | Full-bleed or half-width, minimum 500px tall on desktop, 300px on mobile |
+| Internal padding | `2.5rem 3rem` desktop / `2rem 1.5rem` mobile |
+| Components | `.hero-card`, `.hero-card__content`, `.hero-card__media` |
+
+### Level 2 — Section Banner / Theme
+
+Marks transitions between content areas. Cream background with red accent.
+
+| Property | Value |
+|----------|-------|
+| Font family | Bodoni Moda (`var(--font-bodoni-moda)`) |
+| Font size | `clamp(2.5rem, 4.5vw, 3.6rem)` |
+| Font weight | 400 |
+| Line height | 1.15 |
+| Letter spacing | -0.02em |
+| Text color | `#1A1A1A` |
+| Background | `#F5F0E8` (cream) |
+| Border | `2px solid var(--color-red)` on bottom edge |
+| Internal padding | `2rem 1.5rem` |
+| Components | `.mindset-banner`, `.weekly-theme-banner`, `.section-header h2` |
+
+### Level 3 — Content Cards
+
+The repeating unit. Entry cards, feature cards, connection cards. Medium prominence.
+
+| Property | Value |
+|----------|-------|
+| Font family | Bodoni Moda (`var(--font-bodoni-moda)`) |
+| Font size | `1.6rem` (entry headline) / `1.7rem` (feature headline) |
+| Font weight | 400 |
+| Line height | 1.3 |
+| Letter spacing | 0 |
+| Text color | `var(--text-primary)` — black |
+| Background | `var(--bg-card)` — white |
+| Border | `1px solid var(--border-light)` on bottom edge only |
+| Image treatment | Thumbnail, 160px height, `object-fit: cover` |
+| Internal padding | `1.4rem 1.6rem` (card body) |
+| Hover | `translateX(4px)` — subtle rightward nudge |
+| Components | `.entry-card`, `.feature-card`, `.connection-card` |
+
+### Level 4 — Metadata / Navigation
+
+Scannable labels. Never the focus. Always uppercase, letterspaced, small.
+
+| Property | Value |
+|----------|-------|
+| Font family | Inter (system sans-serif, inherited from body) |
+| Font size | `0.7rem` |
+| Font weight | 600–700 |
+| Line height | 1.4 |
+| Letter spacing | `0.08rem`–`0.12rem` |
+| Text transform | `uppercase` |
+| Text color | `var(--color-red)` for category labels, `var(--text-muted)` for timestamps/bylines |
+| Components | `.category-label`, `.story-meta`, `.entry-card__meta`, `.badge`, `.category-btn`, `.brand-edition` |
+
+---
+
+## 2. Typography System
+
+Two fonts. Two roles. No exceptions in default patterns.
+
+### Primary Pair
+
+| Role | Font | CSS Variable | Used For |
+|------|------|-------------|----------|
+| Editorial voice | Bodoni Moda | `var(--font-bodoni-moda)` | All headlines (Level 1–3), brand title, section headers, button text |
+| Functional voice | Inter | `var(--font-inter)` | Body text, descriptions, metadata (Level 4), form labels, UI controls |
+
+### Reserved Fonts (loaded but not used in default patterns)
+
+These fonts are available via CSS variables but agents should NOT use them unless Adam specifically requests a font change for a particular element:
+
+- Playfair Display (`--font-playfair`)
+- Libre Baskerville (`--font-libre-baskerville`)
+- Lora (`--font-lora`)
+- Source Serif 4 (`--font-source-serif`)
+- Crimson Pro (`--font-crimson-pro`)
+
+### Type Scale
+
+Use only these sizes. The hierarchy level determines which size to pick.
+
+| Size | Token | Used By |
+|------|-------|---------|
+| `clamp(2.8rem, 5.5vw, 4.5rem)` | Hero headline | Level 1 only |
+| `clamp(2.5rem, 4.5vw, 3.6rem)` | Banner headline | Level 2 only |
+| `2rem` | Section heading | Section headers (`.section-header h2`, `.entry-form h2`) |
+| `1.6rem`–`1.7rem` | Card headline | Level 3 cards |
+| `1.25rem` | Sub-headline | Connection card titles |
+| `1.05rem`–`1.1rem` | Emphasized body | Button text, hero descriptions, banner subtitles |
+| `0.95rem` | Body text | Descriptions, form inputs, entry content |
+| `0.85rem` | Small body | Form labels, edition line, nav buttons |
+| `0.7rem`–`0.75rem` | Metadata | Category labels, timestamps, badges, story meta |
+
+### Weight Rules
+
+| Weight | When to use |
+|--------|-------------|
+| 400 | All Bodoni Moda headlines (the font's design carries its own weight) |
+| 500 | Medium emphasis on Inter text (brand edition) |
+| 600 | Buttons, form labels, nav items, sidebar links |
+| 700 | Category labels, badges, section header titles (Inter uppercase) |
+
+### Paragraph Content (Entry Body, Connection Descriptions)
+
+| Property | Value |
+|----------|-------|
+| Font | Inter (`var(--font-inter)`) |
+| Size | `0.95rem` |
+| Weight | 400 |
+| Line height | 1.6 |
+| Max width | `65ch` |
+| Color | `#1A1A1A` (`var(--text-secondary)`) |
+| Paragraph spacing | `1em` between paragraphs |
+
+---
+
+## 3. Spacing System
+
+### Decision Logic
+
+Don't guess. Match the relationship between elements to a spacing tier:
+
+| Relationship | Spacing | Example |
+|-------------|---------|---------|
+| Tightly coupled items | `4px` | Icon and its label |
+| Items in the same group | `8px` | Category label above headline |
+| Groups within a component | `12px`–`16px` | Meta block, headline block, and description within a card |
+| Internal padding of a component | `24px` desktop / `16px` mobile | Card body padding, section internal padding |
+| Between sibling components | `32px` | Between two entry cards, between sidebar blocks |
+| Between major sections | `48px` | Between hero and feed, between feed sections |
+
+### The Whitespace Rule
+
+When in doubt, go one step larger. Whitespace signals quality. Cramped signals cheap.
+
+### Page-Level Spacing
+
+| Element | Value |
+|---------|-------|
+| Page content padding | `2rem` (32px) all sides |
+| Page content gap | `2.5rem` (40px) between sections |
+| Front grid gap | `2rem` (32px) between main and sidebar |
+| Hero section | No padding — full bleed to edges |
+| Banners | `2rem 1.5rem` internal padding |
+
+---
+
+## 4. Component-to-Hierarchy Mapping
+
+When building a new component, determine its hierarchy level first. Then apply that level's specs from Section 1.
+
+### Existing Component Map
+
+| Component Class | Hierarchy Level | Notes |
+|----------------|----------------|-------|
+| `.hero-card` | Level 1 | One per page, dark background |
+| `.mindset-banner` | Level 2 | Cream background, red bottom border |
+| `.weekly-theme-banner` | Level 2 | Same treatment as mindset banner |
+| `.section-header h2` | Level 2 (text only) | Uses Level 2 font specs on white background |
+| `.entry-card` | Level 3 | The primary feed unit |
+| `.feature-card` | Level 3 | Grid variant of entry card |
+| `.connection-card` | Level 3 | Has rounded corners (exception: `var(--radius-md)`) |
+| `.trending-item` | Level 3 (compact) | Smaller variant — `0.9rem` headline, no image |
+| `.category-label` | Level 4 | Red, uppercase, letterspaced |
+| `.story-meta` | Level 4 | Red, uppercase, letterspaced |
+| `.entry-card__meta` | Level 4 | Red, uppercase, letterspaced |
+| `.badge` | Level 4 | Red, uppercase, letterspaced |
+| `.category-btn` | Level 4 | Nav variant — muted until active, then red |
+| `.brand-edition` | Level 4 | Muted, on dark background |
+
+### Decision Tree for New Components
+
+```
+Is this the single most important element on the page?
+  → Yes: Level 1
+  → No: Does it mark a section transition or set context?
+    → Yes: Level 2
+    → No: Is it a content unit the user reads or interacts with?
+      → Yes: Level 3
+      → No: Level 4 (it's metadata, navigation, or a label)
+```
+
+### Existing Component Classifications
+
+These are locked. Agents should not re-classify existing components.
+
+#### Level 1 — Hero / Feature
+- Daily summary hero banner (main dashboard)
+- Entry detail hero (full entry view)
+- Weekly theme display
+
+#### Level 2 — Section Banner / Theme
+- Life Area section dividers (Business, Finance, Health, etc.)
+- Connections category headers
+- "Your Week" / time-period banners
+- Settings section headers
+
+#### Level 3 — Content Cards
+- Entry cards (feed grid)
+- Connection cards (belief library)
+- AI rewrite voice cards (Literary, News, Poetic, Humorous)
+- Mind map canvas
+- Export format cards
+- Image gallery items
+- Context builder summary line (the chip row)
+
+#### Level 4 — Metadata / Navigation
+- Sidebar navigation items
+- Category pills / filter tabs
+- Timestamps and bylines on cards
+- "Pinned" badges
+- Mood and energy labels
+- Entry view counts
+- Capture FAB label text
+- Form field labels
+- Context chip labels (Environment, Activity, Energy, Mood)
+- Breadcrumbs and back-navigation text
+
+**Rule:** If a component isn't listed here, use the decision tree above to classify it. Then add it to this list so the next agent doesn't have to decide again.
+
+---
+
+## 5. Responsive Behavior
+
+### Breakpoints
+
+| Name | Width | What changes |
+|------|-------|-------------|
+| Desktop | > 1024px | Full layout: 2-column grids, sidebar, full hero |
+| Tablet | 768px–1024px | Grids collapse to single column, hero stacks vertically |
+| Mobile | < 768px | Single column, reduced padding, dropdown nav, compact spacing |
+
+### What Never Changes (Any Screen Size)
+
+- Hierarchy order — Level 1 is always most prominent
+- Font families — Bodoni Moda for headlines, Inter for body
+- Colors — same palette everywhere
+- Spacing tier ratios — same relationships, smaller absolute values
+
+### What Changes at 1024px and Below
+
+| Element | Desktop | Tablet |
+|---------|---------|--------|
+| `.front-grid` | 2-column (2fr + 1fr) | Single column |
+| `.hero-card` | 2-column grid | Single column, image on top |
+| `.hero-card__media` | min-height 500px | min-height 300px |
+| `.hero-card__content` padding | `2.5rem 3rem` | `2rem 1.5rem` |
+| `.site-header` | Row layout | Column layout |
+
+### What Changes at 768px and Below
+
+| Element | Tablet | Mobile |
+|---------|--------|--------|
+| `.page-shell` | Has padding | `padding: 0` |
+| `.entries-feed` | Multi-column grid | Single column |
+| `.mindset-banner` | Row (title left, subtitle right) | Column (stacked) |
+| Category nav | Horizontal tab bar | Dropdown selector |
+| `.section-header` | Row (title + lede) | Column (stacked) |
+| Form actions | Row | Column, full-width buttons |
+
+### Mobile-Specific Rules for Agents
+
+1. Touch targets must be at least 44px tall
+2. No hover-only interactions — everything must be tappable
+3. Text never smaller than `0.7rem` (the Level 4 minimum)
+4. Horizontal scrolling is only acceptable for carousels — never for content
+5. Full-bleed images are preferred over padded images on mobile
+
+---
+
+## 6. Styling Approach
+
+Three approaches exist in the codebase. Each has a defined territory.
+
+### CSS Classes (from `style.css`)
+
+**Use for:** All editorial and brand components — hero cards, entry cards, banners, navigation, forms, sidebar blocks.
+
+These are the "designed" elements. Their styles are in `style.css` using CSS variables and BEM-like naming (`.hero-card__content`, `.entry-card__meta`).
+
+**Rule:** If a CSS class already exists for the element, use it. Don't recreate it with Tailwind utilities.
+
+### Tailwind Utilities
+
+**Use for:** Layout composition within components (flex, gap, grid), one-off adjustments, and new UI elements that don't have editorial design (modals, settings pages, admin panels, notification prompts).
+
+**Rule:** When using Tailwind, stay on the design system's spacing and color tokens. Use the custom values defined in `tailwind.config.js` (e.g., `text-understood-crimson`, `bg-understood-beige`).
+
+### Inline Styles
+
+**Use for:** Truly dynamic values only — calculated positions, runtime dimensions, user-selected data, safe-area-inset offsets.
+
+**Rule:** Never use inline styles for static design decisions. If you're writing `style={{ fontSize: '1.6rem' }}`, that should be a CSS class or Tailwind utility instead.
+
+### Decision Flow
+
+```
+Does a CSS class already exist in style.css?
+  → Yes: Use the CSS class
+  → No: Is this an editorial/brand element?
+    → Yes: Create a new CSS class in style.css following the BEM naming pattern
+    → No: Use Tailwind utilities (settings, admin, utility UI)
+Is the value dynamic (changes at runtime)?
+  → Yes: Inline style is acceptable
+  → No: Never inline
+```
+
+---
+
+## Color Reference
+
+Included for completeness. These are defined in `style.css` as CSS variables.
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--color-red` | `#DC143C` | Primary accent, category labels, active states, CTAs |
+| `--color-red-soft` | `rgba(220, 20, 60, 0.12)` | Subtle red backgrounds |
+| `--color-red-dark` | `#B01030` | Hover states on red elements |
+| `--bg-hero` | `#000000` | Level 1 dark backgrounds |
+| `--text-hero` | `#FFFFFF` | Text on dark backgrounds |
+| `--text-hero-muted` | `#999999` | Secondary text on dark backgrounds |
+| `--bg-body` | `#FFFFFF` | Page background |
+| `--bg-panel-alt` / `--bg-card-alt` | `#F5F5F5` / `#FAFAFA` | Subtle surface differentiation |
+| `--text-primary` | `#000000` | Headlines and body text |
+| `--text-muted` | `#666666` | Descriptions, timestamps, secondary info |
+| `--text-ghost` | `#999999` | Placeholder text, disabled states |
+| `--border-light` | `rgba(0, 0, 0, 0.05)` | Card bottom borders, subtle dividers |
+| `--shadow-soft` | `0 2px 8px rgba(0, 0, 0, 0.08)` | Subtle elevation |
+
+---
+
+## 8. Interaction States & Animation
+
+### Transitions
+
+All transitions use the same timing unless noted otherwise.
+
+| Property | Value |
+|----------|-------|
+| Duration | `200ms` |
+| Easing | `ease-out` |
+| Properties to animate | `transform`, `opacity`, `background-color`, `border-color` |
+
+Never animate layout properties (`width`, `height`, `padding`, `margin`) — these cause reflows. Use `transform: scale()` or `translate()` instead.
+
+### State Specs
+
+| State | Spec |
+|-------|------|
+| **Hover (cards)** | `translateX(4px)`, transition `200ms ease-out` |
+| **Hover (buttons)** | Background shifts to `var(--color-red-dark)` (#B01030), transition `200ms` |
+| **Hover (nav items)** | Text color shifts to `var(--color-red)` (#DC143C) |
+| **Active / Pressed** | `scale(0.97)`, transition `100ms` — snappy, not sluggish |
+| **Focus (keyboard)** | `2px solid var(--color-red)` outline, `2px` offset, border-radius matches element |
+| **Focus (input fields)** | Border color shifts to `var(--color-red)`, no outline — the border IS the indicator |
+| **Disabled** | `opacity: 0.4`, `cursor: not-allowed`, no hover/active states |
+| **Selected / Active tab** | Crimson Red text + `2px` Crimson Red bottom border |
+| **Unselected tab** | Muted gray (`#666`) text, no border |
+
+### Loading States
+
+| Element | Loading Behavior |
+|---------|-----------------|
+| **Cards** | Skeleton placeholder — `var(--bg-panel-alt)` (#F5F5F5) with subtle pulse animation (`opacity 0.4 → 1.0`, `1.5s` loop) |
+| **AI rewrites** | Skeleton text lines (3 lines, varying widths: 100%, 85%, 60%) |
+| **Buttons (pending)** | Text replaced with spinner (`16px`), button stays same width — no layout shift |
+| **Full page** | Centered spinner + "Understood." brand text below in Bodoni Moda |
+
+### Expand / Collapse (Context Builder, Sidebar Sections)
+
+| Property | Value |
+|----------|-------|
+| Duration | `250ms` |
+| Easing | `ease-in-out` |
+| Method | `max-height` transition with `overflow: hidden` |
+| Chevron rotation | `180°` rotation on toggle, same `250ms` timing |
+
+### Toast / Notification Behavior
+
+| Property | Value |
+|----------|-------|
+| Entry | slideInRight + fadeIn, `300ms` |
+| Exit | fadeOut, `200ms` |
+| Duration | `3s` for success, `5s` for errors |
+| Position | Bottom-right on desktop, bottom-center on mobile |
+| Max visible | 3 stacked, `8px` gap between |
+
+### Drag & Drop (Context Chips, Image Reorder)
+
+| Property | Value |
+|----------|-------|
+| Pickup | `scale(1.05)`, shadow: `0 4px 12px rgba(0,0,0,0.15)` |
+| Drop zone | `2px dashed var(--color-red)` border |
+| Snap | `150ms ease-out` to final position |

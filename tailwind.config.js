@@ -7,9 +7,24 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'editorial': ['var(--font-bodoni-moda)', 'Georgia', "'Times New Roman'", 'serif'],
+        'body': ['var(--font-inter)', '-apple-system', 'BlinkMacSystemFont', "'Segoe UI'", 'sans-serif'],
+      },
+      spacing: {
+        'tight': '4px',
+        'compact': '8px',
+        'small': '12px',
+        'medium': '16px',
+        'comfortable': '24px',
+        'roomy': '32px',
+        'dramatic': '48px',
+      },
       colors: {
         'understood-beige': '#E8E2D8',
         'understood-crimson': '#DC143C',
+        'understood-crimson-dark': '#B01030',
+        'understood-cream': '#F5F0E8',
       },
       keyframes: {
         enlightenment: {
