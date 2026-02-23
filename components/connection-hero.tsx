@@ -128,10 +128,11 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
         style={{
           background: '#FFFFFF',
           width: '100%',
-          borderTop: '3px solid #DC143C',
+          borderTop: 'none',
           display: 'grid',
           gridTemplateColumns: hasImage ? '1fr 1fr' : '1fr',
-          minHeight: hasImage ? '360px' : '200px',
+          height: hasImage ? '360px' : '280px',
+          overflow: 'hidden',
           position: 'relative',
           touchAction: showNavigation ? 'pan-y' : 'auto',
           userSelect: 'none',
