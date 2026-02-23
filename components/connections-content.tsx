@@ -38,7 +38,7 @@ export function ConnectionsContent({ entries, lifeArea, onViewEntry, userId }: C
 
   if (!hasConnections) {
     return (
-      <div style={{ background: '#000000' }}>
+      <div>
         <ConnectionHero
           pinnedConnections={[]}
           fallbackConnection={null}
@@ -51,7 +51,7 @@ export function ConnectionsContent({ entries, lifeArea, onViewEntry, userId }: C
   }
 
   return (
-    <div style={{ background: '#000000' }}>
+    <div>
       <ConnectionHero
         pinnedConnections={pinnedConnections}
         fallbackConnection={fallbackConnection}

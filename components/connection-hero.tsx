@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Entry, ConnectionType } from '@/types'
+import { Entry } from '@/types'
 import { stripHtml } from '@/lib/utils'
 import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 
@@ -11,13 +11,6 @@ interface ConnectionHeroProps {
   totalCount: number
   lifeArea: string
   entryLookup: Map<string, Entry>
-}
-
-const CONNECTION_TYPE_META: Record<ConnectionType, { label: string }> = {
-  identity_anchor: { label: 'Identity Anchor' },
-  pattern_interrupt: { label: 'Pattern Interrupt' },
-  validated_principle: { label: 'Validated Principle' },
-  process_anchor: { label: 'Process Anchor' },
 }
 
 function getTodayFormatted(): string {
@@ -90,7 +83,6 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
 
   const activeConnection = displayConnections[activeIndex] || null
   const plainContent = activeConnection ? stripHtml(activeConnection.content).trim() : ''
-  const meta = activeConnection?.connection_type ? CONNECTION_TYPE_META[activeConnection.connection_type] : null
 
   const sourceEntry = activeConnection?.source_entry_id ? entryLookup.get(activeConnection.source_entry_id) : undefined
   const { url: imageUrl, objectPosition } = sourceEntry ? getEntryPosterWithFocalPoint(sourceEntry) : { url: undefined, objectPosition: '50% 50%' }
@@ -131,10 +123,10 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
         </span>
       </div>
 
-      {/* Bottom -- Black featured quote area */}
+      {/* Featured quote area */}
       <div
         style={{
-          background: '#000000',
+          background: '#FFFFFF',
           width: '100%',
           borderTop: '3px solid #DC143C',
           display: 'grid',
@@ -159,34 +151,12 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
         }}>
           {activeConnection ? (
             <div style={{ transition: 'opacity 0.3s ease', opacity: 1 }}>
-              {/* Pinned badge */}
-              {hasPinned && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  marginBottom: '1rem',
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  fontWeight: 600,
-                  color: 'rgba(255, 255, 255, 0.35)',
-                }}>
-                  Pinned
-                  {pinnedConnections.length > 1 && (
-                    <span style={{ color: 'rgba(255, 255, 255, 0.25)' }}>
-                      {activeIndex + 1} / {pinnedConnections.length}
-                    </span>
-                  )}
-                </div>
-              )}
-
               <blockquote style={{
                 fontFamily: "Georgia, 'Times New Roman', serif",
-                fontSize: plainContent.length < 80 ? 'clamp(1.4rem, 2.5vw, 1.8rem)' : 'clamp(1.1rem, 2vw, 1.4rem)',
+                fontSize: plainContent.length < 80 ? 'clamp(1.8rem, 3.5vw, 2.4rem)' : 'clamp(1.4rem, 2.5vw, 1.8rem)',
                 fontWeight: 400,
                 fontStyle: 'italic',
-                color: 'rgba(255, 255, 255, 0.85)',
+                color: '#1A1A1A',
                 lineHeight: 1.6,
                 margin: 0,
                 padding: 0,
@@ -197,25 +167,11 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
                 &ldquo;{plainContent.length > 200 ? plainContent.slice(0, 200) + '...' : plainContent}&rdquo;
               </blockquote>
 
-              {meta && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  marginTop: '1rem',
-                  paddingLeft: '1.5rem',
-                  fontSize: '0.8rem',
-                  color: 'rgba(255, 255, 255, 0.45)',
-                  fontWeight: 500,
-                }}>
-                  <span>{meta.label}</span>
-                </div>
-              )}
-
-              {/* Dot navigation */}
+              {/* Dot navigation with page counter */}
               {showNavigation && (
                 <div style={{
                   display: 'flex',
+                  alignItems: 'center',
                   gap: '0.5rem',
                   marginTop: '1.5rem',
                   paddingLeft: '1.5rem',
@@ -229,7 +185,7 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
                         height: '10px',
                         borderRadius: '5px',
                         border: 'none',
-                        background: index === activeIndex ? '#DC143C' : 'rgba(255, 255, 255, 0.25)',
+                        background: index === activeIndex ? '#DC143C' : 'rgba(0, 0, 0, 0.15)',
                         cursor: 'pointer',
                         padding: '8px 0',
                         boxSizing: 'content-box',
@@ -239,6 +195,16 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
                       aria-label={`Go to pinned connection ${index + 1}`}
                     />
                   ))}
+                  {pinnedConnections.length > 1 && (
+                    <span style={{
+                      fontSize: '0.7rem',
+                      color: 'rgba(0, 0, 0, 0.3)',
+                      fontWeight: 500,
+                      marginLeft: '0.25rem',
+                    }}>
+                      {activeIndex + 1} / {pinnedConnections.length}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -246,7 +212,7 @@ export function ConnectionHero({ pinnedConnections, fallbackConnection, totalCou
             <p style={{
               fontFamily: "Georgia, 'Times New Roman', serif",
               fontSize: '1.2rem',
-              color: 'rgba(255, 255, 255, 0.4)',
+              color: 'rgba(0, 0, 0, 0.4)',
               fontStyle: 'italic',
               lineHeight: 1.6,
             }}>

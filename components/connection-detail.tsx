@@ -87,12 +87,16 @@ export function ConnectionDetail({
     setIsPinning(true)
     try {
       const result = await togglePin(entry.id)
+      console.log('[PIN] togglePin result:', JSON.stringify(result), 'for entry:', entry.id)
       if (result.error) {
+        console.error('[PIN] togglePin error:', result.error)
         setIsPinned(previousState)
       } else {
+        console.log('[PIN] calling onPinToggled, pinned:', result.pinned)
         onPinToggled?.(entry.id, result.pinned ?? !previousState)
       }
-    } catch {
+    } catch (err) {
+      console.error('[PIN] togglePin threw:', err)
       setIsPinned(previousState)
     } finally {
       setIsPinning(false)
@@ -228,15 +232,68 @@ export function ConnectionDetail({
             style={{
               background: 'transparent',
               border: 'none',
-              fontSize: '1.1rem',
               cursor: isPinning ? 'not-allowed' : 'pointer',
               padding: '0.25rem 0.4rem',
               borderRadius: '6px',
               opacity: isPinning ? 0.5 : 1,
-              color: isPinned ? '#DC143C' : '#9CA3AF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            {'\u{1F4CC}'}
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 64 64"
+              fill="none"
+              style={{ transform: 'rotate(30deg)', transition: 'all 0.2s ease' }}
+            >
+              {/* Needle (silver, behind everything) */}
+              <line
+                x1="32"
+                y1="44"
+                x2="32"
+                y2="62"
+                stroke="#A0A0A0"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <circle cx="32" cy="62" r="1.5" fill="#808080" />
+              {/* Collar / flared base */}
+              <path
+                d="M22 40 C22 36, 42 36, 42 40 L40 44 C40 46, 24 46, 24 44 Z"
+                fill={isPinned ? '#B01030' : '#808080'}
+                style={{ transition: 'fill 0.2s ease' }}
+              />
+              {/* Body / cylinder */}
+              <rect
+                x="27"
+                y="18"
+                width="10"
+                height="20"
+                rx="2"
+                fill={isPinned ? '#DC143C' : '#9CA3AF'}
+                style={{ transition: 'fill 0.2s ease' }}
+              />
+              {/* Head / flat top */}
+              <ellipse
+                cx="32"
+                cy="16"
+                rx="14"
+                ry="6"
+                fill={isPinned ? '#DC143C' : '#9CA3AF'}
+                style={{ transition: 'fill 0.2s ease' }}
+              />
+              {/* Highlight on head */}
+              <ellipse
+                cx="29"
+                cy="14"
+                rx="6"
+                ry="2.5"
+                fill={isPinned ? '#E8384A' : '#B0B0B0'}
+                style={{ transition: 'fill 0.2s ease' }}
+              />
+            </svg>
           </button>
           <button
             onClick={onClose}

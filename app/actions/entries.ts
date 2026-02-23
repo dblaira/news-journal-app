@@ -576,6 +576,7 @@ export async function updateEntryPhoto(entryId: string, photoUrl: string) {
 // =============================================================================
 
 export async function togglePin(entryId: string) {
+  console.log('[PIN-SERVER] togglePin called for:', entryId)
   const supabase = await createClient()
   
   const {
@@ -583,10 +584,10 @@ export async function togglePin(entryId: string) {
   } = await supabase.auth.getUser()
 
   if (!user) {
+    console.log('[PIN-SERVER] Unauthorized - no user')
     return { error: 'Unauthorized' }
   }
 
-  // First, get the entry to check its current pin state and entry_type
   const { data: entry, error: fetchError } = await supabase
     .from('entries')
     .select('id, entry_type, pinned_at')
@@ -595,8 +596,11 @@ export async function togglePin(entryId: string) {
     .single()
 
   if (fetchError || !entry) {
+    console.log('[PIN-SERVER] Entry not found:', fetchError?.message)
     return { error: 'Entry not found' }
   }
+  
+  console.log('[PIN-SERVER] Current state:', { entry_type: entry.entry_type, pinned_at: entry.pinned_at })
 
   // Default to 'story' if entry_type is not set (legacy entries)
   const entryType = entry.entry_type || 'story'

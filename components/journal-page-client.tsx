@@ -282,18 +282,16 @@ export function JournalPageClient({
   }
 
   const handlePinToggled = (entryId: string, isPinned: boolean) => {
-    // Update local state to reflect pin change
+    console.log('[PIN] handlePinToggled called:', { entryId, isPinned })
     const updatedEntries = entries.map((e) =>
       e.id === entryId ? { ...e, pinned_at: isPinned ? new Date().toISOString() : null } : e
     )
     setEntries(updatedEntries)
     
-    // Update selected entry if it's the one being pinned/unpinned
     if (selectedEntry?.id === entryId) {
       setSelectedEntry({ ...selectedEntry, pinned_at: isPinned ? new Date().toISOString() : null })
     }
     
-    // Refresh to update the pinned sections in the layout
     router.refresh()
   }
 
