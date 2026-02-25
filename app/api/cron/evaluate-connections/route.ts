@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
+import { sendAPNsToDevices } from '@/lib/apns'
 
 const CONNECTION_TYPE_LABELS: Record<string, string> = {
   identity_anchor: 'Identity Anchor',
@@ -101,19 +102,25 @@ export async function GET(request: NextRequest) {
 
     webpush.setVapidDetails('mailto:admin@understood.app', vapidPublic, vapidPrivate)
 
-    const { data: allSubscriptions } = await supabase
-      .from('push_subscriptions')
-      .select('*')
+    // Fetch both web push subscriptions and iOS push tokens
+    const [{ data: allSubscriptions }, { data: allIOSTokens }] = await Promise.all([
+      supabase.from('push_subscriptions').select('*'),
+      supabase.from('ios_push_tokens').select('*'),
+    ])
 
-    if (!allSubscriptions?.length) {
+    const webUserIds = (allSubscriptions || []).map(s => s.user_id)
+    const iosUserIds = (allIOSTokens || []).map(t => t.user_id)
+    const userIds = [...new Set([...webUserIds, ...iosUserIds])]
+
+    if (!userIds.length) {
       return NextResponse.json({ message: 'No subscriptions found', sent: 0 })
     }
 
-    const userIds = [...new Set(allSubscriptions.map(s => s.user_id))]
-    const results: { userId: string, connectionId?: string, sent: boolean, reason?: string }[] = []
+    const results: { userId: string, connectionId?: string, sent: boolean, webSent?: number, iosSent?: number, reason?: string }[] = []
 
     for (const userId of userIds) {
-      const userSubs = allSubscriptions.filter(s => s.user_id === userId)
+      const userSubs = (allSubscriptions || []).filter(s => s.user_id === userId)
+      const userIOSTokens = (allIOSTokens || []).filter(t => t.user_id === userId)
 
       const { data: prefs } = await supabase
         .from('user_notification_preferences')
@@ -129,13 +136,6 @@ export async function GET(request: NextRequest) {
       }
 
       const now = new Date()
-      const dayOfWeek = parseInt(
-        now.toLocaleDateString('en-US', {
-          timeZone: prefs?.timezone || 'America/Los_Angeles',
-          weekday: 'narrow',
-        }),
-        10
-      )
       const localDate = new Date(now.toLocaleString('en-US', { timeZone: prefs?.timezone || 'America/Los_Angeles' }))
       const currentDay = localDate.getDay()
 
@@ -190,39 +190,79 @@ export async function GET(request: NextRequest) {
 
       const contentText = stripHtml(winner.content || '')
       const typeLabel = CONNECTION_TYPE_LABELS[winner.connection_type || ''] || 'Connection'
+      const notificationBody = contentText.length > 200 ? contentText.slice(0, 197) + '...' : contentText
 
-      const payload = JSON.stringify({
-        title: typeLabel,
-        body: contentText.length > 200 ? contentText.slice(0, 197) + '...' : contentText,
-        connectionId: winner.id,
-        url: `/?connection=${winner.id}&from=notification`,
-      })
+      let webSentCount = 0
+      let iosSentCount = 0
 
-      const sendResults = await Promise.allSettled(
-        userSubs.map(sub =>
-          webpush.sendNotification(
-            {
-              endpoint: sub.endpoint,
-              keys: { p256dh: sub.keys_p256dh, auth: sub.keys_auth },
-            },
-            payload
+      // Send via Web Push
+      if (userSubs.length > 0) {
+        const webPayload = JSON.stringify({
+          title: typeLabel,
+          body: notificationBody,
+          connectionId: winner.id,
+          url: `/?connection=${winner.id}&from=notification`,
+        })
+
+        const webResults = await Promise.allSettled(
+          userSubs.map(sub =>
+            webpush.sendNotification(
+              {
+                endpoint: sub.endpoint,
+                keys: { p256dh: sub.keys_p256dh, auth: sub.keys_auth },
+              },
+              webPayload
+            )
           )
         )
-      )
 
-      const sentCount = sendResults.filter(r => r.status === 'fulfilled').length
-      const failedSubs = sendResults
-        .map((r, i) => r.status === 'rejected' ? userSubs[i] : null)
-        .filter(Boolean)
+        webSentCount = webResults.filter(r => r.status === 'fulfilled').length
+        const failedSubs = webResults
+          .map((r, i) => r.status === 'rejected' ? userSubs[i] : null)
+          .filter(Boolean)
 
-      for (const failedSub of failedSubs) {
-        if (failedSub) {
-          await supabase
-            .from('push_subscriptions')
-            .delete()
-            .eq('id', failedSub.id)
+        for (const failedSub of failedSubs) {
+          if (failedSub) {
+            await supabase
+              .from('push_subscriptions')
+              .delete()
+              .eq('id', failedSub.id)
+          }
         }
       }
+
+      // Send via APNs to iOS devices
+      if (userIOSTokens.length > 0) {
+        const hasAPNsConfig = process.env.APNS_KEY_ID && process.env.APNS_TEAM_ID && process.env.APNS_KEY_BASE64
+
+        if (hasAPNsConfig) {
+          const apnsResults = await sendAPNsToDevices(
+            userIOSTokens.map(t => t.device_token),
+            {
+              title: typeLabel,
+              body: notificationBody,
+              category: 'CONNECTION',
+              data: { connectionId: winner.id },
+            }
+          )
+
+          iosSentCount = apnsResults.filter(r => r.success).length
+
+          // Remove failed tokens (e.g. BadDeviceToken, Unregistered)
+          const failedTokens = apnsResults.filter(r =>
+            !r.success && (r.reason === 'BadDeviceToken' || r.reason === 'Unregistered')
+          )
+          for (const failed of failedTokens) {
+            await supabase
+              .from('ios_push_tokens')
+              .delete()
+              .eq('device_token', failed.deviceToken)
+              .eq('user_id', userId)
+          }
+        }
+      }
+
+      const totalSent = webSentCount + iosSentCount
 
       await supabase
         .from('entries')
@@ -232,7 +272,13 @@ export async function GET(request: NextRequest) {
         })
         .eq('id', winner.id)
 
-      results.push({ userId, connectionId: winner.id, sent: sentCount > 0 })
+      results.push({
+        userId,
+        connectionId: winner.id,
+        sent: totalSent > 0,
+        webSent: webSentCount,
+        iosSent: iosSentCount,
+      })
     }
 
     return NextResponse.json({
