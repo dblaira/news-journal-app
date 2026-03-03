@@ -45,7 +45,7 @@ const entryTypeOptions: { id: EntryType; label: string; icon: string }[] = [
 ]
 
 export function CaptureInput({ onCapture, onClose, userId, freshOpen = true }: CaptureInputProps) {
-  const [mode, setMode] = useState<InputMode>('type')
+  const [mode, setMode] = useState<InputMode>('voice')
   const [text, setText] = useState('')
   const [isInferring, setIsInferring] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -479,166 +479,57 @@ export function CaptureInput({ onCapture, onClose, userId, freshOpen = true }: C
           paddingTop: '3rem',
         }}
       >
-        {/* Mode tabs row with type selector */}
+        {/* Input mode tabs — centered above content */}
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
+            justifyContent: 'center',
+            gap: '0.5rem',
             marginBottom: '1.5rem',
           }}
         >
-          {/* Input mode tabs */}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {[
-              { id: 'voice' as InputMode, label: '🎤 Voice', disabled: !voiceSupported },
-              { id: 'type' as InputMode, label: '⌨️ Type', disabled: false },
-              { id: 'paste' as InputMode, label: '📋 Paste', disabled: false },
-            ].map((tab) => (
+          {[
+            { id: 'voice' as InputMode, label: '🎤 Voice', disabled: !voiceSupported },
+            { id: 'type' as InputMode, label: '⌨️ Type', disabled: false },
+            { id: 'paste' as InputMode, label: '📋 Paste', disabled: false },
+          ].map((tab) => {
+            const isActive = mode === tab.id
+            const isVoice = tab.id === 'voice'
+            return (
               <button
                 key={tab.id}
                 onClick={() => handleModeChange(tab.id)}
                 disabled={tab.disabled || isInferring}
                 style={{
                   padding: '0.6rem 1.2rem',
-                  background: mode === tab.id ? '#DC143C' : 'rgba(255, 255, 255, 0.1)',
+                  background: isActive
+                    ? '#DC143C'
+                    : isVoice
+                      ? 'rgba(220, 20, 60, 0.15)'
+                      : 'rgba(255, 255, 255, 0.1)',
                   color: tab.disabled ? '#666' : '#fff',
-                  border: 'none',
+                  border: isActive
+                    ? 'none'
+                    : isVoice
+                      ? '1px solid rgba(220, 20, 60, 0.4)'
+                      : 'none',
                   borderRadius: '20px',
                   cursor: tab.disabled || isInferring ? 'not-allowed' : 'pointer',
                   fontSize: '0.85rem',
-                  fontWeight: 500,
+                  fontWeight: isVoice ? 600 : 500,
                   transition: 'all 0.2s ease',
                   opacity: tab.disabled ? 0.5 : 1,
                 }}
               >
                 {tab.label}
               </button>
-            ))}
-          </div>
-
-          {/* Divider */}
-          <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.2)' }} />
-
-          {/* File attachment button (images, PDF, CSV, XLSX, DOCX) */}
-          <FileAttachmentButton
-            attachments={fileAttachments}
-            onAttach={(attachment) => {
-              // Use functional setState to avoid stale closure when multiple files selected
-              setFileAttachments(prev => {
-                if (prev.length < MAX_IMAGES_PER_ENTRY) {
-                  return [...prev, attachment]
-                }
-                return prev
-              })
-            }}
-            onRemove={(index) => {
-              setFileAttachments(prev => prev.filter((_, i) => i !== index))
-            }}
-            disabled={isInferring || isProcessingImage}
-          />
-
-          {/* Divider */}
-          <div style={{ width: '1px', height: '24px', background: 'rgba(255, 255, 255, 0.2)' }} />
-
-          {/* Type selector - inline with mode tabs */}
-          <div ref={typeDropdownRef} style={{ position: 'relative' }}>
-            <button
-              onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-              disabled={isInferring || isProcessingImage}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.6rem 1rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '20px',
-                color: '#fff',
-                fontSize: '0.85rem',
-                fontWeight: 500,
-                cursor: isInferring ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                opacity: isInferring ? 0.5 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!isInferring) {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-              }}
-            >
-              <span>{entryTypeOptions.find(t => t.id === selectedType)?.icon}</span>
-              <span>{entryTypeOptions.find(t => t.id === selectedType)?.label}</span>
-              <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>▼</span>
-            </button>
-
-            {/* Dropdown */}
-            {showTypeDropdown && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 0.5rem)',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  background: '#1a1a1a',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  overflow: 'hidden',
-                  minWidth: '140px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                  zIndex: 100,
-                }}
-              >
-                {entryTypeOptions.map((type) => (
-                  <button
-                    key={type.id}
-                    onClick={() => {
-                      setSelectedType(type.id)
-                      setUserExplicitlySelectedType(true)
-                      setShowTypeDropdown(false)
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      background: selectedType === type.id ? 'rgba(220, 20, 60, 0.2)' : 'transparent',
-                      border: 'none',
-                      color: selectedType === type.id ? '#DC143C' : '#fff',
-                      fontSize: '0.85rem',
-                      fontWeight: selectedType === type.id ? 600 : 400,
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'background 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedType !== type.id) {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = selectedType === type.id ? 'rgba(220, 20, 60, 0.2)' : 'transparent'
-                    }}
-                  >
-                    <span>{type.icon}</span>
-                    <span>{type.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+            )
+          })}
         </div>
 
         {/* Voice mode */}
         {mode === 'voice' && (
           <div style={{ textAlign: 'center', width: '100%' }}>
-            {/* Voice mode indicator */}
             <p style={{ 
               color: '#666', 
               fontSize: '0.75rem', 
@@ -665,7 +556,7 @@ export function CaptureInput({ onCapture, onClose, userId, freshOpen = true }: C
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'all 0.3s ease',
-                animation: isListening ? 'pulse 1.5s infinite' : voiceProcessing ? 'none' : 'none',
+                animation: isListening ? 'pulse 1.5s infinite' : 'none',
                 margin: '0 auto 1.5rem',
                 opacity: voiceProcessing ? 0.7 : 1,
               }}
@@ -684,7 +575,6 @@ export function CaptureInput({ onCapture, onClose, userId, freshOpen = true }: C
               <p style={{ color: '#ff6b6b', fontSize: '0.85rem', marginBottom: '1rem' }}>{voiceError}</p>
             )}
             
-            {/* Voice transcript display */}
             {(displayText || voiceProcessing) && (
               <div
                 style={{
@@ -790,15 +680,125 @@ export function CaptureInput({ onCapture, onClose, userId, freshOpen = true }: C
           </p>
         )}
 
-        {/* Submit button */}
-        {/* 
-          Button disabled during:
-          - isInferring: AI is processing the entry
-          - voiceProcessing: Whisper is transcribing audio
-          - isProcessingImage: Vision API is analyzing image
-          - isListening && mode === 'voice': User is actively recording (must stop first)
-          - No content and no image: Nothing to submit
-        */}
+        {/* Attachment + Entry type — below content area */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '1rem',
+            marginTop: '1.5rem',
+          }}
+        >
+          <FileAttachmentButton
+            attachments={fileAttachments}
+            onAttach={(attachment) => {
+              setFileAttachments(prev => {
+                if (prev.length < MAX_IMAGES_PER_ENTRY) {
+                  return [...prev, attachment]
+                }
+                return prev
+              })
+            }}
+            onRemove={(index) => {
+              setFileAttachments(prev => prev.filter((_, i) => i !== index))
+            }}
+            disabled={isInferring || isProcessingImage}
+          />
+
+          <div ref={typeDropdownRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+              disabled={isInferring || isProcessingImage}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.6rem 1rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '20px',
+                color: '#fff',
+                fontSize: '0.85rem',
+                fontWeight: 500,
+                cursor: isInferring ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                opacity: isInferring ? 0.5 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!isInferring) {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+              }}
+            >
+              <span>{entryTypeOptions.find(t => t.id === selectedType)?.icon}</span>
+              <span>{entryTypeOptions.find(t => t.id === selectedType)?.label}</span>
+              <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>▼</span>
+            </button>
+
+            {showTypeDropdown && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 'calc(100% + 0.5rem)',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: '#1a1a1a',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  minWidth: '140px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                  zIndex: 100,
+                }}
+              >
+                {entryTypeOptions.map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => {
+                      setSelectedType(type.id)
+                      setUserExplicitlySelectedType(true)
+                      setShowTypeDropdown(false)
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      background: selectedType === type.id ? 'rgba(220, 20, 60, 0.2)' : 'transparent',
+                      border: 'none',
+                      color: selectedType === type.id ? '#DC143C' : '#fff',
+                      fontSize: '0.85rem',
+                      fontWeight: selectedType === type.id ? 600 : 400,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'background 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedType !== type.id) {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = selectedType === type.id ? 'rgba(220, 20, 60, 0.2)' : 'transparent'
+                    }}
+                  >
+                    <span>{type.icon}</span>
+                    <span>{type.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Continue button */}
         {(() => {
           const hasContent = text.trim() || transcript.trim() || fileAttachments.length > 0
           const isDisabled = isInferring || voiceProcessing || isProcessingImage || (mode === 'voice' && isListening) || !hasContent
@@ -807,7 +807,7 @@ export function CaptureInput({ onCapture, onClose, userId, freshOpen = true }: C
               onClick={handleSubmit}
               disabled={isDisabled}
               style={{
-                marginTop: '2rem',
+                marginTop: '1.5rem',
                 padding: '1rem 3rem',
                 background: '#DC143C',
                 color: '#fff',
