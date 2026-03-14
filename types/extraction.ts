@@ -19,9 +19,10 @@ export interface ExtractionFromClaude {
 }
 
 export interface ExtractionBatchResult {
-  batch_id: string
+  batch_id: string | null
   total_entries_processed: number
   total_extractions_found: number
   categories_found: string[]
   extraction_ids: string[]
+  message?: string
 }
