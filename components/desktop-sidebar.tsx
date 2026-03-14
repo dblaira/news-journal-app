@@ -641,6 +641,29 @@ export function DesktopSidebar({
         }}
       >
         <button
+          onClick={() => router.push('/extractions')}
+          title="Extractions"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: isExpanded ? 'flex-start' : 'center',
+            gap: '0.75rem',
+            width: '100%',
+            padding: isExpanded ? '0.65rem 0' : '0.5rem',
+            background: 'transparent',
+            border: 'none',
+            color: 'rgba(255, 255, 255, 0.5)',
+            fontSize: '0.85rem',
+            fontWeight: 500,
+            textAlign: 'left',
+            cursor: 'pointer',
+            transition: 'color 0.15s ease',
+          }}
+        >
+          <span style={{ fontSize: '1.1rem' }}>◆</span>
+          {isExpanded && <span>Extractions</span>}
+        </button>
+        <button
           onClick={() => router.push('/settings')}
           title="Settings"
           style={{

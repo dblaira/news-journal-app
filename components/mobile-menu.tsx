@@ -292,6 +292,30 @@ export function MobileMenu({
             background: '#000000',
           }}
         >
+          {/* Extractions button */}
+          <button
+            onClick={() => {
+              router.push('/extractions')
+              onClose()
+            }}
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '0.875rem 1.5rem',
+              background: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '4px',
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              letterSpacing: '0.1rem',
+              textTransform: 'uppercase' as const,
+              cursor: 'pointer',
+              marginBottom: '0.75rem',
+            }}
+          >
+            Extractions
+          </button>
           {/* Settings button */}
           <button
             onClick={() => {
