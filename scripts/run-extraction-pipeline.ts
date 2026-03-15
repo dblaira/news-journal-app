@@ -134,7 +134,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms))
 }
 
-async function resolveUserId(supabase: ReturnType<typeof createClient>): Promise<string> {
+async function resolveUserId(supabase: any): Promise<string> {
   const { data, error } = await supabase
     .from('entries')
     .select('user_id')
