@@ -7,7 +7,9 @@
     "setup": "node scripts/complete-setup.js",
     "setup:verify": "node scripts/setup-verification.js",
     "setup:storage": "node scripts/create-storage-bucket.js",
-    "setup:migrations": "node scripts/run-migrations.js"
+    "setup:migrations": "node scripts/run-migrations.js",
+    "extract": "npx tsx scripts/run-extraction-pipeline.ts",
+    "extract:dry": "npx tsx scripts/run-extraction-pipeline.ts --dry-run"
   },
   "overrides": {
     "pdfjs-dist": "5.4.530"
@@ -70,6 +72,7 @@
   "devDependencies": {
     "@types/web-push": "^3.6.4",
     "ignore-loader": "^0.1.2",
-    "png-to-ico": "^3.0.1"
+    "png-to-ico": "^3.0.1",
+    "tsx": "^4.21.0"
   }
 }

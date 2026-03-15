@@ -22,7 +22,7 @@ export default async function ExtractionsPage() {
 
   const { data: allExtractionsWithDates } = await supabase
     .from('extractions')
-    .select('*, entries!inner(created_at)')
+    .select('*, entries(created_at)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 

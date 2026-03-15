@@ -47,3 +47,9 @@ out/
 
 # Worktree config (local only)
 .worktreeinclude
+
+# Personal data exports
+Feb_Metadata/
+
+# Claude Code local state
+.claude/

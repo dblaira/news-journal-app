@@ -1,13 +1,17 @@
 export interface Extraction {
   id: string
   user_id: string
-  entry_id: string
+  entry_id: string | null
   category: string
   data: Record<string, string | number | boolean>
   confidence: number
   source_text?: string
   batch_id: string
   created_at: string
+  source_domain?: string
+  time_window_start?: string
+  time_window_end?: string
+  batch_size?: number
 }
 
 export interface ExtractionFromClaude {
@@ -28,7 +32,7 @@ export interface ExtractionBatchResult {
 }
 
 export interface ExtractionWithEntryDate extends Extraction {
-  entries: { created_at: string }
+  entries: { created_at: string } | null
 }
 
 export interface MapNode {
