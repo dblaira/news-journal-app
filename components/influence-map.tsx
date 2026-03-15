@@ -23,17 +23,18 @@ interface InfluenceMapProps {
   onSelectNode: (node: MapNode) => void
 }
 
-const CATEGORY_RADIUS_MIN = 30
-const CATEGORY_RADIUS_MAX = 80
-const CONCEPT_RADIUS_MIN = 20
-const CONCEPT_RADIUS_MAX = 42
+const CATEGORY_RADIUS_MIN = 28
+const CATEGORY_RADIUS_MAX = 95
+const CONCEPT_RADIUS_MIN = 18
+const CONCEPT_RADIUS_MAX = 44
 const MIN_TAP_TARGET = 22
 
 function mapRadius(importance: number, type: 'category' | 'concept'): number {
+  const curved = Math.pow(importance, 2)
   if (type === 'category') {
-    return CATEGORY_RADIUS_MIN + importance * (CATEGORY_RADIUS_MAX - CATEGORY_RADIUS_MIN)
+    return CATEGORY_RADIUS_MIN + curved * (CATEGORY_RADIUS_MAX - CATEGORY_RADIUS_MIN)
   }
-  return CONCEPT_RADIUS_MIN + importance * (CONCEPT_RADIUS_MAX - CONCEPT_RADIUS_MIN)
+  return CONCEPT_RADIUS_MIN + curved * (CONCEPT_RADIUS_MAX - CONCEPT_RADIUS_MIN)
 }
 
 function mapOpacity(confidence: number): number {
@@ -60,6 +61,7 @@ export function InfluenceMap({ nodes, onSelectNode }: InfluenceMapProps) {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
   const [simNodes, setSimNodes] = useState<SimNode[]>([])
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [settled, setSettled] = useState(false)
   const simulationRef = useRef<ReturnType<typeof forceSimulation<SimNode>> | null>(null)
 
@@ -144,8 +146,12 @@ export function InfluenceMap({ nodes, onSelectNode }: InfluenceMapProps) {
   }, [nodes, dimensions])
 
   const handleNodeClick = useCallback((node: MapNode) => {
-    onSelectNode(node)
-  }, [onSelectNode])
+    setSelectedId(prev => prev === node.id ? null : node.id)
+  }, [])
+
+  const handleBackdropClick = useCallback(() => {
+    setSelectedId(null)
+  }, [])
 
   if (nodes.length === 0) {
     return (
@@ -194,6 +200,15 @@ export function InfluenceMap({ nodes, onSelectNode }: InfluenceMapProps) {
         viewBox={`0 0 ${width} ${height}`}
         style={{ display: 'block', overflow: 'visible' }}
       >
+        {/* Backdrop to dismiss selection */}
+        {selectedId && (
+          <rect
+            x={0} y={0} width={width} height={height}
+            fill="transparent"
+            onClick={handleBackdropClick}
+          />
+        )}
+
         {/* Layer 1: Connection lines */}
         {simNodes
           .filter(n => n.type === 'concept' && n.parentId)
@@ -217,7 +232,8 @@ export function InfluenceMap({ nodes, onSelectNode }: InfluenceMapProps) {
         {/* Layer 2: Circles + hit areas (interactive) */}
         {simNodes.map(node => {
           const isHovered = hoveredId === node.id
-          const scale = isHovered ? 1.08 : 1
+          const isSelected = selectedId === node.id
+          const scale = isHovered || isSelected ? 1.08 : 1
           const opacity = mapOpacity(node.confidence)
           const hitRadius = Math.max(node.radius, MIN_TAP_TARGET)
 
@@ -232,7 +248,7 @@ export function InfluenceMap({ nodes, onSelectNode }: InfluenceMapProps) {
                 cursor: 'pointer',
                 transition: settled ? 'transform 200ms ease-out' : 'none',
               }}
-              onClick={() => handleNodeClick(node)}
+              onClick={(e) => { e.stopPropagation(); handleNodeClick(node) }}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleNodeClick(node) }}
               onMouseEnter={() => setHoveredId(node.id)}
               onMouseLeave={() => setHoveredId(null)}
@@ -244,18 +260,44 @@ export function InfluenceMap({ nodes, onSelectNode }: InfluenceMapProps) {
                 r={node.radius}
                 fill={node.color}
                 fillOpacity={opacity}
-                stroke={node.color}
-                strokeOpacity={Math.min(1, opacity + 0.15)}
-                strokeWidth={isHovered ? 2 : 1}
+                stroke={isSelected ? '#fff' : node.color}
+                strokeOpacity={isSelected ? 1 : Math.min(1, opacity + 0.15)}
+                strokeWidth={isSelected ? 3 : isHovered ? 2 : 1}
               />
             </g>
           )
         })}
 
-        {/* Layer 3: Labels (always on top of all circles) */}
+        {/* Layer 3: Score numbers (faint, large, always visible) */}
+        {simNodes.map(node => {
+          if (node.radius < 22) return null
+          const numSize = node.type === 'category'
+            ? Math.max(16, Math.min(32, node.radius * 0.55))
+            : Math.max(12, Math.min(20, node.radius * 0.5))
+
+          return (
+            <text
+              key={`num-${node.id}`}
+              x={node.x}
+              y={node.y + (node.type === 'category' ? numSize * 0.5 : numSize * 0.4)}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="#fff"
+              fillOpacity={0.25}
+              fontFamily="var(--font-inter), sans-serif"
+              fontSize={numSize}
+              fontWeight={800}
+              style={{ pointerEvents: 'none', userSelect: 'none' }}
+            >
+              {node.occurrences}
+            </text>
+          )
+        })}
+
+        {/* Layer 4: Labels (always on top) */}
         {simNodes.map(node => {
           const labelSize = node.type === 'category'
-            ? Math.max(10, Math.min(14, node.radius * 0.28))
+            ? Math.max(10, Math.min(14, node.radius * 0.24))
             : Math.max(9, Math.min(11, node.radius * 0.4))
           const maxChars = node.type === 'category'
             ? Math.floor(node.radius * 0.28)
@@ -268,7 +310,7 @@ export function InfluenceMap({ nodes, onSelectNode }: InfluenceMapProps) {
               <text
                 key={`label-${node.id}`}
                 x={node.x}
-                y={node.y}
+                y={node.y - (node.radius * 0.18)}
                 textAnchor="middle"
                 dominantBaseline="central"
                 fill="#fff"
@@ -294,7 +336,7 @@ export function InfluenceMap({ nodes, onSelectNode }: InfluenceMapProps) {
               <text
                 key={`label-${node.id}`}
                 x={node.x}
-                y={node.y}
+                y={node.y - (node.radius * 0.15)}
                 textAnchor="middle"
                 dominantBaseline="central"
                 fill="#fff"
@@ -317,7 +359,93 @@ export function InfluenceMap({ nodes, onSelectNode }: InfluenceMapProps) {
         })}
       </svg>
 
-      {hoveredId && (() => {
+      {/* Selection popup — shows on tap, stays on map */}
+      {selectedId && (() => {
+        const node = simNodes.find(n => n.id === selectedId)
+        if (!node) return null
+        const popupWidth = 240
+        const nearRightEdge = node.x + node.radius + popupWidth + 20 > width
+        const nearBottomEdge = node.y + node.radius + 140 > height
+        const popupX = nearRightEdge
+          ? Math.max(8, node.x - node.radius - popupWidth - 12)
+          : node.x + node.radius + 12
+        const popupY = nearBottomEdge
+          ? Math.max(8, node.y - 140)
+          : node.y - 20
+
+        return (
+          <div
+            style={{
+              position: 'absolute',
+              left: popupX,
+              top: popupY,
+              width: popupWidth,
+              background: 'rgba(0, 0, 0, 0.92)',
+              color: '#fff',
+              padding: '12px 14px',
+              borderRadius: '8px',
+              fontFamily: 'var(--font-inter), sans-serif',
+              fontSize: '0.75rem',
+              lineHeight: 1.5,
+              zIndex: 10,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+            }}
+          >
+            <div style={{
+              textTransform: 'uppercase',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              letterSpacing: '0.04em',
+              marginBottom: '6px',
+              color: node.color,
+            }}>
+              {node.label}
+            </div>
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
+              <div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{node.occurrences}</div>
+                <div style={{ opacity: 0.6, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  occurrences
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{Math.round(node.confidence * 100)}%</div>
+                <div style={{ opacity: 0.6, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  confidence
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{Math.round(node.importance * 100)}</div>
+                <div style={{ opacity: 0.6, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  score
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setSelectedId(null); onSelectNode(node) }}
+              style={{
+                width: '100%',
+                padding: '8px',
+                background: node.color,
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                fontFamily: 'var(--font-inter), sans-serif',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              View extractions &rarr;
+            </button>
+          </div>
+        )
+      })()}
+
+      {/* Hover tooltip — only when no selection active */}
+      {!selectedId && hoveredId && (() => {
         const node = simNodes.find(n => n.id === hoveredId)
         if (!node) return null
         const tooltipWidth = 200
