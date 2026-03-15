@@ -144,7 +144,7 @@ async function resolveUserId(supabase: ReturnType<typeof createClient>): Promise
   if (error || !data) {
     throw new Error('Could not resolve user_id from entries table. Use --user-id flag.')
   }
-  return data.user_id
+  return (data as { user_id: string }).user_id
 }
 
 async function main() {
