@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Extraction } from '@/types/extraction'
+import { Extraction, ExtractionWithEntryDate } from '@/types/extraction'
 import { ExtractionsReview } from '@/components/extractions-review'
+import { aggregateExtractions } from '@/lib/extractions/aggregate'
 
 interface BatchInfo {
   batch_id: string
@@ -19,15 +20,16 @@ export default async function ExtractionsPage() {
     redirect('/login')
   }
 
-  // Fetch distinct batch IDs with their creation date and count
-  const { data: allExtractions } = await supabase
+  const { data: allExtractionsWithDates } = await supabase
     .from('extractions')
-    .select('id, batch_id, created_at')
+    .select('*, entries!inner(created_at)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
+  const allExtractions = (allExtractionsWithDates || []) as ExtractionWithEntryDate[]
+
   const batchMap = new Map<string, BatchInfo>()
-  for (const ext of allExtractions || []) {
+  for (const ext of allExtractions) {
     if (!batchMap.has(ext.batch_id)) {
       batchMap.set(ext.batch_id, {
         batch_id: ext.batch_id,
@@ -39,23 +41,16 @@ export default async function ExtractionsPage() {
   }
   const batches: BatchInfo[] = Array.from(batchMap.values())
 
-  // Fetch the most recent batch's extractions (or empty)
   let extractions: Extraction[] = []
   let activeBatchId: string | null = null
 
   if (batches.length > 0) {
     activeBatchId = batches[0].batch_id
-    const { data } = await supabase
-      .from('extractions')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('batch_id', activeBatchId)
-      .order('category', { ascending: true })
-
-    extractions = (data as Extraction[]) || []
+    extractions = allExtractions.filter(e => e.batch_id === activeBatchId)
   }
 
-  // Count total entries for context
+  const mapNodes = aggregateExtractions(allExtractions)
+
   const { count: totalEntries } = await supabase
     .from('entries')
     .select('id', { count: 'exact', head: true })
@@ -64,9 +59,11 @@ export default async function ExtractionsPage() {
   return (
     <ExtractionsReview
       initialExtractions={extractions}
+      allExtractions={allExtractions}
       initialBatchId={activeBatchId}
       batches={batches}
       totalEntries={totalEntries || 0}
+      mapNodes={mapNodes}
     />
   )
 }

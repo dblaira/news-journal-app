@@ -26,3 +26,19 @@ export interface ExtractionBatchResult {
   extraction_ids: string[]
   message?: string
 }
+
+export interface ExtractionWithEntryDate extends Extraction {
+  entries: { created_at: string }
+}
+
+export interface MapNode {
+  id: string
+  label: string
+  category: string
+  type: 'category' | 'concept'
+  parentId?: string
+  importance: number
+  confidence: number
+  occurrences: number
+  color: string
+}
