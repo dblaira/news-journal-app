@@ -3,6 +3,7 @@ export interface Extraction {
   user_id: string
   entry_id: string | null
   category: string
+  parent_category?: string
   data: Record<string, string | number | boolean>
   confidence: number
   source_text?: string
@@ -40,9 +41,23 @@ export interface MapNode {
   label: string
   category: string
   type: 'category' | 'concept'
+  nodeLevel?: 'parent' | 'child'
   parentId?: string
   importance: number
   confidence: number
   occurrences: number
   color: string
+}
+
+export interface OntologyParent {
+  parent: string
+  children: string[]
+  description: string
+  merge_note?: string
+}
+
+export interface OntologyProposal {
+  ontology: OntologyParent[]
+  unmapped: string[]
+  proposed_new: string[]
 }
