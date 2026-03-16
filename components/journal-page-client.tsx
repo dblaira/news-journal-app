@@ -297,6 +297,20 @@ export function JournalPageClient({
     router.refresh()
   }
 
+  const handleFeaturedToggle = (entryId: string, isFeatured: boolean) => {
+    const updatedEntries = entries.map((e) => ({
+      ...e,
+      featured: e.id === entryId ? isFeatured : false,
+    }))
+    setEntries(updatedEntries)
+
+    if (selectedEntry?.id === entryId) {
+      setSelectedEntry({ ...selectedEntry, featured: isFeatured })
+    }
+
+    router.refresh()
+  }
+
   const handleContentUpdated = (entryId: string, content: string) => {
     // Update entry in local state
     const updatedEntries = entries.map((e) =>
@@ -629,6 +643,7 @@ export function JournalPageClient({
           onDeleteEntry={handleDeleteEntry}
           onPhotoUpdated={handlePhotoUpdated}
           onPinToggled={handlePinToggled}
+          onFeaturedToggled={handleFeaturedToggle}
           onContentUpdated={handleContentUpdated}
           onEntryUpdated={handleEntryUpdated}
           onViewEntry={(entryId) => {

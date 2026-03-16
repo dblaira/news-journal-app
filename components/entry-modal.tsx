@@ -36,6 +36,7 @@ interface EntryModalProps {
   onDeleteEntry: (id: string) => void
   onPhotoUpdated?: (entryId: string, photoUrl: string | null) => void
   onPinToggled?: (entryId: string, isPinned: boolean) => void
+  onFeaturedToggled?: (entryId: string, isFeatured: boolean) => void
   onContentUpdated?: (entryId: string, content: string) => void
   onEntryUpdated?: (entryId: string, updates: Partial<Entry>) => void
   onViewEntry?: (entryId: string) => void
@@ -50,6 +51,7 @@ export function EntryModal({
   onDeleteEntry,
   onPhotoUpdated,
   onPinToggled,
+  onFeaturedToggled,
   onContentUpdated,
   onEntryUpdated,
   onViewEntry,
@@ -971,6 +973,7 @@ export function EntryModal({
                 entryId={entry.id}
                 isFeatured={!!entry.featured}
                 size={isMobile ? 20 : 18}
+                onToggle={(f) => onFeaturedToggled?.(entry.id, f)}
               />
             </>
           )}
