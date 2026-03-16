@@ -107,20 +107,35 @@ export async function POST() {
 
     console.log('=== Ontology Proposal START ===')
 
-    const { data: extractions, error: fetchError } = await supabase
-      .from('extractions')
-      .select('category, source_domain')
-      .eq('user_id', user.id)
+    // Paginate to get ALL extractions (Supabase default limit is 1000)
+    const allExtractions: { category: string, source_domain: string | null }[] = []
+    let from = 0
+    const pageSize = 1000
 
-    if (fetchError) {
-      console.error('Error fetching extractions:', fetchError)
-      return NextResponse.json(
-        { error: `Failed to fetch extractions: ${fetchError.message}` },
-        { status: 500 }
-      )
+    while (true) {
+      const { data: page, error: fetchError } = await supabase
+        .from('extractions')
+        .select('category, source_domain')
+        .eq('user_id', user.id)
+        .range(from, from + pageSize - 1)
+
+      if (fetchError) {
+        console.error('Error fetching extractions:', fetchError)
+        return NextResponse.json(
+          { error: `Failed to fetch extractions: ${fetchError.message}` },
+          { status: 500 }
+        )
+      }
+
+      if (!page || page.length === 0) break
+      allExtractions.push(...page)
+      if (page.length < pageSize) break
+      from += pageSize
     }
 
-    if (!extractions || extractions.length === 0) {
+    const extractions = allExtractions
+
+    if (extractions.length === 0) {
       return NextResponse.json(
         { error: 'No extractions found. Run extraction first.' },
         { status: 400 }
