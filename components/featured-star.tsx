@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { toggleFeatured } from '@/app/actions/entries'
 
 interface FeaturedStarProps {
@@ -16,6 +17,7 @@ export function FeaturedStar({
   size = 22,
   onToggle,
 }: FeaturedStarProps) {
+  const router = useRouter()
   const [featured, setFeatured] = useState(isFeatured)
   const [animating, setAnimating] = useState(false)
   const [pending, setPending] = useState(false)
@@ -40,6 +42,7 @@ export function FeaturedStar({
       setFeatured(!newState)
     } else {
       onToggle?.(result.featured ?? newState)
+      router.refresh()
     }
 
     setPending(false)
