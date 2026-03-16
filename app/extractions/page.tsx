@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Extraction, ExtractionWithEntryDate } from '@/types/extraction'
 import { ExtractionsReview } from '@/components/extractions-review'
-import { aggregateExtractions } from '@/lib/extractions/aggregate'
+import { aggregateExtractions, aggregateByOntology } from '@/lib/extractions/aggregate'
 
 interface BatchInfo {
   batch_id: string
@@ -49,6 +49,10 @@ export default async function ExtractionsPage() {
     extractions = allExtractions.filter(e => e.batch_id === activeBatchId)
   }
 
+  const hasOntology = allExtractions.some(e => e.parent_category)
+  const parentMapNodes = hasOntology
+    ? aggregateByOntology(allExtractions)
+    : null
   const mapNodes = aggregateExtractions(allExtractions)
 
   const { count: totalEntries } = await supabase
@@ -64,6 +68,7 @@ export default async function ExtractionsPage() {
       batches={batches}
       totalEntries={totalEntries || 0}
       mapNodes={mapNodes}
+      parentMapNodes={parentMapNodes}
     />
   )
 }

@@ -13,6 +13,8 @@ export const CATEGORY_COLORS: Record<string, string> = {
   sleep: '#6366F1',
   social: '#F97316',
   work: '#0EA5E9',
+  entertainment: '#D946EF',
+  learning: '#06B6D4',
 }
 
 const FALLBACK_COLORS = [
@@ -21,8 +23,10 @@ const FALLBACK_COLORS = [
 ]
 
 function getCategoryColor(category: string): string {
+  const lower = category.toLowerCase()
+  if (CATEGORY_COLORS[lower]) return CATEGORY_COLORS[lower]
   if (CATEGORY_COLORS[category]) return CATEGORY_COLORS[category]
-  const idx = Math.abs(hashCode(category)) % FALLBACK_COLORS.length
+  const idx = Math.abs(hashCode(lower)) % FALLBACK_COLORS.length
   return FALLBACK_COLORS[idx]
 }
 
@@ -189,4 +193,66 @@ export function aggregateExtractions(
   })
 
   return nodes
+}
+
+export function aggregateByOntology(
+  extractions: ExtractionWithEntryDate[],
+  weights?: Partial<ImportanceWeights>
+): MapNode[] {
+  if (extractions.length === 0) return []
+
+  const parentMap = new Map<string, CategoryAccumulator>()
+
+  for (const ext of extractions) {
+    const parent = ext.parent_category || ext.category
+    const entryDate = ext.entries?.created_at || ext.created_at
+
+    if (!parentMap.has(parent)) {
+      parentMap.set(parent, {
+        extractions: [],
+        totalConfidence: 0,
+        totalIntensity: 0,
+        intensityCount: 0,
+        mostRecentEntryDate: entryDate,
+      })
+    }
+    const acc = parentMap.get(parent)!
+    acc.extractions.push(ext)
+    acc.totalConfidence += ext.confidence
+
+    const intensity = extractIntensity(ext.data)
+    if (intensity !== null) {
+      acc.totalIntensity += intensity
+      acc.intensityCount++
+    }
+
+    if (new Date(entryDate) > new Date(acc.mostRecentEntryDate)) {
+      acc.mostRecentEntryDate = entryDate
+    }
+  }
+
+  const parentEntries = Array.from(parentMap.entries())
+
+  const rawNodes: RawNodeData[] = parentEntries.map(([, acc]) => ({
+    occurrences: acc.extractions.length,
+    avgIntensity: acc.intensityCount > 0
+      ? acc.totalIntensity / acc.intensityCount
+      : 0.5,
+    avgConfidence: acc.totalConfidence / acc.extractions.length,
+    mostRecentEntryDate: acc.mostRecentEntryDate,
+  }))
+
+  const scores = computeImportanceScores(rawNodes, weights)
+
+  return parentEntries.map(([parent, acc], i) => ({
+    id: `parent::${parent}`,
+    label: parent,
+    category: parent,
+    type: 'category' as const,
+    nodeLevel: 'parent' as const,
+    importance: scores[i],
+    confidence: acc.totalConfidence / acc.extractions.length,
+    occurrences: acc.extractions.length,
+    color: getCategoryColor(parent),
+  }))
 }

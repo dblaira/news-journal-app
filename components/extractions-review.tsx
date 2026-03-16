@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Extraction, ExtractionBatchResult, ExtractionWithEntryDate, MapNode } from '@/types/extraction'
 import { InfluenceMap } from '@/components/influence-map'
+import { aggregateExtractions } from '@/lib/extractions/aggregate'
 
 interface BatchInfo {
   batch_id: string
@@ -18,12 +19,17 @@ interface ExtractionsReviewProps {
   batches: BatchInfo[]
   totalEntries: number
   mapNodes: MapNode[]
+  parentMapNodes?: MapNode[] | null
 }
 
 function filterExtractionsByNode(
   extractions: ExtractionWithEntryDate[],
   node: MapNode
 ): Extraction[] {
+  if (node.nodeLevel === 'parent') {
+    return extractions.filter(e => e.parent_category === node.category)
+  }
+
   if (node.type === 'category') {
     return extractions.filter(e => e.category === node.category)
   }
@@ -43,6 +49,7 @@ export function ExtractionsReview({
   batches: initialBatches,
   totalEntries,
   mapNodes,
+  parentMapNodes,
 }: ExtractionsReviewProps) {
   const router = useRouter()
   const [extractions, setExtractions] = useState(initialExtractions)
@@ -54,6 +61,18 @@ export function ExtractionsReview({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<'map' | 'cards'>('map')
   const [selectedNode, setSelectedNode] = useState<MapNode | null>(null)
+  const [drillParent, setDrillParent] = useState<string | null>(null)
+
+  const activeMapNodes = useMemo(() => {
+    if (!parentMapNodes) return mapNodes
+
+    if (!drillParent) return parentMapNodes
+
+    const childExtractions = allExtractions.filter(
+      e => e.parent_category === drillParent
+    )
+    return aggregateExtractions(childExtractions)
+  }, [parentMapNodes, mapNodes, drillParent, allExtractions])
 
   const displayExtractions = useMemo(() => {
     if (viewMode === 'map' || !selectedNode) return extractions
@@ -90,15 +109,25 @@ export function ExtractionsReview({
   }
 
   const handleSelectNode = (node: MapNode) => {
+    if (node.nodeLevel === 'parent') {
+      setDrillParent(node.category)
+      return
+    }
     setSelectedNode(node)
     setViewMode('cards')
     setExpandedCategories(new Set([node.category]))
   }
 
   const handleBackToMap = () => {
-    setViewMode('map')
-    setSelectedNode(null)
-    setExpandedCategories(new Set())
+    if (viewMode === 'cards') {
+      setViewMode('map')
+      setSelectedNode(null)
+      setExpandedCategories(new Set())
+      return
+    }
+    if (drillParent) {
+      setDrillParent(null)
+    }
   }
 
   const handleRunExtraction = async () => {
@@ -398,7 +427,43 @@ export function ExtractionsReview({
             </div>
           )}
 
-          <InfluenceMap nodes={mapNodes} onSelectNode={handleSelectNode} />
+          {drillParent && (
+            <button
+              onClick={handleBackToMap}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                marginBottom: '1rem',
+                background: 'transparent',
+                border: '1px solid rgba(0,0,0,0.12)',
+                borderRadius: '6px',
+                fontFamily: 'var(--font-inter), sans-serif',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase' as const,
+                color: '#1A1A1A',
+                cursor: 'pointer',
+              }}
+            >
+              &larr; All categories
+            </button>
+          )}
+
+          {drillParent && (
+            <div style={{
+              fontFamily: 'var(--font-bodoni-moda), Georgia, serif',
+              fontSize: '1.6rem',
+              color: '#1A1A1A',
+              marginBottom: '1rem',
+            }}>
+              {drillParent}
+            </div>
+          )}
+
+          <InfluenceMap nodes={activeMapNodes} onSelectNode={handleSelectNode} />
         </div>
 
         {/* Cards View */}
