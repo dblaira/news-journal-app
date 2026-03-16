@@ -12,6 +12,7 @@ import { generateMindMap, toReactFlowFormat } from '@/lib/mindmap/utils'
 import MetadataEnrichment from './entry/MetadataEnrichment'
 import { ImageGallery } from './entry/ImageGallery'
 import { CopyButton } from './ui/copy-button'
+import { FeaturedStar } from './featured-star'
 import { SelectionToolbar } from './ui/selection-toolbar'
 import { renderWithHighlights, addHighlight, removeHighlightAt } from '@/lib/utils/highlights'
 import { LiteraryVersion, NewsVersion, getNewsBody, PoeticVersion, FallbackVersion } from './version-renderers'
@@ -960,6 +961,20 @@ export function EntryModal({
             {isMobile ? (isTogglingPin ? '…' : (isPinned ? '◉' : '○')) : (isTogglingPin ? '...' : isPinned ? 'Unpin' : 'Pin')}
           </button>
           
+          {/* Featured star — only for stories */}
+          {(entry.entry_type === 'story' || !entry.entry_type) && (
+            <>
+              {isMobile && (
+                <div style={{ width: '1px', background: 'rgba(0,0,0,0.15)', margin: '0 0.25rem' }} />
+              )}
+              <FeaturedStar
+                entryId={entry.id}
+                isFeatured={!!entry.featured}
+                size={isMobile ? 20 : 18}
+              />
+            </>
+          )}
+
           {/* Export button with dropdown — ghost style, no border */}
           <div ref={exportMenuRef} style={{ position: 'relative' }}>
             <button

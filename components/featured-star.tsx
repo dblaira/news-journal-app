@@ -45,10 +45,15 @@ export function FeaturedStar({
     setPending(false)
   }, [entryId, featured, pending, onToggle])
 
+  const tooltip = featured
+    ? 'This story is featured on your landing page. Tap to remove.'
+    : 'Feature this story on your landing page'
+
   return (
     <button
       type="button"
       onClick={handleClick}
+      title={tooltip}
       aria-label={featured ? 'Remove from hero' : 'Feature in hero'}
       aria-pressed={featured}
       style={{

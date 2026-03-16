@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { CreateEntryInput, Entry, EntryType, MAX_IMAGES_PER_ENTRY, EntryImage } from '@/types'
-import { createEntry } from '@/app/actions/entries'
+import { createEntry, toggleFeatured } from '@/app/actions/entries'
 import { TiptapEditor } from '@/components/editor/TiptapEditor'
 import { useAutosaveDraft, getSavedDraft, clearDraft } from '@/lib/hooks/use-draft-autosave'
 import { RestoreDraftDialog } from './draft-dialogs'
@@ -68,6 +68,7 @@ export function EntryForm({ onSuccess, onCancel, onContentChange }: EntryFormPro
   const [files, setFiles] = useState<FilePreview[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showRestoreDialog, setShowRestoreDialog] = useState(false)
+  const [featureAsHero, setFeatureAsHero] = useState(false)
   const [formData, setFormData] = useState<CreateEntryInput>({
     headline: '',
     category: 'Business',
@@ -159,6 +160,11 @@ export function EntryForm({ onSuccess, onCancel, onContentChange }: EntryFormPro
         setError(result.error)
         setIsSubmitting(false)
         return
+      }
+
+      // Feature as hero if toggle was on
+      if (featureAsHero && result.data) {
+        await toggleFeatured(result.data.id)
       }
 
       // Upload files if provided
@@ -521,6 +527,43 @@ export function EntryForm({ onSuccess, onCancel, onContentChange }: EntryFormPro
             </div>
           </div>
         </div>
+
+        {formData.entry_type === 'story' && (
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '1rem',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-inter), sans-serif',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              color: featureAsHero ? '#DC143C' : '#666',
+              transition: 'color 200ms',
+            }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill={featureAsHero ? '#DC143C' : 'none'}
+              stroke={featureAsHero ? '#DC143C' : '#999'}
+              strokeWidth="1.5"
+              style={{ transition: 'fill 200ms, stroke 200ms', flexShrink: 0 }}
+            >
+              <path d="M12 1 L13.8 9.5 L22 12 L13.8 14.5 L12 23 L10.2 14.5 L2 12 L10.2 9.5 Z" strokeLinejoin="round"/>
+            </svg>
+            <input
+              type="checkbox"
+              checked={featureAsHero}
+              onChange={(e) => setFeatureAsHero(e.target.checked)}
+              style={{ display: 'none' }}
+            />
+            Feature on landing page
+          </label>
+        )}
 
         <div className="form-actions">
           <button type="submit" className="btn-primary" disabled={isSubmitting}>
