@@ -4,6 +4,7 @@ import { Entry } from '@/types'
 import { formatEntryDateShort, truncateHtml } from '@/lib/utils'
 import { getEntryPosterWithFocalPoint } from '@/lib/utils/entry-images'
 import { useState, useEffect } from 'react'
+import { FeaturedStar } from './featured-star'
 
 interface VanityFairLayoutProps {
   categoryEntries: Entry[]
@@ -274,9 +275,16 @@ export function VanityFairLayout({
                     />
                   </div>
                 )}
-                <h2 className="uppercase text-xs text-red-600 tracking-wider mb-1 font-bold">
-                  {entry.category}
-                </h2>
+                <div className="flex items-center justify-between mb-1">
+                  <h2 className="uppercase text-xs text-red-600 tracking-wider font-bold">
+                    {entry.category}
+                  </h2>
+                  <FeaturedStar
+                    entryId={entry.id}
+                    isFeatured={!!entry.featured}
+                    size={16}
+                  />
+                </div>
                 <h3 className="text-xl font-semibold mt-1 hover:underline leading-tight text-neutral-900 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                   {entry.headline}
                 </h3>
@@ -321,10 +329,15 @@ export function VanityFairLayout({
                       />
                     </div>
                   )}
-                  <div className="mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <span className="uppercase text-xs tracking-wider text-red-600 font-bold">
                       {entry.category}
                     </span>
+                    <FeaturedStar
+                      entryId={entry.id}
+                      isFeatured={!!entry.featured}
+                      size={20}
+                    />
                   </div>
                   <h2 className="text-3xl md:text-4xl font-bold leading-tight mb-2 hover:underline text-neutral-900 group-hover:text-neutral-600 transition-colors" style={{ fontFamily: "var(--font-bodoni-moda), Georgia, 'Times New Roman', serif" }}>
                     {entry.headline}
