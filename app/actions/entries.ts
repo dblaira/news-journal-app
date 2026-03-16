@@ -653,6 +653,73 @@ export async function togglePin(entryId: string) {
   return { success: true, pinned: true }
 }
 
+// FEATURED ENTRY (Hero Section)
+// =============================================================================
+
+export async function toggleFeatured(entryId: string) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { error: 'Unauthorized' }
+
+  const { data: entry, error: fetchError } = await supabase
+    .from('entries')
+    .select('id, featured')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchError || !entry) return { error: 'Entry not found' }
+
+  if (entry.featured) {
+    const { error: updateError } = await supabase
+      .from('entries')
+      .update({ featured: false })
+      .eq('id', entryId)
+      .eq('user_id', user.id)
+
+    if (updateError) return { error: updateError.message }
+
+    revalidatePath('/')
+    return { success: true, featured: false }
+  }
+
+  // Un-feature any currently featured entry for this user
+  await supabase
+    .from('entries')
+    .update({ featured: false })
+    .eq('user_id', user.id)
+    .eq('featured', true)
+
+  // Feature the selected entry
+  const { error: featureError } = await supabase
+    .from('entries')
+    .update({ featured: true })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (featureError) return { error: featureError.message }
+
+  revalidatePath('/')
+  return { success: true, featured: true }
+}
+
+export async function getFeaturedEntry(userId: string): Promise<Entry | null> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('entries')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('featured', true)
+    .single()
+
+  return (data as Entry) || null
+}
+
 export async function getPinnedEntries(userId: string): Promise<{
   stories: Entry[]
   notes: Entry[]

@@ -33,6 +33,7 @@ interface JournalPageClientProps {
   pinnedStories: Entry[]
   pinnedNotes: Entry[]
   pinnedActions: Entry[]
+  featuredEntry?: Entry | null
 }
 
 export function JournalPageClient({
@@ -45,6 +46,7 @@ export function JournalPageClient({
   pinnedStories,
   pinnedNotes,
   pinnedActions,
+  featuredEntry,
 }: JournalPageClientProps) {
   const router = useRouter()
   const [entries, setEntries] = useState<Entry[]>(initialEntries)
@@ -498,7 +500,7 @@ export function JournalPageClient({
           <>
             <div className="hero-section-wrapper">
               <HeroStory
-                entry={filtered[0] || null}
+                entry={featuredEntry || filtered[0] || null}
                 onCreateEntry={handleCreateEntry}
                 onViewEntry={handleViewEntry}
                 onGenerateVersions={handleGenerateVersions}

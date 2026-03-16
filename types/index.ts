@@ -65,6 +65,8 @@ export interface Entry {
   completed_at?: string | null
   // Pin feature
   pinned_at?: string | null
+  // Featured entry — only one per user, shown in hero section
+  featured?: boolean
   // Entry lineage — links to the parent entry that spawned this one (water cycle)
   source_entry_id?: string | null
   // Connection (belief library) fields

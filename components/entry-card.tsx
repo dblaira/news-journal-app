@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Entry, EntryImage } from '@/types'
 import { formatEntryDateLong, formatEntryDateShort } from '@/lib/utils'
 import { ContextSummaryDisplay } from './context'
+import { FeaturedStar } from './featured-star'
 
 // Helper to get poster image URL and focal point from entry (handles both new images array and legacy fields)
 // Returns the poster image URL (empty string if no real image) and CSS object-position value
@@ -112,6 +113,13 @@ export function EntryCard({
         <div className="entry-card__meta">
           <span className="category-label">{entry.category}</span>
           <span>{shortDate}</span>
+          {entry.entry_type === 'story' && (
+            <FeaturedStar
+              entryId={entry.id}
+              isFeatured={!!entry.featured}
+              size={18}
+            />
+          )}
         </div>
         
         {/* Context summary - compact inline display */}
