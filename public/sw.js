@@ -7,8 +7,8 @@ self.addEventListener('push', function(event) {
 
   const options = {
     body: payload.body,
-    icon: '/icon-192.png',
-    badge: '/icons/badge-72.png',
+    icon: '/icon-192.png?v=2',
+    badge: '/icons/badge-72.png?v=2',
     tag: payload.connectionId || 'understood-default',
     data: {
       url: payload.url || '/',
