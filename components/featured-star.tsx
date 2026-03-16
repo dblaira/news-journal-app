@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { toggleFeatured } from '@/app/actions/entries'
 
 interface FeaturedStarProps {
   entryId: string
@@ -17,7 +15,6 @@ export function FeaturedStar({
   size = 22,
   onToggle,
 }: FeaturedStarProps) {
-  const router = useRouter()
   const [featured, setFeatured] = useState(isFeatured)
   const [animating, setAnimating] = useState(false)
   const [pending, setPending] = useState(false)
@@ -36,13 +33,23 @@ export function FeaturedStar({
       setTimeout(() => setAnimating(false), 450)
     }
 
-    const result = await toggleFeatured(entryId)
+    try {
+      const res = await fetch('/api/featured', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entryId }),
+      })
 
-    if (result.error) {
+      const result = await res.json()
+
+      if (!res.ok || result.error) {
+        setFeatured(!newState)
+      } else {
+        onToggle?.(result.featured)
+        window.location.reload()
+      }
+    } catch {
       setFeatured(!newState)
-    } else {
-      onToggle?.(result.featured ?? newState)
-      router.refresh()
     }
 
     setPending(false)

@@ -710,7 +710,7 @@ export async function toggleFeatured(entryId: string) {
 export async function getFeaturedEntry(userId: string): Promise<Entry | null> {
   const supabase = await createClient()
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('entries')
     .select('*')
     .eq('user_id', userId)

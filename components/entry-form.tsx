@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { CreateEntryInput, Entry, EntryType, MAX_IMAGES_PER_ENTRY, EntryImage } from '@/types'
-import { createEntry, toggleFeatured } from '@/app/actions/entries'
+import { createEntry } from '@/app/actions/entries'
 import { TiptapEditor } from '@/components/editor/TiptapEditor'
 import { useAutosaveDraft, getSavedDraft, clearDraft } from '@/lib/hooks/use-draft-autosave'
 import { RestoreDraftDialog } from './draft-dialogs'
@@ -164,7 +164,11 @@ export function EntryForm({ onSuccess, onCancel, onContentChange }: EntryFormPro
 
       // Feature as hero if toggle was on
       if (featureAsHero && result.data) {
-        await toggleFeatured(result.data.id)
+        await fetch('/api/featured', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entryId: result.data.id }),
+        })
       }
 
       // Upload files if provided

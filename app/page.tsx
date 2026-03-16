@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { JournalPageClient } from '@/components/journal-page-client'
 import { Entry, WeeklyTheme } from '@/types'
-import { getCurrentWeeklyTheme, getLatestEntryPerCategory, getLatestEntries, getPinnedEntries, getFeaturedEntry } from '@/app/actions/entries'
+import { getCurrentWeeklyTheme, getLatestEntryPerCategory, getLatestEntries, getPinnedEntries } from '@/app/actions/entries'
 
 async function getEntries(userId: string): Promise<Entry[]> {
   const supabase = await createClient()
@@ -43,7 +43,9 @@ export default async function HomePage({
   const categoryEntries = await getLatestEntryPerCategory(user.id)
   const latestEntries = await getLatestEntries(user.id, 20)
   const pinnedEntries = await getPinnedEntries(user.id)
-  const featuredEntry = await getFeaturedEntry(user.id)
+
+  // Derive featured entry from the entries array — same query, guaranteed fresh
+  const featuredEntry = entries.find(e => e.featured === true) || null
 
   return (
     <JournalPageClient
@@ -60,4 +62,3 @@ export default async function HomePage({
     />
   )
 }
-
