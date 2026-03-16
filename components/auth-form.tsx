@@ -100,17 +100,16 @@ export function AuthForm() {
 
   return (
     <main className="min-h-screen flex" role="main" aria-label="Authentication">
-      {/* Left Column - Black background with arrows icon */}
+      {/* Left Column - Black background with Albers artwork */}
       <div 
-        className="hidden md:flex md:w-1/2 items-center justify-center p-8 lg:p-12 overflow-hidden"
+        className="hidden md:flex md:w-1/2 items-center justify-center p-12 lg:p-16"
         style={{ backgroundColor: '#000000' }}
       >
-        <div className="w-full max-w-lg overflow-hidden rounded-[1.5rem]">
+        <div className="w-full max-w-md">
           <img
-            src="/login-hero.png"
-            alt="Arrows pointing upward - Understood."
-            className="w-full h-full object-cover"
-            style={{ transform: 'scale(1.15)' }}
+            src="/login-hero.png?v=2"
+            alt="Understood — color-field composition"
+            className="w-full h-auto"
           />
         </div>
       </div>
