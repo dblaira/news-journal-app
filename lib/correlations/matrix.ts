@@ -26,12 +26,15 @@ export function buildWeeklyMatrix(
   dateFrom?: string,
   dateTo?: string
 ): WeeklyMatrix {
+  const todayStr = new Date().toISOString().split('T')[0]
+  const effectiveTo = dateTo || todayStr
+
   const filtered = extractions.filter(ext => {
     if (!ext.parent_category) return false
     const d = getExtractionDate(ext)
     if (!d) return false
     if (dateFrom && d < dateFrom) return false
-    if (dateTo && d > dateTo) return false
+    if (d > effectiveTo) return false
     return true
   })
 
