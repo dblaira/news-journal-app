@@ -42,7 +42,7 @@ export function CorrelationsView({ extractions }: CorrelationsViewProps) {
   const stats = useMemo(() => computeCategoryStats(matrix), [matrix])
   const correlations = useMemo(() => computeAllCorrelations(matrix), [matrix])
   const lagged = useMemo(() => computeLaggedCorrelations(matrix), [matrix])
-  const anomalies = useMemo(() => detectAnomalies(matrix), [matrix])
+  const anomalies = useMemo(() => detectAnomalies(matrix, 2.5), [matrix])
 
   const maxCellValue = useMemo(() => {
     let max = 0
