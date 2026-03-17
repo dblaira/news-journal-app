@@ -30,7 +30,7 @@ const CONCEPT_RADIUS_MAX = 44
 const MIN_TAP_TARGET = 22
 
 function mapRadius(importance: number, type: 'category' | 'concept'): number {
-  const curved = Math.pow(importance, 2)
+  const curved = Math.pow(importance, 0.6)
   if (type === 'category') {
     return CATEGORY_RADIUS_MIN + curved * (CATEGORY_RADIUS_MAX - CATEGORY_RADIUS_MIN)
   }

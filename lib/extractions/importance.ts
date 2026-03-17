@@ -32,7 +32,7 @@ export function computeImportanceScores(
 
   if (nodes.length === 0) return []
 
-  const occValues = nodes.map(n => n.occurrences)
+  const occValues = nodes.map(n => Math.log(n.occurrences + 1))
   const occMin = Math.min(...occValues)
   const occMax = Math.max(...occValues)
 
@@ -46,7 +46,7 @@ export function computeImportanceScores(
   const newest = Math.max(...timestamps)
 
   return nodes.map((node, i) => {
-    const normOcc = normalize(node.occurrences, occMin, occMax)
+    const normOcc = normalize(Math.log(node.occurrences + 1), occMin, occMax)
     const normInt = normalize(node.avgIntensity, intMin, intMax)
     const normConf = node.avgConfidence
     const normRecency = normalize(timestamps[i], oldest, newest)
