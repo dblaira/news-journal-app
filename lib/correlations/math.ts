@@ -49,7 +49,7 @@ export function computeAllCorrelations(matrix: WeeklyMatrix, minWeeks = 10): Cor
 
       const coeff = pearsonCorrelation(seriesA, seriesB)
       const absCoeff = Math.abs(coeff)
-      if (absCoeff < 0.15) continue
+      if (absCoeff < 0.50) continue
 
       pairs.push({
         categoryA: catA,

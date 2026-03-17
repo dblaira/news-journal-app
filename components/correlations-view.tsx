@@ -55,7 +55,7 @@ export function CorrelationsView({ extractions }: CorrelationsViewProps) {
   }, [matrix])
 
   return (
-    <div style={{ background: 'var(--bg-body, #FFFFFF)', color: 'var(--text-primary, #000)', minHeight: '100vh' }}>
+    <div style={{ background: '#2A2A2A', color: '#E5E5E5', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ background: '#F5F0E8', borderBottom: '2px solid var(--color-red, #DC143C)', padding: '2rem 1.5rem' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -77,23 +77,23 @@ export function CorrelationsView({ extractions }: CorrelationsViewProps) {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' }}>
         {/* Date filter + tabs */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', marginBottom: '2rem' }}>
-          <label style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 600, color: '#666', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 600, color: '#999', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             From
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.15)' }}
+              style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', padding: '0.4rem 0.6rem', border: '1px solid rgba(255,255,255,0.15)', background: '#333', color: '#E5E5E5' }}
             />
           </label>
-          <label style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 600, color: '#666', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 600, color: '#999', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             To
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
               placeholder="present"
-              style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.15)' }}
+              style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', padding: '0.4rem 0.6rem', border: '1px solid rgba(255,255,255,0.15)', background: '#333', color: '#E5E5E5' }}
             />
           </label>
 
@@ -109,10 +109,10 @@ export function CorrelationsView({ extractions }: CorrelationsViewProps) {
                   letterSpacing: '0.05rem',
                   textTransform: 'uppercase',
                   padding: '0.5rem 1rem',
-                  border: '1px solid rgba(0,0,0,0.15)',
-                  borderRight: t === 'anomalies' ? '1px solid rgba(0,0,0,0.15)' : 'none',
-                  background: tab === t ? '#1A1A1A' : '#fff',
-                  color: tab === t ? '#fff' : '#666',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRight: t === 'anomalies' ? '1px solid rgba(255,255,255,0.15)' : 'none',
+                  background: tab === t ? '#DC143C' : '#333',
+                  color: tab === t ? '#fff' : '#999',
                   cursor: 'pointer',
                   transition: 'all 200ms',
                 }}
@@ -174,7 +174,7 @@ function MatrixTab({ matrix, maxCellValue, hoveredCell, setHoveredCell }: {
       <table style={{ borderCollapse: 'collapse', width: '100%', fontFamily: 'var(--font-inter)', fontSize: '0.75rem' }}>
         <thead>
           <tr>
-            <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08rem', color: '#666', position: 'sticky', left: 0, background: '#fff', zIndex: 2 }}>
+            <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08rem', color: '#999', position: 'sticky', left: 0, background: '#2A2A2A', zIndex: 2 }}>
               Week
             </th>
             {matrix.categories.map(cat => (
@@ -182,13 +182,13 @@ function MatrixTab({ matrix, maxCellValue, hoveredCell, setHoveredCell }: {
                 {cat.slice(0, 6)}
               </th>
             ))}
-            <th style={{ padding: '0.5rem', textAlign: 'center', fontWeight: 700, color: '#666' }}>Total</th>
+            <th style={{ padding: '0.5rem', textAlign: 'center', fontWeight: 700, color: '#999' }}>Total</th>
           </tr>
         </thead>
         <tbody>
           {reversedWeeks.map(w => (
-            <tr key={w.weekKey} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-              <td style={{ padding: '0.4rem 0.5rem', fontWeight: 600, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: '#fff', zIndex: 1 }}>
+            <tr key={w.weekKey} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <td style={{ padding: '0.4rem 0.5rem', fontWeight: 600, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: '#2A2A2A', zIndex: 1, color: '#CCC' }}>
                 {w.weekKey}
               </td>
               {matrix.categories.map(cat => {
@@ -205,7 +205,7 @@ function MatrixTab({ matrix, maxCellValue, hoveredCell, setHoveredCell }: {
                       textAlign: 'center',
                       background: intensityColor(val, maxCellValue),
                       fontWeight: val > 0 ? 600 : 400,
-                      color: val > 0 ? '#1A1A1A' : '#ccc',
+                      color: val > 0 ? '#fff' : '#555',
                       position: 'relative',
                       cursor: val > 0 ? 'default' : 'auto',
                     }}
@@ -234,7 +234,7 @@ function MatrixTab({ matrix, maxCellValue, hoveredCell, setHoveredCell }: {
                   </td>
                 )
               })}
-              <td style={{ padding: '0.4rem', textAlign: 'center', fontWeight: 700, color: '#1A1A1A' }}>
+              <td style={{ padding: '0.4rem', textAlign: 'center', fontWeight: 700, color: '#E5E5E5' }}>
                 {w.total}
               </td>
             </tr>
@@ -254,10 +254,10 @@ function CorrelationsTab({ correlations, lagged }: { correlations: CorrelationPa
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
       {/* Same-week correlations */}
       <div>
-        <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem' }}>
+        <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem', color: '#E5E5E5' }}>
           Rise Together
         </h2>
-        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#666', marginBottom: '1rem' }}>
+        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999', marginBottom: '1rem' }}>
           When one goes up, the other goes up too.
         </p>
         {positive.length === 0 ? (
@@ -268,10 +268,10 @@ function CorrelationsTab({ correlations, lagged }: { correlations: CorrelationPa
       </div>
 
       <div>
-        <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem' }}>
+        <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem', color: '#E5E5E5' }}>
           Trade Off
         </h2>
-        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#666', marginBottom: '1rem' }}>
+        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999', marginBottom: '1rem' }}>
           When one goes up, the other tends to go down.
         </p>
         {negative.length === 0 ? (
@@ -283,17 +283,17 @@ function CorrelationsTab({ correlations, lagged }: { correlations: CorrelationPa
 
       {/* Leading indicators */}
       <div style={{ gridColumn: '1 / -1' }}>
-        <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem' }}>
+        <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem', color: '#E5E5E5' }}>
           One Predicts the Other
         </h2>
-        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#666', marginBottom: '1rem' }}>
+        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999', marginBottom: '1rem' }}>
           Activity in one category shows up 1-2 weeks before a spike in another.
         </p>
         {lagged.length === 0 ? (
           <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999' }}>No strong leading indicators found in this date range.</p>
         ) : (
           lagged.map((c, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
               <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 700, color: getCatColor(c.categoryA), textTransform: 'uppercase', letterSpacing: '0.05rem' }}>
                 {c.categoryA}
               </span>
@@ -320,11 +320,11 @@ function PairRow({ pair }: { pair: CorrelationPair }) {
   const isPositive = pair.coefficient >= 0
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
       <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.75rem', fontWeight: 700, color: getCatColor(pair.categoryA), textTransform: 'uppercase', letterSpacing: '0.05rem', minWidth: '70px' }}>
         {pair.categoryA}
       </span>
-      <div style={{ flex: 1, height: '6px', background: 'rgba(0,0,0,0.05)', position: 'relative' }}>
+      <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.1)', position: 'relative' }}>
         <div style={{ height: '100%', width: `${barWidth}%`, background: isPositive ? '#16a34a' : '#DC143C', transition: 'width 300ms ease-out' }} />
       </div>
       <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.75rem', fontWeight: 700, color: getCatColor(pair.categoryB), textTransform: 'uppercase', letterSpacing: '0.05rem', minWidth: '70px', textAlign: 'right' }}>
@@ -341,7 +341,7 @@ function PairRow({ pair }: { pair: CorrelationPair }) {
 function AnomaliesTab({ anomalies, matrix }: { anomalies: AnomalyWeek[]; matrix: WeeklyMatrix }) {
   return (
     <div>
-      <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#666', marginBottom: '1.5rem' }}>
+      <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999', marginBottom: '1.5rem' }}>
         Weeks where something unusual happened — a category was way higher or lower than your normal. {anomalies.length} unusual weeks found.
       </p>
 
@@ -349,8 +349,8 @@ function AnomaliesTab({ anomalies, matrix }: { anomalies: AnomalyWeek[]; matrix:
         <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.95rem', color: '#999' }}>No anomaly weeks in this date range.</p>
       ) : (
         anomalies.map(a => (
-          <div key={a.weekKey} style={{ marginBottom: '1.5rem', padding: '1rem', border: '1px solid rgba(0,0,0,0.08)', background: '#FAFAFA' }}>
-            <div style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08rem', color: '#1A1A1A', marginBottom: '0.75rem' }}>
+          <div key={a.weekKey} style={{ marginBottom: '1.5rem', padding: '1rem', border: '1px solid rgba(255,255,255,0.1)', background: '#333' }}>
+            <div style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08rem', color: '#E5E5E5', marginBottom: '0.75rem' }}>
               {a.weekKey}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -359,8 +359,8 @@ function AnomaliesTab({ anomalies, matrix }: { anomalies: AnomalyWeek[]; matrix:
                   fontFamily: 'var(--font-inter)',
                   fontSize: '0.75rem',
                   padding: '0.4rem 0.75rem',
-                  background: an.direction === 'spike' ? 'rgba(220, 20, 60, 0.1)' : 'rgba(59, 130, 246, 0.1)',
-                  color: an.direction === 'spike' ? '#DC143C' : '#3B82F6',
+                  background: an.direction === 'spike' ? 'rgba(220, 20, 60, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                  color: an.direction === 'spike' ? '#FF4D6A' : '#60A5FA',
                   fontWeight: 700,
                   display: 'flex',
                   alignItems: 'center',
@@ -368,7 +368,7 @@ function AnomaliesTab({ anomalies, matrix }: { anomalies: AnomalyWeek[]; matrix:
                 }}>
                   <span style={{ textTransform: 'uppercase', letterSpacing: '0.05rem' }}>{an.category}</span>
                   <span>{an.direction === 'spike' ? '↑ way up' : '↓ way down'}</span>
-                  <span style={{ color: '#999', fontWeight: 400 }}>({an.value} that week, usually {an.mean})</span>
+                  <span style={{ color: '#BBB', fontWeight: 400 }}>({an.value} that week, usually {an.mean})</span>
                 </div>
               ))}
             </div>
@@ -376,7 +376,7 @@ function AnomaliesTab({ anomalies, matrix }: { anomalies: AnomalyWeek[]; matrix:
             {Object.keys(a.domainBreakdown).length > 0 && (
               <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
                 {Object.entries(a.domainBreakdown).map(([cat, domains]) => (
-                  <div key={cat} style={{ fontFamily: 'var(--font-inter)', fontSize: '0.7rem', color: '#666' }}>
+                  <div key={cat} style={{ fontFamily: 'var(--font-inter)', fontSize: '0.7rem', color: '#BBB' }}>
                     <span style={{ fontWeight: 700, color: getCatColor(cat), textTransform: 'uppercase' }}>{cat}</span>:{' '}
                     {Object.entries(domains).map(([d, c]) => `${d} ${c}`).join(', ')}
                   </div>
