@@ -41,7 +41,9 @@ function intensityColor(value: number, max: number): string {
 export function CorrelationsView({ extractions }: CorrelationsViewProps) {
   const router = useRouter()
   const [dateFrom, setDateFrom] = useState('2024-06-01')
-  const [dateTo, setDateTo] = useState('')
+  const [dateTo, setDateTo] = useState('2026-03-01')
+  const [pendingFrom, setPendingFrom] = useState('2024-06-01')
+  const [pendingTo, setPendingTo] = useState('2026-03-01')
   const [tab, setTab] = useState<'matrix' | 'correlations' | 'anomalies'>('matrix')
   const [hoveredCell, setHoveredCell] = useState<{ week: string; cat: string } | null>(null)
 
@@ -92,8 +94,11 @@ export function CorrelationsView({ extractions }: CorrelationsViewProps) {
             From
             <input
               type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
+              value={pendingFrom}
+              onChange={(e) => {
+                setPendingFrom(e.target.value)
+                if (e.target.value) setDateFrom(e.target.value)
+              }}
               style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', padding: '0.4rem 0.6rem', border: '1px solid rgba(255,255,255,0.15)', background: '#333', color: '#E5E5E5' }}
             />
           </label>
@@ -101,8 +106,11 @@ export function CorrelationsView({ extractions }: CorrelationsViewProps) {
             To
             <input
               type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
+              value={pendingTo}
+              onChange={(e) => {
+                setPendingTo(e.target.value)
+                if (e.target.value) setDateTo(e.target.value)
+              }}
               placeholder="present"
               style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', padding: '0.4rem 0.6rem', border: '1px solid rgba(255,255,255,0.15)', background: '#333', color: '#E5E5E5' }}
             />
