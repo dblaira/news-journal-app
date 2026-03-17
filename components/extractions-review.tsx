@@ -304,6 +304,25 @@ export function ExtractionsReview({
             {isRunning ? 'Extracting...' : 'Run Extraction'}
           </button>
 
+          <button
+            onClick={() => router.push('/extractions/correlations')}
+            style={{
+              fontFamily: "var(--font-bodoni-moda), Georgia, serif",
+              fontSize: '1.05rem',
+              fontWeight: 400,
+              background: '#1A1A1A',
+              color: '#fff',
+              border: 'none',
+              padding: '0.75rem 1.5rem',
+              cursor: 'pointer',
+              transition: 'background 200ms ease-out',
+            }}
+            onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.background = '#333' }}
+            onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = '#1A1A1A' }}
+          >
+            Correlations
+          </button>
+
           {viewMode === 'cards' && batches.length > 1 && !selectedNode && (
             <select
               value={activeBatchId || ''}
