@@ -17,7 +17,7 @@ function getCatColor(cat: string): string {
 }
 
 function formatCoeff(n: number): string {
-  return (n >= 0 ? '+' : '') + n.toFixed(3)
+  return Math.round(Math.abs(n) * 100) + '% of the time'
 }
 
 function intensityColor(value: number, max: number): string {
@@ -140,7 +140,7 @@ export function CorrelationsView({ extractions }: CorrelationsViewProps) {
                 borderLeft: `3px solid ${getCatColor(s.category)}`,
               }}
             >
-              {s.category} {s.totalCount} ({s.coveragePercent}%)
+              {s.category} &middot; {s.totalCount} total &middot; {s.coveragePercent}% of weeks
             </span>
           ))}
         </div>
@@ -255,10 +255,10 @@ function CorrelationsTab({ correlations, lagged }: { correlations: CorrelationPa
       {/* Same-week correlations */}
       <div>
         <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem' }}>
-          Co-movements
+          Rise Together
         </h2>
         <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#666', marginBottom: '1rem' }}>
-          Categories that spike together in the same time window.
+          When one goes up, the other goes up too.
         </p>
         {positive.length === 0 ? (
           <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999' }}>No significant co-movements found.</p>
@@ -269,10 +269,10 @@ function CorrelationsTab({ correlations, lagged }: { correlations: CorrelationPa
 
       <div>
         <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem' }}>
-          Inverse Pairs
+          Trade Off
         </h2>
         <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#666', marginBottom: '1rem' }}>
-          Categories that trade off — when one rises, the other falls.
+          When one goes up, the other tends to go down.
         </p>
         {negative.length === 0 ? (
           <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999' }}>No significant inverse pairs found.</p>
@@ -284,10 +284,10 @@ function CorrelationsTab({ correlations, lagged }: { correlations: CorrelationPa
       {/* Leading indicators */}
       <div style={{ gridColumn: '1 / -1' }}>
         <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem' }}>
-          Leading Indicators
+          One Predicts the Other
         </h2>
         <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#666', marginBottom: '1rem' }}>
-          One category predicting another 1-2 weeks later.
+          Activity in one category shows up 1-2 weeks before a spike in another.
         </p>
         {lagged.length === 0 ? (
           <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999' }}>No strong leading indicators found in this date range.</p>
@@ -298,13 +298,10 @@ function CorrelationsTab({ correlations, lagged }: { correlations: CorrelationPa
                 {c.categoryA}
               </span>
               <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.75rem', color: '#999' }}>
-                leads
+                &rarr; {c.lag} week{c.lag > 1 ? 's' : ''} later &rarr;
               </span>
               <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 700, color: getCatColor(c.categoryB), textTransform: 'uppercase', letterSpacing: '0.05rem' }}>
                 {c.categoryB}
-              </span>
-              <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.75rem', color: '#999' }}>
-                by {c.lag}wk
               </span>
               <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', fontWeight: 700, color: c.coefficient >= 0 ? '#16a34a' : '#DC143C', marginLeft: 'auto' }}>
                 {formatCoeff(c.coefficient)}
@@ -345,7 +342,7 @@ function AnomaliesTab({ anomalies, matrix }: { anomalies: AnomalyWeek[]; matrix:
   return (
     <div>
       <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#666', marginBottom: '1.5rem' }}>
-        Weeks where one or more categories deviated more than 1.5 standard deviations from their mean. {anomalies.length} anomaly weeks found.
+        Weeks where something unusual happened — a category was way higher or lower than your normal. {anomalies.length} unusual weeks found.
       </p>
 
       {anomalies.length === 0 ? (
@@ -370,9 +367,8 @@ function AnomaliesTab({ anomalies, matrix }: { anomalies: AnomalyWeek[]; matrix:
                   gap: '0.4rem',
                 }}>
                   <span style={{ textTransform: 'uppercase', letterSpacing: '0.05rem' }}>{an.category}</span>
-                  <span>{an.direction === 'spike' ? '↑' : '↓'}</span>
-                  <span>{Math.abs(an.zScore).toFixed(1)}σ</span>
-                  <span style={{ color: '#999', fontWeight: 400 }}>({an.value} vs avg {an.mean})</span>
+                  <span>{an.direction === 'spike' ? '↑ way up' : '↓ way down'}</span>
+                  <span style={{ color: '#999', fontWeight: 400 }}>({an.value} that week, usually {an.mean})</span>
                 </div>
               ))}
             </div>
