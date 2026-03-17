@@ -20,6 +20,17 @@ function formatCoeff(n: number): string {
   return Math.round(Math.abs(n) * 100) + '% of the time'
 }
 
+function weekKeyToDateRange(weekKey: string): string {
+  const [y, w] = weekKey.split('-W').map(Number)
+  const jan1 = new Date(y, 0, 1)
+  const dayOffset = (1 - jan1.getDay() + 7) % 7
+  const monday = new Date(y, 0, 1 + dayOffset + (w - 1) * 7)
+  const sunday = new Date(monday)
+  sunday.setDate(sunday.getDate() + 6)
+  const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return fmt(monday) + ' – ' + fmt(sunday) + ', ' + y
+}
+
 function intensityColor(value: number, max: number): string {
   if (max === 0 || value === 0) return 'transparent'
   const ratio = Math.min(value / max, 1)
@@ -189,7 +200,7 @@ function MatrixTab({ matrix, maxCellValue, hoveredCell, setHoveredCell }: {
           {reversedWeeks.map(w => (
             <tr key={w.weekKey} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <td style={{ padding: '0.4rem 0.5rem', fontWeight: 600, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: '#2A2A2A', zIndex: 1, color: '#CCC' }}>
-                {w.weekKey}
+                {weekKeyToDateRange(w.weekKey)}
               </td>
               {matrix.categories.map(cat => {
                 const val = w.counts[cat] || 0
@@ -350,8 +361,8 @@ function AnomaliesTab({ anomalies, matrix }: { anomalies: AnomalyWeek[]; matrix:
       ) : (
         anomalies.map(a => (
           <div key={a.weekKey} style={{ marginBottom: '1.5rem', padding: '1rem', border: '1px solid rgba(255,255,255,0.1)', background: '#333' }}>
-            <div style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08rem', color: '#E5E5E5', marginBottom: '0.75rem' }}>
-              {a.weekKey}
+            <div style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.02rem', color: '#E5E5E5', marginBottom: '0.75rem' }}>
+              {weekKeyToDateRange(a.weekKey)}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {a.anomalies.map((an, i) => (
