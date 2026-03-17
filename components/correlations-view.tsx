@@ -41,10 +41,9 @@ function intensityColor(value: number, max: number): string {
 export function CorrelationsView({ extractions }: CorrelationsViewProps) {
   const router = useRouter()
   const [dateFrom, setDateFrom] = useState('2024-06-01')
-  const today = new Date().toISOString().split('T')[0]
-  const [dateTo, setDateTo] = useState(today)
+  const [dateTo, setDateTo] = useState('2026-03-01')
   const [pendingFrom, setPendingFrom] = useState('2024-06-01')
-  const [pendingTo, setPendingTo] = useState(today)
+  const [pendingTo, setPendingTo] = useState('2026-03-01')
   const [tab, setTab] = useState<'matrix' | 'correlations' | 'anomalies'>('matrix')
   const [hoveredCell, setHoveredCell] = useState<{ week: string; cat: string } | null>(null)
 
