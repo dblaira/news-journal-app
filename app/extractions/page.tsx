@@ -20,13 +20,21 @@ export default async function ExtractionsPage() {
     redirect('/login')
   }
 
-  const { data: allExtractionsWithDates } = await supabase
-    .from('extractions')
-    .select('*, entries(created_at)')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-
-  const allExtractions = (allExtractionsWithDates || []) as ExtractionWithEntryDate[]
+  const allExtractions: ExtractionWithEntryDate[] = []
+  let offset = 0
+  const PAGE_SIZE = 1000
+  while (true) {
+    const { data } = await supabase
+      .from('extractions')
+      .select('*, entries(created_at)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + PAGE_SIZE - 1)
+    if (!data || data.length === 0) break
+    allExtractions.push(...(data as ExtractionWithEntryDate[]))
+    if (data.length < PAGE_SIZE) break
+    offset += PAGE_SIZE
+  }
 
   const batchMap = new Map<string, BatchInfo>()
   for (const ext of allExtractions) {
