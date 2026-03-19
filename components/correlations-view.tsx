@@ -7,6 +7,8 @@ import { WeeklyMatrix, CorrelationPair, AnomalyWeek, CategoryStats } from '@/typ
 import { buildWeeklyMatrix } from '@/lib/correlations/matrix'
 import { computeAllCorrelations, computeLaggedCorrelations, computeCategoryStats, detectAnomalies } from '@/lib/correlations/math'
 import { CATEGORY_COLORS } from '@/lib/extractions/aggregate'
+import { CorrelationNetwork } from './correlation-network'
+import { SparklineGrid } from './correlation-sparklines'
 
 interface CorrelationsViewProps {
   extractions: Extraction[]
@@ -202,7 +204,7 @@ export function CorrelationsView({ extractions }: CorrelationsViewProps) {
           <MatrixTab matrix={matrix} maxCellValue={maxCellValue} hoveredCell={hoveredCell} setHoveredCell={setHoveredCell} />
         )}
         {tab === 'correlations' && (
-          <CorrelationsTab correlations={correlations} lagged={lagged} />
+          <CorrelationsTab correlations={correlations} lagged={lagged} stats={stats} matrix={matrix} />
         )}
         {tab === 'anomalies' && (
           <AnomaliesTab anomalies={anomalies} matrix={matrix} />
@@ -298,81 +300,172 @@ function MatrixTab({ matrix, maxCellValue, hoveredCell, setHoveredCell }: {
 }
 
 
-function CorrelationsTab({ correlations, lagged }: { correlations: CorrelationPair[]; lagged: CorrelationPair[] }) {
+function CorrelationsTab({ correlations, lagged, stats, matrix }: {
+  correlations: CorrelationPair[]
+  lagged: CorrelationPair[]
+  stats: CategoryStats[]
+  matrix: WeeklyMatrix
+}) {
+  const [hoveredPair, setHoveredPair] = useState<{ catA: string; catB: string } | null>(null)
+  const [showDetails, setShowDetails] = useState(false)
+
   const positive = correlations.filter(c => c.coefficient > 0)
   const negative = correlations.filter(c => c.coefficient < 0)
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-      {/* Same-week correlations */}
-      <div>
-        <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem', color: '#E5E5E5' }}>
-          Rise Together
+    <div>
+      {/* Network Graph */}
+      <div style={{ marginBottom: '2rem', padding: '1rem', background: '#333', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <h2 style={{ fontFamily: 'var(--font-bodoni-moda), Georgia, serif', fontSize: '1.6rem', fontWeight: 400, color: '#E5E5E5', marginBottom: '0.25rem' }}>
+          How Your Life Connects
         </h2>
-        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999', marginBottom: '1rem' }}>
-          When one goes up, the other goes up too.
+        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', color: '#999', marginBottom: '1rem' }}>
+          Thicker lines = stronger connection. Green = rise together. Red = trade off. Yellow dashed = one predicts the other.
         </p>
-        {positive.length === 0 ? (
-          <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999' }}>No significant co-movements found.</p>
-        ) : (
-          positive.map((c, i) => <PairRow key={i} pair={c} />)
-        )}
+        <CorrelationNetwork
+          correlations={correlations}
+          lagged={lagged}
+          stats={stats}
+          hoveredPair={hoveredPair}
+          onHoverPair={setHoveredPair}
+        />
       </div>
 
-      <div>
-        <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem', color: '#E5E5E5' }}>
-          Trade Off
-        </h2>
-        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999', marginBottom: '1rem' }}>
-          When one goes up, the other tends to go down.
-        </p>
-        {negative.length === 0 ? (
-          <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999' }}>No significant inverse pairs found.</p>
-        ) : (
-          negative.map((c, i) => <PairRow key={i} pair={c} />)
-        )}
+      {/* Sparkline Grid */}
+      <div style={{ marginBottom: '2rem', padding: '1rem', background: '#333', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <SparklineGrid
+          matrix={matrix}
+          hoveredPair={hoveredPair}
+          onHoverPair={setHoveredPair}
+        />
       </div>
 
-      {/* Leading indicators */}
-      <div style={{ gridColumn: '1 / -1' }}>
-        <h2 style={{ fontFamily: "var(--font-bodoni-moda), Georgia, serif", fontSize: '1.6rem', fontWeight: 400, marginBottom: '1rem', color: '#E5E5E5' }}>
-          One Predicts the Other
-        </h2>
-        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999', marginBottom: '1rem' }}>
-          Activity in one category shows up 1-2 weeks before a spike in another.
-        </p>
-        {lagged.length === 0 ? (
-          <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999' }}>No strong leading indicators found in this date range.</p>
-        ) : (
-          lagged.map((c, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-              <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 700, color: getCatColor(c.categoryA), textTransform: 'uppercase', letterSpacing: '0.05rem' }}>
-                {c.categoryA}
-              </span>
-              <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.75rem', color: '#999' }}>
-                &rarr; {c.lag} week{c.lag > 1 ? 's' : ''} later &rarr;
-              </span>
-              <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 700, color: getCatColor(c.categoryB), textTransform: 'uppercase', letterSpacing: '0.05rem' }}>
-                {c.categoryB}
-              </span>
-              <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', fontWeight: 700, color: c.coefficient >= 0 ? '#16a34a' : '#DC143C', marginLeft: 'auto' }}>
-                {formatCoeff(c.coefficient)}
-              </span>
-            </div>
-          ))
-        )}
-      </div>
+      {/* Collapsible Detail Lists */}
+      <button
+        onClick={() => setShowDetails(!showDetails)}
+        style={{
+          fontFamily: 'var(--font-inter)',
+          fontSize: '0.8rem',
+          fontWeight: 600,
+          color: '#999',
+          background: 'none',
+          border: '1px solid rgba(255,255,255,0.15)',
+          padding: '0.5rem 1rem',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          marginBottom: '1rem',
+        }}
+      >
+        <span style={{ transform: showDetails ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 200ms', display: 'inline-block' }}>&#9654;</span>
+        {showDetails ? 'Hide' : 'Show'} detailed pair list ({positive.length + negative.length} pairs, {lagged.length} predictions)
+      </button>
+
+      {showDetails && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          <div>
+            <h3 style={{ fontFamily: 'var(--font-bodoni-moda), Georgia, serif', fontSize: '1.3rem', fontWeight: 400, marginBottom: '0.75rem', color: '#E5E5E5' }}>
+              Rise Together
+            </h3>
+            <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', color: '#999', marginBottom: '0.75rem' }}>
+              When one goes up, the other goes up too.
+            </p>
+            {positive.length === 0 ? (
+              <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999' }}>None above 50%.</p>
+            ) : (
+              positive.map((c, i) => <PairRow key={i} pair={c} hoveredPair={hoveredPair} onHover={setHoveredPair} />)
+            )}
+          </div>
+
+          <div>
+            <h3 style={{ fontFamily: 'var(--font-bodoni-moda), Georgia, serif', fontSize: '1.3rem', fontWeight: 400, marginBottom: '0.75rem', color: '#E5E5E5' }}>
+              Trade Off
+            </h3>
+            <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', color: '#999', marginBottom: '0.75rem' }}>
+              When one goes up, the other goes down.
+            </p>
+            {negative.length === 0 ? (
+              <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999' }}>None found.</p>
+            ) : (
+              negative.map((c, i) => <PairRow key={i} pair={c} hoveredPair={hoveredPair} onHover={setHoveredPair} />)
+            )}
+          </div>
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <h3 style={{ fontFamily: 'var(--font-bodoni-moda), Georgia, serif', fontSize: '1.3rem', fontWeight: 400, marginBottom: '0.75rem', color: '#E5E5E5' }}>
+              One Predicts the Other
+            </h3>
+            <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', color: '#999', marginBottom: '0.75rem' }}>
+              Activity in one category shows up 1-2 weeks before a spike in another.
+            </p>
+            {lagged.length === 0 ? (
+              <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: '#999' }}>No strong predictions found.</p>
+            ) : (
+              lagged.map((c, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.75rem 0',
+                    borderBottom: '1px solid rgba(255,255,255,0.08)',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={() => setHoveredPair({ catA: c.categoryA, catB: c.categoryB })}
+                  onMouseLeave={() => setHoveredPair(null)}
+                >
+                  <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 700, color: getCatColor(c.categoryA), textTransform: 'uppercase', letterSpacing: '0.05rem' }}>
+                    {c.categoryA}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.75rem', color: '#999' }}>
+                    &rarr; {c.lag} week{c.lag > 1 ? 's' : ''} later &rarr;
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 700, color: getCatColor(c.categoryB), textTransform: 'uppercase', letterSpacing: '0.05rem' }}>
+                    {c.categoryB}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', fontWeight: 700, color: c.coefficient >= 0 ? '#16a34a' : '#DC143C', marginLeft: 'auto' }}>
+                    {formatCoeff(c.coefficient)}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 
-function PairRow({ pair }: { pair: CorrelationPair }) {
+function PairRow({ pair, hoveredPair, onHover }: {
+  pair: CorrelationPair
+  hoveredPair: { catA: string; catB: string } | null
+  onHover: (pair: { catA: string; catB: string } | null) => void
+}) {
   const barWidth = Math.abs(pair.coefficient) * 100
   const isPositive = pair.coefficient >= 0
 
+  const isActive = hoveredPair &&
+    ((hoveredPair.catA === pair.categoryA && hoveredPair.catB === pair.categoryB) ||
+     (hoveredPair.catA === pair.categoryB && hoveredPair.catB === pair.categoryA))
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
+        padding: '0.6rem 0',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        background: isActive ? 'rgba(255,255,255,0.05)' : 'transparent',
+        cursor: 'pointer',
+        transition: 'background 200ms',
+      }}
+      onMouseEnter={() => onHover({ catA: pair.categoryA, catB: pair.categoryB })}
+      onMouseLeave={() => onHover(null)}
+    >
       <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.75rem', fontWeight: 700, color: getCatColor(pair.categoryA), textTransform: 'uppercase', letterSpacing: '0.05rem', minWidth: '70px' }}>
         {pair.categoryA}
       </span>
