@@ -1,0 +1,17 @@
+export const C = {
+  sun: "#FFE15D",
+  sunLight: "#F4D160",
+  sunPale: "#FBEEAC",
+  orange: "#F49D1A",
+  red: "#DC3535",
+  magenta: "#B01E68",
+  ocean: "#1D5D9B",
+  oceanLight: "#75C2F6",
+  sand: "#FBEEAC",
+  cream: "#FFF9E6",
+  charcoal: "#2C2C2C",
+  warmGray: "#8C7B6B",
+  white: "#FFFFFF",
+  green: "#27AE60",
+  purple: "#7B1FA2",
+} as const;

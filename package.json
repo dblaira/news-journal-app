@@ -15,6 +15,7 @@
     "pdfjs-dist": "5.4.530"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -48,6 +49,7 @@
     "emoji-picker-react": "^4.16.1",
     "express": "^4.18.2",
     "geist": "^1.7.0",
+    "html5-qrcode": "^2.3.8",
     "jspdf": "^3.0.4",
     "lucide-react": "^0.563.0",
     "mammoth": "^1.11.0",
@@ -70,8 +72,10 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/web-push": "^3.6.4",
     "ignore-loader": "^0.1.2",
+    "playwright": "^1.58.2",
     "png-to-ico": "^3.0.1",
     "tsx": "^4.21.0"
   }
