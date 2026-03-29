@@ -183,18 +183,17 @@ test.describe('Quality standards', () => {
 // ============================================================
 // STEP 5 TESTS — After Vercel deploy (run against production URL)
 // ============================================================
-// Uncomment these after deploying. Replace URL with your actual domain.
 
-// const PROD_URL = 'https://understood.app';
-//
-// test.describe('Production deploy', () => {
-//   test('production home page loads', async ({ page }) => {
-//     const response = await page.goto(PROD_URL);
-//     expect(response?.status()).toBe(200);
-//   });
-//
-//   test('production nutrition page loads', async ({ page }) => {
-//     const response = await page.goto(`${PROD_URL}/nutrition`);
-//     expect(response?.status()).toBe(200);
-//   });
-// });
+const PROD_URL = 'https://understood.app';
+
+test.describe('Production deploy', () => {
+  test('production home page loads', async ({ page }) => {
+    const response = await page.goto(PROD_URL);
+    expect(response?.status()).toBe(200);
+  });
+
+  test('production nutrition page loads', async ({ page }) => {
+    const response = await page.goto(`${PROD_URL}/nutrition`);
+    expect(response?.status()).toBe(200);
+  });
+});
