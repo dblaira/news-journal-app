@@ -1,0 +1,37 @@
+╔══════════════════════════════════════════════════════════════╗
+║           V3 SETUP - COMPLETE THESE 3 STEPS                 ║
+╚══════════════════════════════════════════════════════════════╝
+
+STEP 1: DATABASE MIGRATIONS (2 minutes)
+─────────────────────────────────────────
+1. Open: https://supabase.com/dashboard → Your Project → SQL Editor
+2. Click "New Query"
+3. Open file: COPY_PASTE_MIGRATIONS.sql
+4. Copy ALL content (Ctrl/Cmd + A, Ctrl/Cmd + C)
+5. Paste into SQL Editor (Ctrl/Cmd + V)
+6. Click "Run" button
+7. Should see: "Success. No rows returned"
+
+STEP 2: CREATE STORAGE BUCKET (2 minutes)
+───────────────────────────────────────────
+Option A - Via Dashboard (Easiest):
+1. Supabase Dashboard → Storage → New bucket
+2. Name: entry-photos
+3. ✅ Public bucket: CHECKED
+4. File size limit: 10485760 (10MB)
+5. MIME types: image/jpeg, image/png, image/webp
+6. Click "Create bucket"
+
+Option B - Via Script:
+1. Add to .env.local: SUPABASE_SERVICE_ROLE_KEY=your_key
+2. Run: npm run setup:storage
+
+STEP 3: VERIFY SETUP (30 seconds)
+──────────────────────────────────
+Run: npm run setup:verify
+
+Should see all ✅ green checkmarks!
+
+═══════════════════════════════════════════════════════════════
+QUICK START: Run "npm run setup" for interactive guidance
+═══════════════════════════════════════════════════════════════

@@ -1,0 +1,63 @@
+name: Test Result
+description: Log the result of testing a feature
+title: "[Test] "
+labels: ["qa"]
+body:
+  - type: input
+    id: feature
+    attributes:
+      label: Feature tested
+      description: Which feature or area of the app did you test?
+      placeholder: "Push notifications on iPhone Safari"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Pass — everything worked as expected
+        - Partial — some things worked, some didn't
+        - Fail — the feature does not work
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device and browser
+      options:
+        - iPhone — Safari
+        - iPhone — Chrome
+        - iPad — Safari
+        - Mac — Safari
+        - Mac — Chrome
+        - Android — Chrome
+        - Other (describe in notes)
+    validations:
+      required: true
+
+  - type: textarea
+    id: observations
+    attributes:
+      label: What did you observe?
+      description: Describe what happened during testing. Include anything unexpected even if the result was Pass.
+      placeholder: "Notification arrived after about 3 seconds. Tapping it opened the app but landed on the wrong page."
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Drag and drop a screenshot if helpful.
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else?
+    validations:
+      required: false

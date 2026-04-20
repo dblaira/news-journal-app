@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ─────────────────────────────────────────────────────────────
+# worktree — create / remove isolated workspaces for parallel agents
+#
+# Usage:
+#   ./worktree create <branch-name>    Create a worktree + symlinks + npm install
+#   ./worktree remove <branch-name>    Tear down a worktree cleanly
+#   ./worktree list                    Show all active worktrees
+#   ./worktree open <branch-name>      Open a worktree in a new Cursor window
+#
+# Examples:
+#   ./worktree create feature-ai-chat
+#   ./worktree create fix-mobile-layout
+#   ./worktree list
+#   ./worktree open feature-ai-chat
+#   ./worktree remove feature-ai-chat
+# ─────────────────────────────────────────────────────────────
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Resolve the main repo root (where this script lives)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MAIN_REPO="$SCRIPT_DIR"
+
+# Parent directory where worktrees are created
+WORKTREE_PARENT="$(dirname "$MAIN_REPO")"
+
+# Config file listing paths to symlink
+INCLUDE_FILE="$MAIN_REPO/.worktreeinclude"
+
+# ─── Helpers ────────────────────────────────────────────────
+
+info()  { echo -e "${CYAN}▸${NC} $1"; }
+ok()    { echo -e "${GREEN}✓${NC} $1"; }
+warn()  { echo -e "${YELLOW}⚠${NC} $1"; }
+err()   { echo -e "${RED}✗${NC} $1" >&2; }
+
+usage() {
+  echo ""
+  echo -e "${CYAN}Usage:${NC}"
+  echo "  ./worktree create <branch-name>    Create worktree with symlinks"
+  echo "  ./worktree remove <branch-name>    Remove worktree and clean up"
+  echo "  ./worktree list                    List all worktrees"
+  echo "  ./worktree open <branch-name>      Open worktree in Cursor"
+  echo ""
+  echo -e "${CYAN}Examples:${NC}"
+  echo "  ./worktree create feature-ai-chat"
+  echo "  ./worktree remove feature-ai-chat"
+  echo ""
+  exit 1
+}
+
+# ─── CREATE ─────────────────────────────────────────────────
+
+cmd_create() {
+  local branch="$1"
+  local repo_name
+  repo_name="$(basename "$MAIN_REPO")"
+  local worktree_dir="$WORKTREE_PARENT/${repo_name}-${branch}"
+
+  if [ -d "$worktree_dir" ]; then
+    err "Worktree already exists at $worktree_dir"
+    exit 1
+  fi
+
+  echo ""
+  echo -e "${CYAN}━━━ Creating worktree: ${branch} ━━━${NC}"
+  echo ""
+
+  # 1. Create the worktree (new branch from current HEAD)
+  info "Creating git worktree..."
+  if git -C "$MAIN_REPO" show-ref --verify --quiet "refs/heads/$branch" 2>/dev/null; then
+    git -C "$MAIN_REPO" worktree add "$worktree_dir" "$branch"
+  else
+    git -C "$MAIN_REPO" worktree add -b "$branch" "$worktree_dir"
+  fi
+  ok "Worktree created at $worktree_dir"
+
+  # 2. Symlink files from .worktreeinclude
+  if [ -f "$INCLUDE_FILE" ]; then
+    info "Symlinking secrets and config..."
+    while IFS= read -r line || [ -n "$line" ]; do
+      # Skip comments and empty lines
+      line="$(echo "$line" | sed 's/#.*//' | xargs)"
+      [ -z "$line" ] && continue
+
+      local src="$MAIN_REPO/$line"
+      local dest="$worktree_dir/$line"
+
+      if [ -e "$src" ]; then
+        # Create parent directory if needed (but not the target itself)
+        local dest_parent
+        dest_parent="$(dirname "$dest")"
+        [ "$dest_parent" != "$worktree_dir" ] && mkdir -p "$dest_parent"
+        # Remove existing file/dir at destination if any
+        rm -rf "$dest"
+        # Create symlink
+        ln -s "$src" "$dest"
+        ok "  Linked: $line"
+      else
+        warn "  Skipped (not found): $line"
+      fi
+    done < "$INCLUDE_FILE"
+  else
+    warn "No .worktreeinclude file found — skipping symlinks"
+  fi
+
+  # 3. Install dependencies
+  info "Installing dependencies (npm install)..."
+  (cd "$worktree_dir" && npm install --silent 2>&1 | tail -1)
+  ok "Dependencies installed"
+
+  # 4. Summary
+  echo ""
+  echo -e "${GREEN}━━━ Ready! ━━━${NC}"
+  echo ""
+  echo -e "  Branch:    ${CYAN}${branch}${NC}"
+  echo -e "  Directory: ${CYAN}${worktree_dir}${NC}"
+  echo ""
+  echo -e "  Open in Cursor:  ${YELLOW}./worktree open ${branch}${NC}"
+  echo -e "  Start dev server: ${YELLOW}cd ${worktree_dir} && PORT=3001 npm run dev${NC}"
+  echo -e "  Remove when done: ${YELLOW}./worktree remove ${branch}${NC}"
+  echo ""
+}
+
+# ─── REMOVE ─────────────────────────────────────────────────
+
+cmd_remove() {
+  local branch="$1"
+  local repo_name
+  repo_name="$(basename "$MAIN_REPO")"
+  local worktree_dir="$WORKTREE_PARENT/${repo_name}-${branch}"
+
+  if [ ! -d "$worktree_dir" ]; then
+    err "No worktree found at $worktree_dir"
+    exit 1
+  fi
+
+  echo ""
+  echo -e "${CYAN}━━━ Removing worktree: ${branch} ━━━${NC}"
+  echo ""
+
+  # Check for uncommitted changes
+  if [ -n "$(git -C "$worktree_dir" status --porcelain 2>/dev/null)" ]; then
+    warn "Worktree has uncommitted changes!"
+    echo ""
+    git -C "$worktree_dir" status --short
+    echo ""
+    read -p "Continue removing? (y/N) " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      info "Cancelled."
+      exit 0
+    fi
+  fi
+
+  # Remove the worktree
+  info "Removing worktree..."
+  git -C "$MAIN_REPO" worktree remove "$worktree_dir" --force
+  ok "Worktree removed"
+
+  # Optionally delete the branch if it was merged
+  if git -C "$MAIN_REPO" branch --merged main | grep -q "$branch"; then
+    info "Branch '$branch' is merged into main — deleting..."
+    git -C "$MAIN_REPO" branch -d "$branch"
+    ok "Branch deleted"
+  else
+    info "Branch '$branch' is not merged — keeping it"
+  fi
+
+  echo ""
+  echo -e "${GREEN}━━━ Cleaned up ━━━${NC}"
+  echo ""
+}
+
+# ─── LIST ───────────────────────────────────────────────────
+
+cmd_list() {
+  echo ""
+  echo -e "${CYAN}━━━ Active Worktrees ━━━${NC}"
+  echo ""
+  git -C "$MAIN_REPO" worktree list
+  echo ""
+}
+
+# ─── OPEN ───────────────────────────────────────────────────
+
+cmd_open() {
+  local branch="$1"
+  local repo_name
+  repo_name="$(basename "$MAIN_REPO")"
+  local worktree_dir="$WORKTREE_PARENT/${repo_name}-${branch}"
+
+  if [ ! -d "$worktree_dir" ]; then
+    err "No worktree found at $worktree_dir"
+    echo -e "  Run: ${YELLOW}./worktree create ${branch}${NC}"
+    exit 1
+  fi
+
+  info "Opening in Cursor..."
+  cursor "$worktree_dir"
+  ok "Opened $worktree_dir"
+}
+
+# ─── Main ───────────────────────────────────────────────────
+
+[ $# -lt 1 ] && usage
+
+case "$1" in
+  create)
+    [ $# -lt 2 ] && { err "Missing branch name"; usage; }
+    cmd_create "$2"
+    ;;
+  remove|rm)
+    [ $# -lt 2 ] && { err "Missing branch name"; usage; }
+    cmd_remove "$2"
+    ;;
+  list|ls)
+    cmd_list
+    ;;
+  open)
+    [ $# -lt 2 ] && { err "Missing branch name"; usage; }
+    cmd_open "$2"
+    ;;
+  *)
+    err "Unknown command: $1"
+    usage
+    ;;
+esac

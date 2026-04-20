@@ -1,0 +1,944 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import existing styles */
+@import '../style.css';
+
+/* Tiptap Editor Styles */
+.tiptap-editor {
+  font-family: inherit;
+}
+
+.tiptap-content .ProseMirror {
+  outline: none;
+  min-height: 200px;
+}
+
+.tiptap-content .ProseMirror p {
+  margin: 0 0 1em 0;
+}
+
+.tiptap-content .ProseMirror h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.75em 0;
+  line-height: 1.2;
+}
+
+.tiptap-content .ProseMirror h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin: 0 0 0.5em 0;
+  line-height: 1.3;
+}
+
+.tiptap-content .ProseMirror ul,
+.tiptap-content .ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0 0 1em 0;
+}
+
+.tiptap-content .ProseMirror ul {
+  list-style-type: disc;
+}
+
+.tiptap-content .ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.tiptap-content .ProseMirror li {
+  margin: 0.25em 0;
+  display: list-item;
+}
+
+.tiptap-content .ProseMirror li::marker {
+  color: currentColor;
+}
+
+.tiptap-content .ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap-content .ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.tiptap-content .ProseMirror ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tiptap-content .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: #DC143C;
+  cursor: pointer;
+  margin: 0;
+}
+
+.tiptap-content .ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.tiptap-content .ProseMirror ul[data-type="taskList"] li > div p {
+  margin: 0;
+}
+
+.tiptap-content .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  color: #6B7280;
+}
+
+.tiptap-content .ProseMirror strong {
+  font-weight: 700;
+}
+
+.tiptap-content .ProseMirror em {
+  font-style: italic;
+}
+
+.tiptap-content .ProseMirror s {
+  text-decoration: line-through;
+}
+
+.tiptap-content .ProseMirror blockquote {
+  border-left: 3px solid #374151;
+  padding-left: 1rem;
+  margin: 1em 0;
+  color: #9CA3AF;
+  font-style: italic;
+}
+
+.tiptap-content .ProseMirror code {
+  background: #374151;
+  padding: 0.15em 0.3em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.tiptap-content .ProseMirror pre {
+  background: #1F2937;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.tiptap-content .ProseMirror pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Placeholder for empty editor (Tiptap Placeholder extension) */
+.tiptap-content .ProseMirror .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9CA3AF;
+  pointer-events: none;
+  height: 0;
+}
+
+.tiptap-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9CA3AF;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Light mode overrides */
+.tiptap-content.bg-white .ProseMirror blockquote {
+  border-left-color: #D1D5DB;
+  color: #6B7280;
+}
+
+.tiptap-content.bg-white .ProseMirror code {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.tiptap-content.bg-white .ProseMirror pre {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+}
+
+/* Rendered HTML content styles (for viewing saved entries) */
+.rendered-content h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.75em 0;
+  line-height: 1.2;
+}
+
+.rendered-content h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin: 0 0 0.5em 0;
+  line-height: 1.3;
+}
+
+.rendered-content p {
+  margin: 0 0 1em 0;
+}
+
+.rendered-content ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 0 0 1em 0;
+}
+
+.rendered-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0 0 1em 0;
+}
+
+.rendered-content li {
+  margin: 0.25em 0;
+  display: list-item;
+}
+
+/* Override for task list items - MUST come after the above rule */
+/* Using high specificity to ensure these win */
+.rendered-content ul[data-type="taskList"] > li,
+.rendered-content ul[data-type="taskList"] > li[data-type="taskItem"],
+.rendered-content li[data-type="taskItem"],
+div.rendered-content li[data-type="taskItem"],
+.hero-card .rendered-content li[data-type="taskItem"],
+.hero-preview li[data-type="taskItem"] {
+  display: flex !important;
+  list-style: none !important;
+  list-style-type: none !important;
+  list-style-image: none !important;
+}
+
+/* Task list styles for rendered content (Actions) - GLOBAL NUCLEAR */
+/* These rules target ANY task list anywhere on the page */
+[data-type="taskList"] {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+}
+
+[data-type="taskList"] li,
+[data-type="taskList"] [data-type="taskItem"] {
+  display: flex !important;
+  list-style: none !important;
+  list-style-type: none !important;
+}
+
+[data-type="taskList"] li::marker,
+[data-type="taskItem"]::marker,
+li[data-type="taskItem"]::marker {
+  content: "" !important;
+  content: none !important;
+  display: none !important;
+  font-size: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  color: transparent !important;
+  background: transparent !important;
+}
+
+/* Hide Tiptap's native checkbox in RENDERED content only - NOT in the editor */
+/* The editor (.tiptap-content) needs the actual checkbox inputs to work */
+.rendered-content [data-type="taskList"] input[type="checkbox"],
+.rendered-content [data-type="taskItem"] input[type="checkbox"],
+.rendered-content [data-type="taskList"] label > input[type="checkbox"],
+.hero-card [data-type="taskList"] input[type="checkbox"],
+.hero-card [data-type="taskItem"] input[type="checkbox"],
+.card-preview [data-type="taskList"] input[type="checkbox"],
+.card-preview [data-type="taskItem"] input[type="checkbox"] {
+  display: none !important;
+}
+
+/* Also hide the label wrapper in rendered content if it only contains the checkbox */
+.rendered-content [data-type="taskItem"] > label:has(input[type="checkbox"]),
+.hero-card [data-type="taskItem"] > label:has(input[type="checkbox"]),
+.card-preview [data-type="taskItem"] > label:has(input[type="checkbox"]) {
+  display: none !important;
+}
+
+/* Rendered content specific overrides */
+.rendered-content ul[data-type="taskList"] {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+  margin: 0 0 1em 0;
+}
+
+.rendered-content ul[data-type="taskList"] li {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+  list-style: none !important;
+  list-style-type: none !important;
+}
+
+.rendered-content ul[data-type="taskList"] li::marker {
+  content: "" !important;
+  display: none !important;
+}
+
+.rendered-content ul[data-type="taskList"] li::before {
+  content: '';
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid #DC143C;
+  border-radius: 3px;
+  background: transparent;
+}
+
+.rendered-content ul[data-type="taskList"] li[data-checked="true"]::before {
+  background: #DC143C;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+  background-size: 80%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.rendered-content ul[data-type="taskList"] li[data-checked="true"] {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.rendered-content ul[data-type="taskList"] li p {
+  margin: 0;
+  flex: 1;
+}
+
+.rendered-content strong {
+  font-weight: 700;
+}
+
+.rendered-content em {
+  font-style: italic;
+}
+
+.rendered-content s {
+  text-decoration: line-through;
+}
+
+.rendered-content blockquote {
+  border-left: 3px solid #D1D5DB;
+  padding-left: 1rem;
+  margin: 1em 0;
+  color: #6B7280;
+  font-style: italic;
+}
+
+.rendered-content code {
+  background: #F3F4F6;
+  padding: 0.15em 0.3em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.rendered-content pre {
+  background: #F9FAFB;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1em 0;
+  border: 1px solid #E5E7EB;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.rendered-content pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Preview fills remaining hero space */
+.hero-preview {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.hero-preview h1,
+.hero-preview h2 {
+  font-size: 1rem;
+  margin: 0 0 0.5em 0;
+}
+
+/* Hero preview inherits hero text colors */
+.hero-preview,
+.hero-preview h1,
+.hero-preview h2,
+.hero-preview p,
+.hero-preview li,
+.hero-preview strong,
+.hero-preview em {
+  color: var(--text-hero);
+}
+
+.hero-preview blockquote {
+  border-left-color: rgba(255, 255, 255, 0.3);
+  color: var(--text-hero-muted);
+}
+
+.hero-preview code {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-hero);
+}
+
+/* Task list in hero preview - full styles for dark background */
+.hero-preview ul[data-type="taskList"],
+.hero-card ul[data-type="taskList"],
+.hero-card__content ul[data-type="taskList"] {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+  margin: 0 !important;
+}
+
+.hero-preview ul[data-type="taskList"] li,
+.hero-card ul[data-type="taskList"] li,
+.hero-card__content ul[data-type="taskList"] li {
+  display: flex !important;
+  align-items: center;
+  gap: 0.6rem;
+  list-style: none !important;
+  list-style-type: none !important;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.hero-preview ul[data-type="taskList"] li::marker,
+.hero-card ul[data-type="taskList"] li::marker,
+.hero-card__content ul[data-type="taskList"] li::marker {
+  content: none !important;
+  display: none !important;
+  font-size: 0 !important;
+  color: transparent !important;
+}
+
+.hero-preview ul[data-type="taskList"] li::before,
+.hero-card ul[data-type="taskList"] li::before,
+.hero-card__content ul[data-type="taskList"] li::before {
+  content: '';
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 3px;
+  background: transparent;
+}
+
+.hero-preview ul[data-type="taskList"] li[data-checked="true"]::before,
+.hero-card ul[data-type="taskList"] li[data-checked="true"]::before,
+.hero-card__content ul[data-type="taskList"] li[data-checked="true"]::before {
+  background: #DC143C;
+  border-color: #DC143C;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+  background-size: 80%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.hero-preview ul[data-type="taskList"] li p,
+.hero-card ul[data-type="taskList"] li p,
+.hero-card__content ul[data-type="taskList"] li p {
+  margin: 0;
+  flex: 1;
+}
+
+/* Task list in card preview */
+.card-preview ul[data-type="taskList"] {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+}
+
+.card-preview ul[data-type="taskList"] li {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none !important;
+  list-style-type: none !important;
+}
+
+.card-preview ul[data-type="taskList"] li::marker {
+  content: none !important;
+  display: none !important;
+  font-size: 0 !important;
+}
+
+.card-preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 8em;
+}
+
+.card-preview h1,
+.card-preview h2 {
+  font-size: 0.95rem;
+  margin: 0 0 0.4em 0;
+}
+
+.card-preview p {
+  margin: 0 0 0.5em 0;
+}
+
+.card-preview ul,
+.card-preview ol {
+  margin: 0 0 0.5em 0;
+  padding-left: 1.2em;
+}
+
+/* Responsive navigation - hide desktop nav on mobile/tablet, mobile uses hamburger menu */
+@media (max-width: 1023px) {
+  /* Black background extends to status bar on mobile */
+  html, body {
+    background: #000000 !important;
+    background-color: #000000 !important;
+  }
+  
+  .desktop-only-nav,
+  .section-nav.desktop-only-nav {
+    display: none !important;
+  }
+  
+  /* Hide desktop header on mobile - mobile-header renders separately */
+  .site-header:not(.mobile-header) {
+    display: none !important;
+  }
+  
+  /* Hide desktop logout button on mobile - logout is in mobile menu */
+  .desktop-logout-btn {
+    display: none !important;
+  }
+  
+  /* Mobile header must stay horizontal with logo on left */
+  .mobile-header {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  
+  .mobile-header .brand-block {
+    text-align: left !important;
+    align-items: flex-start !important;
+  }
+}
+
+/* Ensure mobile header stays horizontal at all breakpoints */
+@media (max-width: 1024px) {
+  .mobile-header {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+}
+
+/* Desktop - show logout button */
+@media (min-width: 1024px) {
+  .desktop-logout-btn {
+    display: block;
+  }
+}
+
+/* Desktop sidebar - hidden on mobile, shown on desktop */
+.desktop-sidebar {
+  display: none !important;
+}
+
+/* Desktop main content - hidden on mobile */
+.desktop-main-content {
+  display: none;
+}
+
+/* Mobile main content - shown on mobile */
+.mobile-main-content {
+  display: block;
+}
+
+@media (min-width: 1024px) {
+  .desktop-sidebar {
+    display: flex !important;
+  }
+  
+  /* Desktop main content - shown on desktop */
+  .desktop-main-content {
+    display: block;
+    margin-left: 260px;
+    min-height: 100vh;
+    transition: margin-left 0.25s ease;
+  }
+  
+  /* Mobile main content - hidden on desktop */
+  .mobile-main-content {
+    display: none !important;
+  }
+  
+  /* Desktop content padding for non-story views */
+  .desktop-content-padded {
+    padding: 1.5rem 2rem;
+    max-width: 900px;
+    background: #F9FAFB;
+  }
+  
+  /* Desktop footer for non-story views */
+  .desktop-footer {
+    padding: 2rem;
+    text-align: center;
+    color: #9CA3AF;
+    font-size: 0.8rem;
+    border-top: 1px solid #E5E7EB;
+    margin-top: 2rem;
+    background: #F9FAFB;
+  }
+  
+  /* Hide all headers on desktop when sidebar is active */
+  .site-header {
+    display: none !important;
+  }
+  
+  /* Hide legacy desktop logout button - logout is in sidebar */
+  .desktop-logout-btn {
+    display: none !important;
+  }
+  
+  /* Hide desktop category nav - categories are in sidebar */
+  .desktop-only-nav,
+  .section-nav.desktop-only-nav {
+    display: none !important;
+  }
+}
+
+/* Sidebar transition support */
+.sidebar-layout-main {
+  transition: margin-left 0.25s ease;
+}
+
+/* Actions content list styles */
+.actions-section-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Scrollbar styling for sidebar */
+@media (min-width: 1024px) {
+  .desktop-sidebar::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .desktop-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .desktop-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+  
+  .desktop-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* ============================================
+   Phase 2: Collapsible/Details Sections
+   ============================================ */
+
+/* Details/Collapsible in editor */
+.tiptap-content .ProseMirror details,
+.tiptap-content .ProseMirror .details-wrapper {
+  margin: 12px 0;
+}
+
+/* Details/Collapsible in rendered content */
+.rendered-content details {
+  margin: 12px 0;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #F9FAFB;
+}
+
+.rendered-content details summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: #F3F4F6;
+  font-weight: 500;
+  user-select: none;
+  list-style: none;
+}
+
+.rendered-content details summary::-webkit-details-marker {
+  display: none;
+}
+
+.rendered-content details summary::before {
+  content: '▶';
+  font-size: 10px;
+  transition: transform 0.15s ease;
+}
+
+.rendered-content details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.rendered-content details[open] summary {
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.rendered-content details .details-content {
+  padding: 12px 14px;
+}
+
+/* Dark mode details */
+.tiptap-content.bg-neutral-900 .ProseMirror details,
+.prose-invert details {
+  border-color: #374151;
+  background: #1F2937;
+}
+
+.tiptap-content.bg-neutral-900 .ProseMirror details summary,
+.prose-invert details summary {
+  background: #374151;
+}
+
+.tiptap-content.bg-neutral-900 .ProseMirror details[open] summary,
+.prose-invert details[open] summary {
+  border-bottom-color: #4B5563;
+}
+
+/* ============================================
+   Phase 3: Semantic Callout Blocks
+   ============================================ */
+
+/* Callout blocks in rendered content */
+.rendered-content [data-callout],
+.rendered-content .callout {
+  margin: 16px 0;
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.rendered-content [data-callout="insight"],
+.rendered-content .callout-insight {
+  background: #FEF9C3;
+  border: 1px solid #FDE047;
+  color: #713F12;
+}
+
+.rendered-content [data-callout="question"],
+.rendered-content .callout-question {
+  background: #DBEAFE;
+  border: 1px solid #93C5FD;
+  color: #1E40AF;
+}
+
+.rendered-content [data-callout="warning"],
+.rendered-content .callout-warning {
+  background: #FEE2E2;
+  border: 1px solid #FCA5A5;
+  color: #991B1B;
+}
+
+.rendered-content [data-callout="note"],
+.rendered-content .callout-note {
+  background: #E0E7FF;
+  border: 1px solid #A5B4FC;
+  color: #3730A3;
+}
+
+.rendered-content .callout-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.rendered-content .callout-content {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rendered-content .callout-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Dark mode callouts */
+.tiptap-content.bg-neutral-900 [data-callout="insight"],
+.prose-invert [data-callout="insight"] {
+  background: #422006;
+  border-color: #CA8A04;
+  color: #FEF08A;
+}
+
+.tiptap-content.bg-neutral-900 [data-callout="question"],
+.prose-invert [data-callout="question"] {
+  background: #1E3A5F;
+  border-color: #3B82F6;
+  color: #BFDBFE;
+}
+
+.tiptap-content.bg-neutral-900 [data-callout="warning"],
+.prose-invert [data-callout="warning"] {
+  background: #450A0A;
+  border-color: #DC2626;
+  color: #FECACA;
+}
+
+.tiptap-content.bg-neutral-900 [data-callout="note"],
+.prose-invert [data-callout="note"] {
+  background: #1E1B4B;
+  border-color: #6366F1;
+  color: #C7D2FE;
+}
+
+/* ============================================
+   Phase 4: Entry Links
+   ============================================ */
+
+/* Entry link styling */
+.rendered-content a[data-entry-id],
+.rendered-content .entry-link,
+.tiptap-content a[data-entry-id],
+.tiptap-content .entry-link {
+  color: #8B5CF6;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.1s ease;
+}
+
+.rendered-content a[data-entry-id]:hover,
+.rendered-content .entry-link:hover,
+.tiptap-content a[data-entry-id]:hover,
+.tiptap-content .entry-link:hover {
+  color: #7C3AED;
+}
+
+/* Entry link with tooltip on hover */
+.rendered-content a[data-entry-id]::after {
+  content: ' →';
+  font-size: 0.85em;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.rendered-content a[data-entry-id]:hover::after {
+  opacity: 1;
+}
+
+/* ============================================
+   Phase 5: Outline/Nested List Support
+   ============================================ */
+
+/* Nested list indentation in editor */
+.tiptap-content .ProseMirror ul ul,
+.tiptap-content .ProseMirror ol ol,
+.tiptap-content .ProseMirror ul ol,
+.tiptap-content .ProseMirror ol ul {
+  margin-top: 0.25em;
+  margin-bottom: 0;
+}
+
+/* Nested task list styling */
+.tiptap-content .ProseMirror ul[data-type="taskList"] ul[data-type="taskList"] {
+  margin-left: 1.5rem;
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+/* Rendered nested lists */
+.rendered-content ul ul,
+.rendered-content ol ol,
+.rendered-content ul ol,
+.rendered-content ol ul {
+  margin-top: 0.25em;
+  margin-bottom: 0;
+  padding-left: 1.25em;
+}
+
+/* Different bullet styles for nested lists */
+.rendered-content ul ul {
+  list-style-type: circle;
+}
+
+.rendered-content ul ul ul {
+  list-style-type: square;
+}
+
+/* Nested task lists */
+.rendered-content ul[data-type="taskList"] ul[data-type="taskList"] {
+  margin-left: 1.5rem;
+  padding-left: 0;
+}
+
+/* Versions nudge — subtle pulse to draw attention to the subtitle on first view */
+@keyframes nudge-pulse {
+  0%, 100% {
+    opacity: 1;
+    color: #6B7280;
+  }
+  25% {
+    opacity: 1;
+    color: #DC143C;
+  }
+  50% {
+    opacity: 1;
+    color: #6B7280;
+  }
+  75% {
+    opacity: 1;
+    color: #DC143C;
+  }
+}
+
+/* Selection toolbar animation */
+@keyframes toolbar-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Tooltip animations */
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tooltip-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
