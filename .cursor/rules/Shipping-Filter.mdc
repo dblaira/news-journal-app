@@ -1,0 +1,56 @@
+---
+alwaysApply: true
+---
+
+# The Shipping Filter
+
+## The Principle (load-bearing, added April 22, 2026)
+
+**Adam builds products other people can buy.**
+
+Until another person has the real opportunity to press **"Pay," "Start trial," or "Subscribe"** — including email-list signup, social-account follow, or any other commitment action — *the product has not been built*. Prototypes, repos, plans, specs, drafts, and demos are not products. A payable surface is the only evidence.
+
+April 22, 2026 is Adam's Independence Day — the day he crossed from builder-of-artifacts to operator-of-a-buyable-thing. Everything before that date was practice. Everything after points in one direction:
+
+> **Make it easier and more valuable to pay or subscribe to his products.**
+
+## The Test (apply on every decision)
+
+Before any feature, page, deploy, rewrite, refactor, or new workstream, ask:
+
+1. Can a stranger press *pay* / *subscribe* / *start trial* **right now**, on the live surface this touches?
+   - If **no**: the single highest-priority work is to make that possible. Everything else is deferred until it is.
+   - If **yes**: this feature must either (a) increase conversion on the payable surface, (b) increase retention/value after payment, or (c) reduce the operational cost of serving the payment. If it does none of these, it waits.
+
+2. Does this work ship to a publicly reachable URL within the next 24 hours?
+   - If **no**: why not? Name the blocker and fix the blocker first.
+
+3. Is there a visible, unbroken path from "stranger lands on a public URL" to "Adam receives money"?
+   - If **no** at any point in that chain: that broken step is the work.
+
+## Consequences for Agent Behavior
+
+- **Recommend the payable path first.** When presenting options, order them by which gets a payable moment live fastest.
+- **Flag non-payable work as non-payable.** Anything that isn't on the conversion path should be labeled as such in the plan, not buried in.
+- **Do not optimize internal tooling while the purchase path has friction.** If the site, checkout, webhook, or post-payment experience is fragile, fix that before any other category of work.
+- **Public beats private.** When choosing between two implementations, prefer the one that reaches a public URL sooner.
+- **Count the surfaces.** Adam's buyable surfaces currently include: the Stripe checkout at understood.app/pricing, and the app itself. Every addition to this list (newsletter, waitlist, secondary product) is a win. Every broken one is a P1.
+
+## Record of the Day (April 22, 2026)
+
+What was true at the start of the day:
+- No public product.
+- No payable surface.
+- Personal ontology work lived in a private lab.
+
+What was true at the end of the day:
+- understood.app serves a public marketing site, a paywalled app, a long-form story, a keynote deck, and a live pricing page.
+- Stripe is live in test mode with two recurring prices ($100/mo, $999/yr) and a capped promotion code (FIRST100, 100 redemptions).
+- A checkout flows end-to-end from stranger to signed-in paying trialist with a Weekly-debrief cron queued.
+- A hand-issued invite tool exists at /admin/first-100 for the cohort offer.
+
+Adam completed a live trial-start subscription on himself as the first user. The Stripe dashboard has a **Switch to live account** button. Pressing that button is the next irreversible line.
+
+## The Line
+
+This filter is not a priority among others. It is the **prerequisite**. Lift / Leverage / Automation still apply, *but only to work that is downstream of a live payable surface that actually converts.*
