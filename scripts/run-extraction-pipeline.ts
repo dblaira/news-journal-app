@@ -15,8 +15,9 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!
 
-const COST_PER_1K_INPUT = 0.015
-const COST_PER_1K_OUTPUT = 0.075
+// Claude Sonnet 4.6 standard API: $3/M input, $15/M output (aligned with callExtractionAPI model)
+const COST_PER_1K_INPUT = 0.003
+const COST_PER_1K_OUTPUT = 0.015
 
 interface CLIArgs {
   dryRun: boolean
