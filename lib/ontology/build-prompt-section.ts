@@ -1,16 +1,22 @@
-import { LIFE_DOMAINS } from '@/types/ontology'
+import { LIFE_DOMAINS, type OntologyAxiomScope, type OntologyAxiomStatus } from '@/types/ontology'
 
 export type OntologyAxiomPromptRow = {
   antecedent: string
   consequent: string
   confidence: number | string
+  status?: OntologyAxiomStatus | string | null
+  scope?: OntologyAxiomScope | string | null
 }
 
 /** Appended to infer-entry (and similar) system/user prompts. */
 export function buildOntologyPromptSection(axioms: OntologyAxiomPromptRow[]): string {
-  if (!axioms.length) return ''
+  const activeAxioms = axioms.filter((axiom) => {
+    return axiom.status === 'confirmed' && axiom.scope === 'personal'
+  })
 
-  const lines = axioms.map((a) => {
+  if (!activeAxioms.length) return ''
+
+  const lines = activeAxioms.map((a) => {
     const c = typeof a.confidence === 'number' ? a.confidence : Number(a.confidence)
     const conf = Number.isFinite(c) ? c : 0
     return `- ${a.antecedent} → ${a.consequent} (confidence ${conf})`
