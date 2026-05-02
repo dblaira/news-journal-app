@@ -9,6 +9,7 @@ import {
 } from '../types/ontology'
 import { buildOntologyPromptSection } from '../lib/ontology/build-prompt-section'
 import { buildAxiomReviewUpdate } from '../lib/ontology/axiom-review'
+import { projectAxiomsToKnowledgeGraph } from '../lib/ontology/knowledge-graph'
 
 describe('standard ontology vocabulary', () => {
   it('keeps neutral product vocabulary separate from Adam example axioms', () => {
@@ -104,5 +105,66 @@ describe('axiom review transitions', () => {
     )
 
     assert.deepEqual(update, { error: 'Cannot move axiom from rejected to confirmed' })
+  })
+})
+
+describe('knowledge graph projection', () => {
+  it('projects confirmed personal axioms into deterministic nodes and edges', () => {
+    const graph = projectAxiomsToKnowledgeGraph([
+      {
+        id: 'axiom-1',
+        antecedent: 'High Learning',
+        consequent: 'Higher Affect',
+        confidence: 0.67,
+        status: 'confirmed',
+        scope: 'personal',
+        relationshipType: 'predicts',
+        evidenceEntryIds: ['entry-1', 'entry-2'],
+        evidenceCount: 2,
+        provenance: { source: 'test' },
+      },
+      {
+        id: 'axiom-2',
+        antecedent: 'Adam Exercise + Sleep',
+        consequent: 'Adam stress recovery',
+        confidence: 0.57,
+        status: 'confirmed',
+        scope: 'demo',
+        relationshipType: 'predicts',
+        evidenceEntryIds: [],
+        evidenceCount: 8069,
+        provenance: { corpus: 'adam_example' },
+      },
+      {
+        id: 'axiom-3',
+        antecedent: 'Low Sleep',
+        consequent: 'Lower Work',
+        confidence: 0.4,
+        status: 'candidate',
+        scope: 'personal',
+        relationshipType: 'predicts',
+        evidenceEntryIds: [],
+        evidenceCount: 0,
+        provenance: {},
+      },
+    ])
+
+    assert.deepEqual(
+      graph.nodes.map((node) => node.id),
+      ['concept:high-learning', 'concept:higher-affect']
+    )
+    assert.deepEqual(graph.edges, [
+      {
+        id: 'axiom:axiom-1',
+        sourceId: 'concept:high-learning',
+        targetId: 'concept:higher-affect',
+        relationshipType: 'predicts',
+        confidence: 0.67,
+        axiomId: 'axiom-1',
+        evidenceEntryIds: ['entry-1', 'entry-2'],
+        evidenceCount: 2,
+        provenance: { source: 'test' },
+      },
+    ])
   })
 })

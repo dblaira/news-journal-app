@@ -252,3 +252,12 @@ SET
   confirmed_at = COALESCE(confirmed_at, created_at)
 WHERE user_id IS NULL
   AND name IN ('Learning Master Key', 'Exercise-Sleep Synergy', 'Belief to Entertainment Lag', 'Zero Negative Impact');
+
+-- -----------------------------------------------------------------------------
+-- 7. Knowledge graph migration path
+-- -----------------------------------------------------------------------------
+-- The current product stores ontology facts as reviewed axioms. A later graph store
+-- can project confirmed personal rows into deterministic nodes and edges:
+--   concept:{slug(antecedent)} -[relationship_type, confidence, axiom_id]-> concept:{slug(consequent)}
+-- Keep `evidence_entry_ids`, `evidence_count`, and `provenance` populated so Neo4j,
+-- RDF/OWL, or GraphRAG exports can preserve traceability back to entries.
