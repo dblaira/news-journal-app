@@ -48,3 +48,7 @@ out/
 
 # Worktree config (local only)
 .worktreeinclude
+
+# Cursor local project state
+.cursor
+.cursor/

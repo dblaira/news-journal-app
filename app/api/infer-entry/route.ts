@@ -63,8 +63,9 @@ export async function POST(request: NextRequest) {
     try {
       const { data: axiomRows, error: axiomError } = await supabase
         .from('ontology_axioms')
-        .select('antecedent, consequent, confidence')
-        .or(`user_id.is.null,user_id.eq.${user.id}`)
+        .select('antecedent, consequent, confidence, status, scope')
+        .eq('user_id', user.id)
+        .eq('status', 'confirmed')
         .order('confidence', { ascending: false })
 
       if (!axiomError && axiomRows?.length) {
